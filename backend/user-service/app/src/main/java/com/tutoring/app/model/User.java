@@ -7,82 +7,39 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Builder
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
+
   @Column(name = "email", unique = true)
   private String email;
+
   @Column(name = "password")
   private String password;
+
   @Column(name = "roles")
   private String roles;
-  @Column(name = "userName")
+
+  @Column(name = "username")
   private String username;
-  @Column(name = "isConfirmed")
+
+  @Column(name = "is_confirmed")
   private boolean isConfirmed;
+
   @Column(name = "photo_path")
   private String photoPath;
-
-  public UUID getId() {
-    return id;
-  }
-
-  public void setId(UUID id) {
-    this.id = id;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
-  public String getRoles() {
-    return roles;
-  }
-
-  public void setRoles(String roles) {
-    this.roles = roles;
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public void setUsername(String username) {
-    this.username = username;
-  }
-
-  public boolean getIsConfirmed() {
-    return isConfirmed;
-  }
-
-  public void setIsConfirmed(boolean isConfirmed) {
-    this.isConfirmed = isConfirmed;
-  }
-
-  public String getPhotoPath() {
-    return photoPath;
-  }
-
-  public void setPhotoPath(String photoPath) {
-    this.photoPath = photoPath;
-  }
 }
