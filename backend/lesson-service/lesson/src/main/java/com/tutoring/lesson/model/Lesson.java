@@ -1,12 +1,12 @@
 package com.tutoring.lesson.model;
 
 import java.util.UUID;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "lessons")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,6 +34,6 @@ public class Lesson {
   @Column(name = "duration_time")
   private int durationTime;
 
-  @Column(name = "tutor_id", unique = true)
+  @Column(name = "tutor_id", nullable = false)
   private UUID tutorId;
 }
