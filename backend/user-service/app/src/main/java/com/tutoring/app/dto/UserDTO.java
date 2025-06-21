@@ -2,7 +2,9 @@ package com.tutoring.app.dto;
 
 import org.hibernate.annotations.processing.Pattern;
 import jakarta.validation.constraints.NotBlank;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class UserDTO {
   @NotBlank
   private String email;

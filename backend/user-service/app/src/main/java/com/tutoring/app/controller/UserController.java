@@ -3,6 +3,7 @@ package com.tutoring.app.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,9 +17,9 @@ import org.springframework.http.ResponseEntity;
 
 import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.model.User;
-import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.service.UserService;
 
+@CrossOrigin(origins = { "http://localhost:8081", "exp://192.168.1.32:8081" })
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -36,6 +37,9 @@ public class UserController {
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
   public User register(@RequestBody UserDTO userDTO) {
+    System.out.println("Email: " + userDTO.getEmail());
+    System.out.println("Username: " + userDTO.getUsername());
+    System.out.println("Password: " + userDTO.getPassword());
     return userService.register(userDTO);
   }
 
