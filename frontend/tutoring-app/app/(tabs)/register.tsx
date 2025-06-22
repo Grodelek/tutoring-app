@@ -1,11 +1,14 @@
 import React, {useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
-
+import { View, TextInput, Button, Alert, StyleSheet, Text } from 'react-native';
+import { router } from 'expo-router';
 const UserForm: React.FC = () => {
+
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-
+  const navigateToLogin = () => {
+   router.push('/login'); 
+  };
   const handleSubmit = async () => {
     try {
       const response = await fetch('http://192.168.1.32:8090/api/users/add', {
@@ -48,7 +51,10 @@ return (
       style={[styles.input]}
       autoCapitalize="none"
       secureTextEntry={true}
-      /> 
+      />
+    <Text onPress={navigateToLogin} style={{ color: 'blue', textDecorationLine: 'underline' }}>
+      Already have an account? Login here:
+    </Text>
       <Button title="Register" onPress={handleSubmit} />
   </View>
 );

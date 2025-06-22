@@ -1,7 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
+import { StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -9,46 +7,51 @@ import { ThemedView } from '@/components/ThemedView';
 export default function HomeScreen() {
   return (
     <ParallaxScrollView
+      headerHeight={250}
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+          source={require('@/assets/images/logo.png')}
+          style={styles.fullImage}
+          contentFit="cover"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
+      }
+    >
+      <ThemedView style={styles.headerContainer}>
+        <ThemedText type="title" style={styles.mainTitle}>Welcome to Skill Swap!</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          The platform connecting learners with teachers in your community
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
+
+      <ThemedView style={styles.featureCard}>
+        <ThemedText type="subtitle" style={styles.featureTitle}>🔁 Exchange Your Skills</ThemedText>
         <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+          Have something to teach? Find people who can teach you what you need to learn. 
+          Our skill-for-skill system makes knowledge your currency.
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
+
+      <ThemedView style={styles.featureCard}>
+        <ThemedText type="subtitle" style={styles.featureTitle}>📈 Track Your Progress</ThemedText>
         <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
+          Our system monitors your learning and teaching journey. Visualize your 
+          development over time and identify areas for improvement.
+        </ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.featureCard}>
+        <ThemedText type="subtitle" style={styles.featureTitle}>👥 Build Your Learning Network</ThemedText>
+        <ThemedText>
+          Connect with passionate learners in your area. Skill sharing isn't just about 
+          knowledge exchange - it's about building meaningful relationships.
+        </ThemedText>
+      </ThemedView>
+
+      <ThemedView style={styles.ctaContainer}>
+        <ThemedText style={styles.ctaText}>
+          Ready to begin your journey? Create your profile now and discover 
+          the world of skill sharing in your community!
         </ThemedText>
       </ThemedView>
     </ParallaxScrollView>
@@ -56,20 +59,40 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  headerContainer: {
+    marginBottom: 24,
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
+  mainTitle: {
+    textAlign: 'center',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  featureCard: {
+    backgroundColor: 'rgba(161, 206, 220, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  featureTitle: {
+    marginBottom: 8,
+  },
+  ctaContainer: {
+    marginTop: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#A1CEDC',
+    borderRadius: 12,
+  },
+  ctaText: {
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  fullImage: {
+    width: '100%',
+    height: '100%',
   },
 });
