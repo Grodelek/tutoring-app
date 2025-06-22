@@ -42,4 +42,5 @@ public class User {
 
   @Column(name = "photo_path")
   private String photoPath;
+
 }

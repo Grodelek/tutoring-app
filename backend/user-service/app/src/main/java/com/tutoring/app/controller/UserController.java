@@ -29,6 +29,11 @@ public class UserController {
     this.userService = userService;
   }
 
+  @PostMapping("/login")
+  public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
+    return userService.verify(userDTO);
+  }
+
   @GetMapping("/all")
   public List<User> getUsers() {
     return userService.getUsers();
@@ -39,7 +44,6 @@ public class UserController {
   public User register(@RequestBody UserDTO userDTO) {
     System.out.println("Email: " + userDTO.getEmail());
     System.out.println("Username: " + userDTO.getUsername());
-    System.out.println("Password: " + userDTO.getPassword());
     return userService.register(userDTO);
   }
 
