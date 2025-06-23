@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -66,14 +67,14 @@ public class UserService {
   public ResponseEntity<String> verify(UserDTO userDTO) {
     try {
       Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(userDTO.getEmail(), userDTO.getPassword()));
+          new UsernamePasswordAuthenticationToken(userDTO.getUsername(), userDTO.getPassword()));
 
       Optional<User> userOptional = userRepository.findByEmail(userDTO.getEmail());
       if (userOptional.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
       }
 
-      String token = jwtService.generateToken(userDTO.getEmail());
+      String token = jwtService.generateToken(userDTO.getUsername());
       return ResponseEntity.ok(token);
 
     } catch (AuthenticationException e) {
@@ -90,5 +91,10 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
     return ResponseEntity.ok(userOptional.get());
+  }
+
+  public User findByUsername(String username) {
+    return userRepository.findByUsername(username)
+        .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony"));
   }
 }
