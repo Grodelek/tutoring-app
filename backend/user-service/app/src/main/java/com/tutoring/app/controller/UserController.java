@@ -39,6 +39,11 @@ public class UserController {
     return userService.getUsers();
   }
 
+  @GetMapping("/{id}")
+  public ResponseEntity<?> getUsers(@PathVariable UUID id) {
+    return userService.getUserById(id);
+  }
+
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
   public User register(@RequestBody UserDTO userDTO) {
