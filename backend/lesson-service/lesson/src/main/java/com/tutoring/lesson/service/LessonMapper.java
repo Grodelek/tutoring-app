@@ -1,6 +1,7 @@
 package com.tutoring.lesson.service;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import com.tutoring.lesson.dto.LessonRequestDTO;
 import com.tutoring.lesson.dto.LessonResponseDTO;
