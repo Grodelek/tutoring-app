@@ -54,21 +54,20 @@ public class JWTService {
     }
   }
 
-  public String generateToken(String email) {
+  public String generateToken(String username) {
     Map<String, Object> claims = new HashMap<>();
 
     String token = Jwts.builder()
         .claims()
         .add(claims)
-        .subject(email)
+        .subject(username)
         .issuedAt(new Date(System.currentTimeMillis()))
         .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
         .and()
         .signWith(getKey())
         .compact();
 
-    Optional<User> userOptional = userRepository.findByEmail(email);
-    System.out.println("Generated token for user " + email + ": " + token);
+    System.out.println("Generated token for user " + username + ": " + token);
     return token;
   }
 
@@ -92,7 +91,8 @@ public class JWTService {
   public boolean validateToken(String token, UserDetails userDetails) {
     final String username = extractUserName(token);
     System.out.println("Token username: " + username); // Debugowanie: Wyświetl użytkownika w tokenie
-    System.out.println("Expected username: " + userDetails.getUsername()); // Debugowanie: Wyświetl użytkownika z
+    System.out.println("Expected username: " + userDetails.getUsername());
+    System.out.println("token:" + token);// Debugowanie: Wyświetl użytkownika z
     return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
   }
 
