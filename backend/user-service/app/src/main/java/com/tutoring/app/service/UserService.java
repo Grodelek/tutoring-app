@@ -83,4 +83,12 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
     }
   }
+
+  public ResponseEntity<?> getUserById(UUID id) {
+    Optional<User> userOptional = userRepository.findById(id);
+    if (userOptional.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
+    return ResponseEntity.ok(userOptional.get());
+  }
 }
