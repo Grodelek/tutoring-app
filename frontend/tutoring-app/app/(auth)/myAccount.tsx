@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -14,12 +15,14 @@ const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-
+  const [password, setPassword] = useState('');
+ 
   const fetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem('jwtToken');
       if (!token) {
-        Alert.alert('Błąd', 'Brak tokenu – użytkownik niezalogowany.');
+        Alert.alert('Błąd', 'Brak tokenu – użytkownik niezalogowany.'); 
+        router.replace('tabs');
         return;
       }
 
@@ -44,34 +47,50 @@ const MyAccount: React.FC = () => {
     }
   };
 
-  const updateUsername = async () => {
-    try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token || !user) return;
+ const updateUsername = async () => {
+  try {
+    const token = await AsyncStorage.getItem('jwtToken');
+    if (!token || !user) return;
 
-      const response = await fetch(`http://192.168.1.32:8090/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ...user, username }),
+    const response = await fetch(`http://192.168.1.32:8090/api/users/${user.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ username }),
+    });
+
+    if (response.ok) {
+      Alert.alert('Sukces', 'Nazwa użytkownika została zaktualizowana.');
+
+      const loginResponse = await fetch('http://192.168.1.32:8090/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
 
-      if (response.ok) {
-        Alert.alert('Sukces', 'Nazwa użytkownika została zaktualizowana.');
+      if (loginResponse.ok) {
+        const data = await loginResponse.json();
+        await AsyncStorage.setItem('jwtToken', data.token);
         setIsEditing(false);
         fetchUser();
       } else {
-        const errorText = await response.text();
-        Alert.alert('Błąd', `Nie udało się zapisać zmian: ${errorText}`);
+        Alert.alert('Błąd logowania', 'Zaloguj się ponownie ręcznie.');
+        navigation.navigate('Login');
       }
-    } catch (error: any) {
-      Alert.alert('Błąd', `Błąd połączenia: ${error.message}`);
-    }
-  };
 
-  useEffect(() => {
+    } else {
+      const errorText = await response.text();
+      Alert.alert('Błąd', `Nie udało się zapisać zmian: ${errorText}`);
+    }
+  } catch (error: any) {
+    Alert.alert('Błąd', `Błąd połączenia: ${error.message}`);
+  }
+};  useEffect(() => {
     fetchUser();
   }, []);
 
