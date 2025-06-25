@@ -21,10 +21,13 @@ const LoginForm: React.FC = () => {
         body: JSON.stringify({ email, username, password }),
       });
       if (response.ok) {
-        const token = await response.text();
+        const data = await response.json();
+        const token = data.token;
+        const userId = data.userId;
         if (token) {
           await AsyncStorage.setItem('jwtToken', token);
           await AsyncStorage.setItem('username', username)
+          await AsyncStorage.setItem('userId', userId.toString());
           setToken(token);
           Alert.alert('Success', 'User logged in successfully!');
         } else {
