@@ -1,6 +1,8 @@
 package com.tutoring.app.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -64,24 +66,37 @@ public class UserService {
   }
 
   @Transactional
-  public ResponseEntity<String> verify(UserDTO userDTO) {
+  public ResponseEntity<Map<String, Object>> verify(UserDTO userDTO) {
     try {
       Authentication authentication = authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(userDTO.getUsername(), userDTO.getPassword()));
 
       Optional<User> userOptional = userRepository.findByEmail(userDTO.getEmail());
       if (userOptional.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "User not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
       }
 
       String token = jwtService.generateToken(userDTO.getUsername());
-      return ResponseEntity.ok(token);
+      User user = userOptional.get();
+      UUID id = user.getId();
+
+      Map<String, Object> response = new HashMap<>();
+      response.put("token", token);
+      response.put("userId", id);
+
+      return ResponseEntity.ok(response);
 
     } catch (AuthenticationException e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed");
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "Authentication failed");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     } catch (Exception e) {
       e.printStackTrace();
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred");
+      Map<String, Object> errorResponse = new HashMap<>();
+      errorResponse.put("error", "An error occurred");
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
   }
 

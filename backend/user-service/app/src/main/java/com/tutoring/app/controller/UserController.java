@@ -1,6 +1,7 @@
 package com.tutoring.app.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -39,7 +40,7 @@ public class UserController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
+  public ResponseEntity<Map<String, Object>> login(@RequestBody UserDTO userDTO) {
     return userService.verify(userDTO);
   }
 
