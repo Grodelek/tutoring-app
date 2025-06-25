@@ -97,4 +97,15 @@ public class UserService {
     return userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony"));
   }
+
+  public ResponseEntity<?> updateUsername(UUID id, String username) {
+    Optional<User> userOptional = userRepository.findById(id);
+    if (userOptional.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
+    User user = userOptional.get();
+    user.setUsername(username);
+    userRepository.save(user);
+    return ResponseEntity.ok("Username updated successfully");
+  }
 }
