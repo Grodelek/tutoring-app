@@ -24,6 +24,7 @@ const LoginForm: React.FC = () => {
         const token = await response.text();
         if (token) {
           await AsyncStorage.setItem('jwtToken', token);
+          await AsyncStorage.setItem('username', username)
           setToken(token);
           Alert.alert('Success', 'User logged in successfully!');
         } else {
