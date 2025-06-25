@@ -21,9 +21,17 @@ public class MessageService {
   }
 
   public Conversation getOrCreateConversation(UUID user1Id, UUID user2Id) {
+    if (user1Id == null || user2Id == null) {
+      throw new IllegalArgumentException("User IDs cannot be null");
+    }
     return conversationRepository.findAll().stream()
-        .filter(c -> (user1Id.equals(c.getUser1Id()) && user2Id.equals(c.getUser2Id())) ||
-            (user1Id.equals(c.getUser2Id()) && user2Id.equals(c.getUser1Id())))
+        .filter(c -> {
+          UUID cUser1Id = c.getUser1Id();
+          UUID cUser2Id = c.getUser2Id();
+          return cUser1Id != null && cUser2Id != null &&
+              ((user1Id.equals(cUser1Id) && user2Id.equals(cUser2Id)) ||
+                  (user1Id.equals(cUser2Id) && user2Id.equals(cUser1Id)));
+        })
         .findFirst()
         .orElseGet(() -> {
           Conversation newConversation = new Conversation();
@@ -37,6 +45,7 @@ public class MessageService {
     Conversation conversation = getOrCreateConversation(senderId, receiverId);
     Message message = new Message();
     message.setSenderId(senderId);
+    message.setReceiverId(receiverId);
     message.setContent(content);
     message.setConversation(conversation);
     messageRepository.save(message);
