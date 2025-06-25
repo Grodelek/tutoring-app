@@ -29,6 +29,8 @@ public class Message {
 
   private UUID senderId;
 
+  private UUID receiverId;
+
   private String content;
 
   private LocalDateTime timestamp = LocalDateTime.now();
