@@ -6,11 +6,13 @@ import { router } from 'expo-router';
 const Dashboard: React.FC = () => {
   const [lesson, setLesson] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
   const fetchLessons = async () => {
     const token = await AsyncStorage.getItem('jwtToken');
     if (!token) {
       Alert.alert('Błąd', 'Brak tokenu – użytkownik niezalogowany.');
-      router.replace('tabs'); 
+      router.replace('tabs');
       return;
     }
 
@@ -35,46 +37,86 @@ const Dashboard: React.FC = () => {
     }
   };
 
-useEffect(() => {
   const initialize = async () => {
     const storedUserId = await AsyncStorage.getItem('userId');
     setUserId(storedUserId);
-    fetchLessons();
+    await fetchLessons();
   };
-  initialize();
-}, []);
 
+  useEffect(() => {
+    initialize();
+  }, []);
 
-  const handleMessageTutor = (tutorId: string) => {
-    Alert.alert('Wiadomość', `Tutaj otworzyłby się chat z nauczycielem ${tutorId}`);
-    // router.push(`/messages/${tutorId}`); <-- przykład
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchLessons();
+    setRefreshing(false);
   };
+const handleMessageTutor = async (tutorId: string) => {
+  const token = await AsyncStorage.getItem('jwtToken');
+  const currentUserId = await AsyncStorage.getItem('userId');
+  console.log("Attempting to message tutor with ID:", tutorId); // ✅ Debugowanie
+  console.log('TOKEN:', token);
+  console.log('USER ID:', currentUserId);
+  if (!token || !currentUserId) {
+    Alert.alert('Błąd', 'Brak informacji o użytkowniku.');
+    return;
+  }
+
+  const response = await fetch('http://192.168.1.32:8090/api/messages/get-or-create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      user1Id: currentUserId,
+      user2Id: tutorId,
+    }),
+  });
+if (response.ok) {
+  const data = await response.json();
+  const conversationId = data.id;
+  console.log(conversationId);
+  router.push({
+        pathname: "/(auth)/messages/[conversationId]",
+        params: { conversationId: data.id },
+    });
+} else {
+  const status = response.status;
+  const statusText = response.statusText;
+  const errorText = await response.text();
+  console.log('❌ Błąd serwera:', { status, statusText, errorText });
+  Alert.alert('Błąd', `Nie udało się rozpocząć konwersacji: ${status} ${statusText} - ${errorText}`);
+}
+};
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Lista lekcji:</Text>
       <FlatList
         data={lesson}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         contentContainerStyle={{ paddingBottom: 100 }}
         keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
-       
-renderItem={({ item }) => (
-  <View style={styles.userItem}>
-    <Text style={styles.userText}>📘 Przedmiot: {item.subject}</Text>
-    <Text style={styles.userText}>📝 Opis: {item.description}</Text>
-    <Text style={styles.userText}>⏱️ Czas trwania: {item.durationTime} minut</Text>
-    <Text style={styles.userText}>👤 Nauczyciel: {item.tutorUsername ?? 'Brak danych'}</Text>
+        renderItem={({ item }) => (
+          <View style={styles.userItem}>
+            <Text style={styles.userText}>📘 Przedmiot: {item.subject}</Text>
+            <Text style={styles.userText}>📝 Opis: {item.description}</Text>
+            <Text style={styles.userText}>⏱️ Czas trwania: {item.durationTime} minut</Text>
+            <Text style={styles.userText}>👤 Nauczyciel: {item.tutorUsername ?? 'Brak danych'}</Text>
 
-    {userId !== item.tutorId && (
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => handleMessageTutor(item.tutorId)}
-      >
-        <Text style={styles.buttonText}>Napisz do nauczyciela</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-)}
+            {userId !== item.tutorId && (
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => handleMessageTutor(item.tutorId)}
+              >
+                <Text style={styles.buttonText}>Napisz do nauczyciela</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         ListEmptyComponent={<Text style={styles.userText}>Brak dostępnych lekcji.</Text>}
       />
     </View>
