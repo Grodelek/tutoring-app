@@ -15,9 +15,8 @@ const ChatScreen: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const { conversationId } = useLocalSearchParams();
+  const { conversationId, receiverId } = useLocalSearchParams();
 
-  // Pobieramy userId z AsyncStorage przy starcie komponentu
   useEffect(() => {
     AsyncStorage.getItem('userId').then(setUserId);
   }, []);
@@ -57,11 +56,12 @@ const ChatScreen: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conversationId,
           senderId: userId,
+          receiverId: receiverId,
           content: newMessage.trim(),
         }),
       });
+      console.log(userId);
       if (res.ok) {
         setNewMessage('');
         fetchMessages();
