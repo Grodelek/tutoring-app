@@ -79,7 +79,7 @@ if (response.ok) {
   const conversationId = data.id;
   console.log(conversationId);
   router.push({
-        pathname: "/(auth)/messages/[conversationId]",
+        pathname: "/messages/[conversationId]",
         params: { conversationId: data.id, receiverId: tutorId },
     });
 } else {

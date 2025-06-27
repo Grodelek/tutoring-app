@@ -1,14 +1,24 @@
-import React, {useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet, Text } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from 'react-native';
 import { router } from 'expo-router';
-const UserForm: React.FC = () => {
 
+const UserForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
   const navigateToLogin = () => {
-   router.push('/login'); 
+    router.push('/login');
   };
+
   const handleSubmit = async () => {
     try {
       const response = await fetch('http://192.168.1.32:8090/api/users/add', {
@@ -18,62 +28,112 @@ const UserForm: React.FC = () => {
         },
         body: JSON.stringify({ email, username, password }),
       });
-    if (response.ok) {
-      Alert.alert('Success', 'User registered successfully!');
-    } else {
-      const errorText = await response.text();
-      Alert.alert('Error', `User registration failed ${errorText}`);
-    }
-    }catch (error){
+      if (response.ok) {
+        Alert.alert('Success', 'User registered successfully!');
+      } else {
+        const errorText = await response.text();
+        Alert.alert('Error', `User registration failed: ${errorText}`);
+      }
+    } catch (error) {
       Alert.alert('Error', `Problem with connection: ${error}`);
     }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Create Account</Text>
+
+      <TextInput
+        placeholder="Email"
+        placeholderTextColor="#999"
+        value={email}
+        onChangeText={setEmail}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
+        placeholder="Username"
+        placeholderTextColor="#999"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
+        placeholder="Password"
+        placeholderTextColor="#999"
+        value={password}
+        onChangeText={setPassword}
+        style={styles.input}
+        autoCapitalize="none"
+        secureTextEntry={true}
+      />
+
+      <TouchableOpacity onPress={handleSubmit} style={styles.button}>
+        <Text style={styles.buttonText}>Register</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.loginLink}>
+        Already have an account?{' '}
+        <Text onPress={navigateToLogin} style={styles.loginText}>
+          Login here
+        </Text>
+      </Text>
+    </View>
+  );
 };
-return (
-  <View style = {styles.container}>
-    <TextInput
-      placeholder="Email"
-      value={email}
-      onChangeText={setEmail}
-      style={[styles.input, styles.inputTextWhite]}
-      autoCapitalize="none"
-      />
-    <TextInput
-      placeholder="Username"
-      value={username}
-      onChangeText={setUsername}
-      style={[styles.input, styles.inputTextWhite]}
-      autoCapitalize="none"
-      />
-     <TextInput
-      placeholder="Password"
-      value={password}
-      onChangeText={setPassword}
-      style={[styles.input]}
-      autoCapitalize="none"
-      secureTextEntry={true}
-      />
-    <Text onPress={navigateToLogin} style={{ color: 'blue', textDecorationLine: 'underline' }}>
-      Already have an account? Login here:
-    </Text>
-      <Button title="Register" onPress={handleSubmit} />
-  </View>
-);
-};
+
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    marginTop: 40,
-    backgroundColor: '#000', // opcjonalnie ciemne tło formularza
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   input: {
+    height: 52,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#999',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    color: 'white',               // 👈 biały tekst
-    backgroundColor: '#222',      // 👈 ciemne tło inputa
+    borderColor: '#333',
+    paddingHorizontal: 16,
+    color: '#fff',
+    marginBottom: 16,
+    backgroundColor: '#1a1a1a',
+  },
+  button: {
+    backgroundColor: '#5e5ce6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#5e5ce6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loginLink: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#aaa',
+  },
+  loginText: {
+    color: '#5e5ce6',
+    textDecorationLine: 'underline',
   },
 });
 
 export default UserForm;
+
