@@ -1,6 +1,9 @@
 package com.tutoring.app.controller;
 
 import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +21,12 @@ public class ConversationController {
   }
 
   @PostMapping("/{userId}")
-  public ConversationHistory allConversations(@PathVariable UUID userId) {
+  public ConversationHistory assignConversationsToHistory(@PathVariable UUID userId) {
     return conversationHistoryService.assignConversationsToHistory(userId);
+  }
+
+  @GetMapping("/{userId}")
+  public ResponseEntity<?> getAllConversationHistory(@PathVariable UUID userId) {
+    return conversationHistoryService.getAll(userId);
   }
 }

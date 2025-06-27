@@ -1,9 +1,12 @@
 package com.tutoring.app.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.tutoring.app.model.Conversation;
@@ -34,5 +37,13 @@ public class ConversationHistoryService {
       c.setConversationHistory(history);
     }
     return conversationHistoryRepository.save(history);
+  }
+
+  public ResponseEntity<?> getAll(UUID userId) {
+    List<ConversationHistory> userConversations = conversationHistoryRepository.findByUserId(userId);
+    if (userConversations.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Conversation History not found");
+    }
+    return ResponseEntity.ok(userConversations);
   }
 }
