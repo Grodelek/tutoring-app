@@ -53,10 +53,8 @@ const ConversationHistoryScreen: React.FC = () => {
           return;
         }
 
-        // Filtrujemy rozmowy, w których uczestniczy użytkownik
         const filtered = conversationsList.filter(
-          (conv) => conv.user1Id === userId || conv.user2Id === userId
-        );
+          (conv) => conv.user1Id === userId);
 
         setConversations(filtered);
       } else {
