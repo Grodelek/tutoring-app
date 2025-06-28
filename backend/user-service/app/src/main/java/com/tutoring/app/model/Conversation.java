@@ -29,7 +29,9 @@ public class Conversation {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
   private UUID user1Id;
+  private String user1Username;
   private UUID user2Id;
+  private String user2Username;
 
   @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
   private List<Message> messages;
