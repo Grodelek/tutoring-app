@@ -2,6 +2,8 @@ package com.tutoring.app.controller;
 
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,8 +40,14 @@ public class MessageController {
   }
 
   @PostMapping("/get-or-create")
-  public ResponseEntity<Conversation> getOrCreateConversation(@RequestBody ConversationRequest req) {
-    Conversation conversation = messageService.getOrCreateConversation(req.getUser1Id(), req.getUser2Id());
-    return ResponseEntity.ok(conversation);
+  public ResponseEntity<?> getOrCreateConversation(@RequestBody ConversationRequest req) {
+    try {
+      Conversation conversation = messageService.getOrCreateConversation(req.getUser1Id(), req.getUser2Id());
+      return ResponseEntity.ok(conversation);
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Wystąpił błąd serwera");
+    }
   }
 }
