@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
 import com.tutoring.app.dto.LessonWithTutorDTO;
+import com.tutoring.app.dto.LessonWithTutorResponse;
 import com.tutoring.app.model.Lesson;
 import com.tutoring.app.model.User;
 import com.tutoring.app.repository.LessonRepository;
@@ -42,10 +43,6 @@ public class LessonService {
         .durationTime(lessonRequestDTO.getDurationTime())
         .build();
     Lesson savedLesson = lessonRepository.save(lesson);
-
-    System.out.println("Saved lesson: " + savedLesson);
-    System.out.println("ID: " + savedLesson.getId());
-    System.out.println("Subject: " + savedLesson.getSubject());
     LessonResponseDTO response = new LessonResponseDTO();
     response.setId(savedLesson.getId());
     response.setSubject(savedLesson.getSubject());
@@ -87,21 +84,19 @@ public class LessonService {
     return ResponseEntity.ok(responseDTO);
   }
 
-  public List<LessonWithTutorDTO> getLessonsWithTutors() {
+  public List<LessonWithTutorResponse> getLessonsWithTutors() {
     List<Lesson> lessons = lessonRepository.findAll();
-
-    return lessons.stream().map(lesson -> {
-      User tutor = lesson.getTutor();
-
-      return LessonWithTutorDTO.builder()
-          .id(lesson.getId())
-          .subject(lesson.getSubject())
-          .description(lesson.getDescription())
-          .durationTime(lesson.getDurationTime())
-          .tutorId(tutor.getId())
-          .tutorEmail(tutor.getEmail())
-          .tutorUsername(tutor.getUsername())
-          .build();
-    }).collect(Collectors.toList());
+    return lessons.stream()
+        .map(lesson -> LessonWithTutorResponse.builder()
+            .id(lesson.getId())
+            .subject(lesson.getSubject())
+            .description(lesson.getDescription())
+            .durationTime(lesson.getDurationTime())
+            .tutorId(lesson.getTutor().getId())
+            .tutorEmail(lesson.getTutor().getEmail())
+            .tutorUsername(lesson.getTutor().getUsername())
+            .tutorPhotoPath(lesson.getTutor().getPhotoPath())
+            .build())
+        .collect(Collectors.toList());
   }
 }

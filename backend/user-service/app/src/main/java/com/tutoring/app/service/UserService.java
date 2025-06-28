@@ -49,6 +49,8 @@ public class UserService {
         .email(userDTO.getEmail())
         .password(bCryptPasswordEncoder.encode(userDTO.getPassword()))
         .roles("ROLE_USER")
+        .photoPath(
+            "https://ui-avatars.com/api/?name=" + userDTO.getUsername() + "&background=random&bold=true&color=fff")
         .build();
     userRepository.save(user);
     return user;
