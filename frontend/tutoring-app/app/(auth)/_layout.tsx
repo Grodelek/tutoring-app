@@ -12,10 +12,17 @@ export default function AuthenticatedTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="createPost"
+        options={{
+          title: 'Add Post',
+          tabBarIcon: ({ color }) => <IconSymbol name="rise" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol name="car" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol name="arrow" color={color} />,
         }}
       />
       <Tabs.Screen
