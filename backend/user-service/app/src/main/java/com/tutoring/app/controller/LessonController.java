@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
 import com.tutoring.app.dto.LessonWithTutorDTO;
+import com.tutoring.app.dto.LessonWithTutorResponse;
 import com.tutoring.app.model.Lesson;
 import com.tutoring.app.service.LessonService;
 
@@ -42,9 +43,9 @@ class LessonController {
   }
 
   @GetMapping("/all-with-tutors")
-  public ResponseEntity<List<LessonWithTutorDTO>> getAllLessonsWithTutors() {
-    List<LessonWithTutorDTO> lessons = lessonService.getLessonsWithTutors();
-    return ResponseEntity.ok(lessons);
+  public ResponseEntity<List<LessonWithTutorResponse>> getAllLessonsWithTutors() {
+    List<LessonWithTutorResponse> lessonsWithTutor = lessonService.getLessonsWithTutors();
+    return ResponseEntity.ok(lessonsWithTutor);
   }
 
   @GetMapping("/{id}")
