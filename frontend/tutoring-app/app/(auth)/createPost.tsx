@@ -1,214 +1,133 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
+  TextInput,
   Alert,
   StyleSheet,
-  Image,
-  TextInput,
-  Button,
-  Modal,
-  Pressable,
-  ScrollView,
+  Text,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 
-const MyAccount: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
-  const [username, setUsername] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [password, setPassword] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const navigation = useNavigation();
+const CreatePost: React.FC = () => {
+  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
+  const [durationTime, setDurationTime] = useState('');
 
-  const fetchUser = async () => {
+  const handleSubmit = async () => {
     try {
+      const storedUserId = await AsyncStorage.getItem('userId');
       const token = await AsyncStorage.getItem('jwtToken');
-      if (!token) {
-        Alert.alert('Error', 'Missing token – user not logged in.');
+      if (!storedUserId) {
+        Alert.alert('Error', 'User ID not found in storage');
         return;
       }
-      const response = await fetch('http://192.168.1.32:8090/api/users/me', {
-        method: 'GET',
+
+      const response = await fetch('http://192.168.1.32:8090/api/lessons/add', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setUsername(userData.username);
-      } else {
-        const errorText = await response.text();
-        Alert.alert('Error', `Failed to fetch user: ${errorText}`);
-      }
-    } catch (error: any) {
-      Alert.alert('Error', `Connection error: ${error.message}`);
-    }
-  };
-
-  const updateUsername = async () => {
-    try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (!token || !user) return;
-
-      const response = await fetch(`http://192.168.1.32:8090/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({
+          subject,
+          description,
+          durationTime: parseInt(durationTime, 10), // upewnij się, że to liczba
+          tutorId: storedUserId,
+        }),
       });
 
       if (response.ok) {
-        Alert.alert('Success', 'Username updated.');
-
-        const loginResponse = await fetch('http://192.168.1.32:8090/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
-
-        if (loginResponse.ok) {
-          const data = await loginResponse.json();
-          await AsyncStorage.setItem('jwtToken', data.token);
-          setIsEditing(false);
-          fetchUser();
-        } else {
-          Alert.alert('Login error', 'Please log in manually.');
-          navigation.navigate('Login' as never);
-        }
+        Alert.alert('Success', 'Lesson added!');
       } else {
         const errorText = await response.text();
-        Alert.alert('Error', `Could not update: ${errorText}`);
+        Alert.alert('Error', `User registration failed: ${errorText}`);
       }
-    } catch (error: any) {
-      Alert.alert('Error', `Connection issue: ${error.message}`);
+    } catch (error) {
+      Alert.alert('Error', `Problem with connection: ${error}`);
     }
   };
-
-  useEffect(() => {
-    fetchUser();
-  }, []);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {user ? (
-        <View style={styles.userItem}>
-          <Pressable onPress={() => setModalVisible(true)}>
-            {user.photoPath ? (
-              <Image
-                source={{ uri: user.photoPath }}
-                style={styles.avatar}
-              />
-            ) : (
-              <Text style={{ color: 'white', textAlign: 'center' }}>No photo available</Text>
-            )}
-          </Pressable>
+    <View style={styles.container}>
+      <Text style={styles.title}>Add lesson</Text>
 
-          <Text style={styles.userText}>ID: {user.id}</Text>
-          <Text style={styles.userText}>Username: {user.username}</Text>
-          <Text style={styles.userText}>Email: {user.email}</Text>
+      <TextInput
+        placeholder="Subject"
+        placeholderTextColor="#999"
+        value={subject}
+        onChangeText={setSubject}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor="#999"
+        value={description}
+        onChangeText={setDescription}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
+        placeholder="Duration time"
+        placeholderTextColor="#999"
+        value={durationTime}
+        onChangeText={setDurationTime}
+        style={styles.input}
+        autoCapitalize="none"
+        keyboardType="numeric"
+      />
 
-          {isEditing ? (
-            <>
-              <TextInput
-                value={username}
-                onChangeText={setUsername}
-                style={styles.input}
-                placeholder="New username"
-                placeholderTextColor="#888"
-              />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                style={styles.input}
-                placeholder="Current password"
-                placeholderTextColor="#888"
-                secureTextEntry
-              />
-              <Button title="Save" onPress={updateUsername} color="#c678dd" />
-            </>
-          ) : (
-            <Button title="Change Username" onPress={() => setIsEditing(true)} color="#c678dd" />
-          )}
-        </View>
-      ) : (
-        <Text style={styles.userText}>Loading user data...</Text>
-      )}
-
-      <Modal visible={modalVisible && !!user?.photoPath} transparent animationType="fade">
-        <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)}>
-          {user?.photoPath ? (
-            <Image
-              source={{ uri: user.photoPath }}
-              style={styles.fullScreenImage}
-              resizeMode="contain"
-            />
-          ) : (
-            <Text style={{ color: 'white' }}>No photo available</Text>
-          )}
-        </Pressable>
-      </Modal>
-    </ScrollView>
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Wyślij</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    flexGrow: 1,
-    backgroundColor: '#1e1e1e',
-    justifyContent: 'flex-start',
+    flex: 1,
+    backgroundColor: '#1a1a2e',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
   },
-  userItem: {
-    backgroundColor: '#2d2d2d',
-    padding: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  userText: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginBottom: 12,
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 6,
-    borderColor: '#444',
-    borderWidth: 1,
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 15,
-    alignSelf: 'center',
-    borderWidth: 2,
-    borderColor: '#c678dd',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullScreenImage: {
-    width: '85%',
-    height: '50%',
+    height: 52,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#c678dd',
+    borderWidth: 1,
+    borderColor: '#333',
+    paddingHorizontal: 16,
+    color: '#fff',
+    marginBottom: 16,
+    backgroundColor: '#1a1a1a',
+  },
+  button: {
+    backgroundColor: '#5e5ce6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#5e5ce6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
-export default MyAccount;
+export default CreatePost;
+
