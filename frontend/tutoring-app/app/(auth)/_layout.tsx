@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { IconSymbol} from '@/components/ui/IconSymbol';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AuthenticatedTabsLayout() {
   return (
@@ -11,34 +12,50 @@ export default function AuthenticatedTabsLayout() {
           tabBarIcon: ({ color }) => <IconSymbol name="person.crop.circle" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="createPost"
-        options={{
-          title: 'Add Post',
-          tabBarIcon: ({ color }) => <IconSymbol name="rise" color={color} />,
-        }}
-      />
+      
+
+<Tabs.Screen
+  name="createPost"
+  options={{
+    title: 'Add Post',
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="create-outline" size={size} color={color} />
+    ),
+  }}
+/>
+
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol name="arrow" color={color} />,
+    tabBarButton: () => null, // This hides the tab from the tab bar
         }}
       />
       <Tabs.Screen
         name="myAccount"
         options={{
-          title: 'Moje konto',
+          title: 'My Account',
           tabBarIcon: ({ color }) => <IconSymbol name="gear" color={color} />,
         }}
       />
       <Tabs.Screen
         name="logout"
         options={{
-          title: 'Wyloguj',
+          title: 'Logout',
           tabBarIcon: ({ color }) => <IconSymbol name="arrow.right.circle" color={color} />,
         }}
       />
+
+      <Tabs.Screen
+        name="messagesHistory"
+        options={{
+        title: 'Conversations',
+        tabBarIcon: ({ color, size }) => (
+        <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
+      ),
+  }}
+/>
     </Tabs>
   );
 }
