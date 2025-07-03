@@ -15,10 +15,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
-import com.tutoring.app.dto.LessonWithTutorDTO;
 import com.tutoring.app.dto.LessonWithTutorResponse;
 import com.tutoring.app.model.Lesson;
 import com.tutoring.app.service.LessonService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -32,7 +33,7 @@ class LessonController {
 
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
-  public ResponseEntity<LessonResponseDTO> createLesson(@RequestBody LessonRequestDTO lessonRequestDTO) {
+  public ResponseEntity<LessonResponseDTO> createLesson(@Valid @RequestBody LessonRequestDTO lessonRequestDTO) {
     LessonResponseDTO response = lessonService.createLesson(lessonRequestDTO);
     return ResponseEntity.ok(response);
   }
@@ -55,7 +56,7 @@ class LessonController {
 
   @PutMapping("/{id}")
   public ResponseEntity<LessonResponseDTO> updateLesson(@PathVariable UUID id,
-      @RequestBody LessonRequestDTO lessonDTO) {
+      @Valid @RequestBody LessonRequestDTO lessonDTO) {
     return lessonService.updateLesson(id, lessonDTO);
   }
 

@@ -62,7 +62,7 @@ public class UserController {
 
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
-  public User register(@RequestBody UserDTO userDTO) {
+  public User register(@Valid @RequestBody UserDTO userDTO) {
     System.out.println("Email: " + userDTO.getEmail());
     System.out.println("Username: " + userDTO.getUsername());
     return userService.register(userDTO);
