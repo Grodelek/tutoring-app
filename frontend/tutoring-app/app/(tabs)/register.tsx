@@ -9,15 +9,17 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 const UserForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigation = useNavigation();
 
   const navigateToLogin = () => {
-    router.push('/login');
-  };
+    router.push('login')
+  }
 
   const handleSubmit = async () => {
     try {
@@ -29,7 +31,11 @@ const UserForm: React.FC = () => {
         body: JSON.stringify({ email, username, password }),
       });
       if (response.ok) {
+        setEmail('');
+        setUsername('');
+        setPassword('');
         Alert.alert('Success', 'User registered successfully!');
+        router.push('login');
       } else {
         const errorText = await response.text();
         Alert.alert('Error', `User registration failed: ${errorText}`);
