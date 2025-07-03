@@ -3,6 +3,8 @@ import {
   View,
   TextInput,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -23,7 +25,6 @@ const CreatePost: React.FC = () => {
         Alert.alert('Error', 'User ID not found in storage');
         return;
       }
-
       const response = await fetch('http://192.168.1.32:8090/api/lessons/add', {
         method: 'POST',
         headers: {
@@ -33,13 +34,16 @@ const CreatePost: React.FC = () => {
         body: JSON.stringify({
           subject,
           description,
-          durationTime: parseInt(durationTime, 10), // upewnij się, że to liczba
+          durationTime: parseInt(durationTime, 10), 
           tutorId: storedUserId,
         }),
       });
-
       if (response.ok) {
+        setSubject('');
+        setDescription('');
+        setDurationTime('');
         Alert.alert('Success', 'Lesson added!');
+        router.push('dashboard');
       } else {
         const errorText = await response.text();
         Alert.alert('Error', `User registration failed: ${errorText}`);
@@ -50,6 +54,7 @@ const CreatePost: React.FC = () => {
   };
 
   return (
+  <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
     <View style={styles.container}>
       <Text style={styles.title}>Add lesson</Text>
 
@@ -77,12 +82,15 @@ const CreatePost: React.FC = () => {
         style={styles.input}
         autoCapitalize="none"
         keyboardType="numeric"
+        returnKeyType="done"
+        onSubmitEditing={() => Keyboard.dismiss()}
       />
 
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Wyślij</Text>
       </TouchableOpacity>
     </View>
+  </TouchableWithoutFeedback>
   );
 };
 

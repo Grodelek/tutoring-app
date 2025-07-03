@@ -24,9 +24,9 @@ return (
   <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
     <Stack screenOptions={{ headerShown: false }}>
       {token ? (
-        <Stack.Screen name="(auth)/" />
+        <Stack.Screen name="(auth)" />
       ) : (
-        <Stack.Screen name="(tabs)/" />
+        <Stack.Screen name="(tabs)" />
       )}
       <Stack.Screen name="+not-found" />
     </Stack>

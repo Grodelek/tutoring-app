@@ -4,58 +4,53 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function AuthenticatedTabsLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color }) => <IconSymbol name="person.crop.circle" color={color} />,
-        }}
-      />
-      
-
-<Tabs.Screen
-  name="createPost"
-  options={{
-    title: 'Add Post',
-    tabBarIcon: ({ color, size }) => (
-      <Ionicons name="create-outline" size={size} color={color} />
-    ),
-  }}
-/>
-
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol name="arrow" color={color} />,
-    tabBarButton: () => null, // This hides the tab from the tab bar
-        }}
-      />
-      <Tabs.Screen
-        name="myAccount"
-        options={{
-          title: 'My Account',
-          tabBarIcon: ({ color }) => <IconSymbol name="gear" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="logout"
-        options={{
-          title: 'Logout',
-          tabBarIcon: ({ color }) => <IconSymbol name="arrow.right.circle" color={color} />,
-        }}
-      />
-
-      <Tabs.Screen
-        name="messagesHistory"
-        options={{
-        title: 'Conversations',
-        tabBarIcon: ({ color, size }) => (
+    
+<Tabs>
+  <Tabs.Screen
+    name="index"
+    options={{
+      href: null, // 👈 ukryj z zakładek
+    }}
+  />
+  <Tabs.Screen
+    name="dashboard"
+    options={{
+      title: 'Dashboard',
+      tabBarIcon: ({ color }) => <IconSymbol name="person.crop.circle" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="createPost"
+    options={{
+      title: 'Add Post',
+      tabBarIcon: ({ color, size }) => (
+        <Ionicons name="create-outline" size={size} color={color} />
+      ),
+    }}
+  />
+  <Tabs.Screen
+    name="myAccount"
+    options={{
+      title: 'My Account',
+      tabBarIcon: ({ color }) => <IconSymbol name="gear" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="logout"
+    options={{
+      title: 'Logout',
+      tabBarIcon: ({ color }) => <IconSymbol name="arrow.right.circle" color={color} />,
+    }}
+  />
+  <Tabs.Screen
+    name="messagesHistory"
+    options={{
+      title: 'Conversations',
+      tabBarIcon: ({ color, size }) => (
         <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
       ),
-  }}
-/>
-    </Tabs>
+    }}
+  />
+</Tabs>
   );
 }
