@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.model.Conversation;
 import com.tutoring.app.model.Message;
 import com.tutoring.app.model.User;
@@ -57,17 +59,24 @@ public class MessageService {
         });
   }
 
-  public void sendMessage(UUID senderId, UUID receiverId, String content) {
+  public Message sendMessage(UUID senderId, UUID receiverId, String content) {
     Conversation conversation = getOrCreateConversation(senderId, receiverId);
+    User sender = userRepository.findById(senderId)
+        .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+    User receiver = userRepository.findById(receiverId)
+        .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
     Message message = new Message();
-    message.setSenderId(senderId);
-    message.setReceiverId(receiverId);
+    message.setSender(sender);
+    message.setReceiver(receiver);
     message.setContent(content);
     message.setConversation(conversation);
-    messageRepository.save(message);
+    return messageRepository.save(message);
   }
 
-  public List<Message> getMessages(UUID conversationId) {
-    return messageRepository.findByConversationIdOrderByTimestampAsc(conversationId);
+  public List<MessageDTO> getMessages(UUID conversationId) {
+    List<Message> messages = messageRepository.findByConversationIdOrderByTimestampAsc(conversationId);
+    return messages.stream()
+        .map(MessageDTO::new)
+        .toList();
   }
 }
