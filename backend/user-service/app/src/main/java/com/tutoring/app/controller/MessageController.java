@@ -2,17 +2,17 @@ package com.tutoring.app.controller;
 
 import java.util.List;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.tutoring.app.dto.ConversationRequest;
+import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.dto.MessageRequest;
 import com.tutoring.app.model.Conversation;
 import com.tutoring.app.model.Message;
@@ -26,17 +26,30 @@ import lombok.RequiredArgsConstructor;
 public class MessageController {
   private final MessageService messageService;
   private final ConversationService conversationService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @PostMapping("/send")
   public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request) {
-    messageService.sendMessage(request.getSenderId(), request.getReceiverId(), request.getContent());
-    return ResponseEntity.ok("Wiadomość wysłana");
+    Message saved = messageService.sendMessage(
+        request.getSenderId(),
+        request.getReceiverId(),
+        request.getContent());
+
+    MessageDTO dto = new MessageDTO(
+        saved.getId(),
+        saved.getSender().getId(),
+        saved.getReceiver().getId(),
+        saved.getContent(),
+        saved.getTimestamp());
+
+    messagingTemplate.convertAndSend("/topic/notification", dto);
+    return ResponseEntity.ok(dto);
   }
 
   @GetMapping("/{conversationId}")
-  public ResponseEntity<List<Message>> getMessages(@PathVariable UUID conversationId) {
-    List<Message> messages = messageService.getMessages(conversationId);
-    return ResponseEntity.ok(messages);
+  public ResponseEntity<List<MessageDTO>> getMessages(@PathVariable UUID conversationId) {
+    List<MessageDTO> dtos = messageService.getMessages(conversationId);
+    return ResponseEntity.ok(dtos);
   }
 
   @PostMapping("/get-or-create")

@@ -27,9 +27,11 @@ public class Message {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
-  private UUID senderId;
+  @ManyToOne
+  private User sender;
 
-  private UUID receiverId;
+  @ManyToOne
+  private User receiver;
 
   private String content;
 
