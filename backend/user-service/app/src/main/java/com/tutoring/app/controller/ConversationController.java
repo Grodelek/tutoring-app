@@ -47,7 +47,6 @@ public class ConversationController {
           }
         })
         .collect(Collectors.toList());
-
     return ResponseEntity.ok(conversations);
   }
 }

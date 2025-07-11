@@ -21,6 +21,7 @@ public class MessageDTO {
   private String content;
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private LocalDateTime timestamp;
+  private UUID conversationId;
 
   public MessageDTO(Message message) {
     this.id = message.getId();
@@ -28,5 +29,6 @@ public class MessageDTO {
     this.receiverId = message.getReceiver().getId();
     this.content = message.getContent();
     this.timestamp = message.getTimestamp();
+    this.conversationId = message.getConversation().getId();
   }
 }
