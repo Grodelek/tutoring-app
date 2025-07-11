@@ -40,7 +40,8 @@ public class MessageController {
         saved.getSender().getId(),
         saved.getReceiver().getId(),
         saved.getContent(),
-        saved.getTimestamp());
+        saved.getTimestamp(),
+        saved.getConversation().getId());
 
     messagingTemplate.convertAndSend("/topic/notification", dto);
     return ResponseEntity.ok(dto);
