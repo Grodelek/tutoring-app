@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
     const token = await AsyncStorage.getItem('jwtToken');
     if (!token) {
       Alert.alert('Błąd', 'Brak tokenu – użytkownik niezalogowany.');
-      router.replace('tabs');
+      router.push('login');
       return;
     }
 

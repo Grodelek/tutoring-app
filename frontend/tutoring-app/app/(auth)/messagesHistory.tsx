@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const ConversationHistoryScreen: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -25,7 +27,6 @@ const ConversationHistoryScreen: React.FC = () => {
 
     const token = await AsyncStorage.getItem('jwtToken');
     if (!token) {
-      Alert.alert('Błąd', 'Brak tokenu – użytkownik niezalogowany.');
       return;
     }
 
@@ -48,7 +49,6 @@ const ConversationHistoryScreen: React.FC = () => {
         const conversationsList = data;
 
         if (!Array.isArray(conversationsList)) {
-          console.warn('⚠️ conversationList nie jest tablicą:', conversationsList);
           setConversations([]);
           return;
         }
@@ -60,11 +60,10 @@ const ConversationHistoryScreen: React.FC = () => {
       } else {
         const errorText = await response.text();
         console.error('❌ Error response:', errorText);
-        Alert.alert('Błąd', `Nie udało się pobrać historii konwersacji: ${errorText}`);
+        Alert.alert('Error', `Cannot fetch conversation history: ${errorText}`);
       }
     } catch (error: any) {
-      console.error('❌ Network or server error:', error);
-      Alert.alert('Błąd', `Problem z połączeniem: ${error.message}`);
+      Alert.alert('Error', `Problem with connection: ${error.message}`);
     }
   };
 
@@ -75,11 +74,13 @@ const ConversationHistoryScreen: React.FC = () => {
     });
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     if (userId) {
       fetchConversationHistory();
     }
-  }, [userId]);
+  }, [userId])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
