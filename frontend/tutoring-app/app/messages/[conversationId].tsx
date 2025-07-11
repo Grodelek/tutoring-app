@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -13,6 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useWebSocketMessages } from '../../hooks/useWebSocketMessages';
 
 interface Message {
   id: string;
@@ -29,6 +31,10 @@ const ChatScreen: React.FC = () => {
   const { conversationId, receiverId } = useLocalSearchParams();
   const router = useRouter();
   const [receiverName, setReceiverName] = useState<string>('Nauczyciel');
+
+  useWebSocketMessages(conversationId, (incomingMessage) => {
+    setMessages((prev) => [...prev, incomingMessage]);
+  });
 
   useEffect(() => {
     AsyncStorage.getItem('userId').then(setUserId);
@@ -51,10 +57,11 @@ const ChatScreen: React.FC = () => {
       } else {
         Alert.alert('Błąd', 'Nie udało się pobrać wiadomości');
       }
-    } catch {
+    } catch (e) {
       Alert.alert('Błąd', 'Problem z połączeniem');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -79,7 +86,6 @@ const ChatScreen: React.FC = () => {
       });
       if (res.ok) {
         setNewMessage('');
-        fetchMessages();
       } else {
         Alert.alert('Błąd', 'Nie udało się wysłać wiadomości');
       }
@@ -102,7 +108,6 @@ const ChatScreen: React.FC = () => {
       style={styles.container}
       keyboardVerticalOffset={80}
     >
-      {/* Nagłówek z nazwą i awatarem odbiorcy oraz przyciskiem Wróć */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/dashboard')} style={styles.backButton}>
           <Text style={styles.backText}>← Wróć</Text>
@@ -157,7 +162,6 @@ const ChatScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
-
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -264,5 +268,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
 export default ChatScreen;
 
