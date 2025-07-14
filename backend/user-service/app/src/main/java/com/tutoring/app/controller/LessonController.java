@@ -18,7 +18,6 @@ import com.tutoring.app.dto.LessonResponseDTO;
 import com.tutoring.app.dto.LessonWithTutorResponse;
 import com.tutoring.app.model.Lesson;
 import com.tutoring.app.service.LessonService;
-
 import jakarta.validation.Valid;
 
 @RestController
