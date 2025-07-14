@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Logout() {
   const { token, setToken } = useAuth();
@@ -11,20 +11,20 @@ export default function Logout() {
   useEffect(() => {
     const performLogout = async () => {
       try {
-        await AsyncStorage.removeItem('jwtToken');
+        await AsyncStorage.removeItem("jwtToken");
         setToken(null);
         setTimeout(() => {
-          router.replace('/login');
+          router.replace("/login");
         }, 500);
       } catch (error) {
-        console.error('Logout error:', error);
-        router.replace('/login'); 
+        console.error("Logout error:", error);
+        router.replace("/login");
       }
     };
     if (token) {
       performLogout();
     } else {
-      router.replace('/login'); 
+      router.replace("/login");
     }
   }, [token]);
 
@@ -35,11 +35,11 @@ export default function Logout() {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff'
-  }
-};
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+});

@@ -5,40 +5,37 @@ import {
   Alert,
   StyleSheet,
   Image,
-  TextInput,
-  Button,
   Modal,
   Pressable,
   ScrollView,
   RefreshControl,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
-
-const MyAccount: React.FC = () => {
+import { useLocalSearchParams } from "expo-router";
+const UserProfile: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const navigation = useNavigation();
-  const [description, setDescription] = useState("");
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchUser();
+    if (userId && typeof userId === "string") {
+      await fetchUser(userId);
+    }
     setRefreshing(false);
   };
 
-  const fetchUser = async () => {
+  const fetchUser = async (id: string) => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch("http://192.168.1.32:8090/api/users/me", {
+      const response = await fetch(`http://192.168.1.32:8090/api/users/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -46,10 +43,10 @@ const MyAccount: React.FC = () => {
         },
       });
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setUsername(userData.username);
-        setDescription(userData.description || "");
+        const data = await response.json();
+        console.log("Fetched user data:", data);
+        setUser(data);
+        setUsername(data.username);
       } else {
         const errorText = await response.text();
         Alert.alert("Error", `Failed to fetch user: ${errorText}`);
@@ -59,60 +56,16 @@ const MyAccount: React.FC = () => {
     }
   };
 
-  const updateUserProfile = async () => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token || !user) return;
-
-      const response = await fetch(
-        `http://192.168.1.32:8090/api/users/${user.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ username, description }),
-        },
-      );
-
-      if (response.ok) {
-        Alert.alert("Success", "User profile updated.");
-        const loginResponse = await fetch(
-          "http://192.168.1.32:8090/api/auth/login",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          },
-        );
-
-        if (loginResponse.ok) {
-          const data = await loginResponse.json();
-          await AsyncStorage.setItem("jwtToken", data.token);
-          setIsEditing(false);
-          fetchUser();
-        }
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Could not update: ${errorText}`);
-      }
-    } catch (error: any) {
-      Alert.alert("Error", `Connection issue: ${error.message}`);
-    }
-  };
-
   useEffect(() => {
-    fetchUser();
-  }, []);
+    if (userId && typeof userId === "string") {
+      fetchUser(userId);
+    } else {
+      console.warn("Invalid userId param:", userId);
+    }
+  }, [userId]);
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+    <ScrollView contentContainerStyle={styles.container}>
       {user ? (
         <View style={styles.userItem}>
           <Pressable onPress={() => setModalVisible(true)}>
@@ -124,39 +77,12 @@ const MyAccount: React.FC = () => {
               </Text>
             )}
           </Pressable>
-
           <Text style={styles.userText}>ID: {user.id}</Text>
           <Text style={styles.userText}>Username: {user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
-          <Text style={styles.userText}>Description: {user.description}</Text>
-          <Button
-            title={isEditing ? "Cancel" : "Edit"}
-            onPress={() => setIsEditing((prev) => !prev)}
-            color="#61dafb"
-          />
-          {isEditing ? (
-            <>
-              <TextInput
-                value={username}
-                onChangeText={setUsername}
-                style={styles.input}
-                placeholder="New username"
-                placeholderTextColor="#888"
-              />
-              <TextInput
-                value={description}
-                onChangeText={setDescription}
-                style={styles.input}
-                placeholder="New description"
-                placeholderTextColor="#888"
-              />
-              <Button
-                title="Save"
-                onPress={updateUserProfile}
-                color="#c678dd"
-              />
-            </>
-          ) : null}
+          <Text style={styles.userText}>
+            Description: {user.description ?? "No description"}
+          </Text>
         </View>
       ) : (
         <Text style={styles.userText}>Loading user data...</Text>
@@ -184,6 +110,7 @@ const MyAccount: React.FC = () => {
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -238,4 +165,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MyAccount;
+export default UserProfile;
