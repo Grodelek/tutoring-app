@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
-import { router } from 'expo-router';
+import { useEffect } from "react";
+import { router } from "expo-router";
 
 export default function RedirectToDashboard() {
   useEffect(() => {
-    router.replace('/(auth)/dashboard');
+    router.replace("/(auth)/dashboard");
   }, []);
 
   return null;
 }
-
