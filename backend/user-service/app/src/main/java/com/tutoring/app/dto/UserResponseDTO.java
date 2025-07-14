@@ -14,11 +14,13 @@ public class UserResponseDTO {
   private String username;
   private String email;
   private String photoPath;
+  private String description;
 
   public UserResponseDTO(User user) {
     this.id = user.getId();
     this.username = user.getUsername();
     this.email = user.getEmail();
     this.photoPath = user.getPhotoPath();
+    this.description = user.getDescription();
   }
 }

@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+
+import com.tutoring.app.dto.UpdateUserProfileRequest;
 import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.model.User;
 import com.tutoring.app.repository.UserRepository;
@@ -115,13 +117,18 @@ public class UserService {
         .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony"));
   }
 
-  public ResponseEntity<?> updateUsername(UUID id, String username) {
+  public ResponseEntity<?> updateUserProfile(UUID id, UpdateUserProfileRequest request) {
     Optional<User> userOptional = userRepository.findById(id);
     if (userOptional.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
     }
     User user = userOptional.get();
-    user.setUsername(username);
+    if (request.getUsername() != null) {
+      user.setUsername(request.getUsername());
+    }
+    if (request.getDescription() != null) {
+      user.setDescription(request.getDescription());
+    }
     userRepository.save(user);
     return ResponseEntity.ok("Username updated successfully");
   }

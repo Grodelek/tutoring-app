@@ -48,6 +48,9 @@ public class User {
   @Column(name = "photo_path")
   private String photoPath;
 
+  @Column(name = "description")
+  private String description;
+
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
   private List<Lesson> lessons = new ArrayList<>();
 }
