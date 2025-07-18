@@ -9,9 +9,10 @@ import {
   Pressable,
   ScrollView,
   RefreshControl,
+  TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState("");
@@ -19,6 +20,10 @@ const UserProfile: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const [refreshing, setRefreshing] = useState(false);
+
+  const navigateToDashboard = () => {
+    router.push("/dashboard");
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -83,6 +88,12 @@ const UserProfile: React.FC = () => {
           <Text style={styles.userText}>
             Description: {user.description ?? "No description"}
           </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigateToDashboard()}
+          >
+            <Text style={styles.buttonText}>Return</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <Text style={styles.userText}>Loading user data...</Text>
@@ -113,10 +124,23 @@ const UserProfile: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 30,
     padding: 20,
     flexGrow: 1,
     backgroundColor: "#1e1e1e",
     justifyContent: "flex-start",
+  },
+  button: {
+    marginTop: 10,
+    backgroundColor: "#4CAF50",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
   },
   userItem: {
     backgroundColor: "#2d2d2d",

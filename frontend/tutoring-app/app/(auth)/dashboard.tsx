@@ -15,7 +15,6 @@ const Dashboard: React.FC = () => {
   const [lesson, setLesson] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-
   const fetchLessons = async () => {
     const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {

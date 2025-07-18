@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import useUpdateUserProfile from "@components/MyAccount/UpdateUserProfile";
 
 const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -59,48 +60,14 @@ const MyAccount: React.FC = () => {
     }
   };
 
-  const updateUserProfile = async () => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token || !user) return;
-
-      const response = await fetch(
-        `http://192.168.1.32:8090/api/users/${user.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ username, description }),
-        },
-      );
-
-      if (response.ok) {
-        Alert.alert("Success", "User profile updated.");
-        const loginResponse = await fetch(
-          "http://192.168.1.32:8090/api/auth/login",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          },
-        );
-
-        if (loginResponse.ok) {
-          const data = await loginResponse.json();
-          await AsyncStorage.setItem("jwtToken", data.token);
-          setIsEditing(false);
-          fetchUser();
-        }
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Could not update: ${errorText}`);
-      }
-    } catch (error: any) {
-      Alert.alert("Error", `Connection issue: ${error.message}`);
-    }
-  };
+  const updateUserProfile = useUpdateUserProfile({
+    user,
+    username,
+    password,
+    description,
+    setIsEditing,
+    fetchUser,
+  });
 
   useEffect(() => {
     fetchUser();
@@ -125,8 +92,7 @@ const MyAccount: React.FC = () => {
             )}
           </Pressable>
 
-          <Text style={styles.userText}>ID: {user.id}</Text>
-          <Text style={styles.userText}>Username: {user.username}</Text>
+          <Text style={styles.userName}>{user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
           <Text style={styles.userText}>Description: {user.description}</Text>
           <Button
@@ -152,8 +118,8 @@ const MyAccount: React.FC = () => {
               />
               <Button
                 title="Save"
-                onPress={updateUserProfile}
                 color="#c678dd"
+                onPress={updateUserProfile}
               />
             </>
           ) : null}
@@ -171,11 +137,14 @@ const MyAccount: React.FC = () => {
           onPress={() => setModalVisible(false)}
         >
           {user?.photoPath ? (
-            <Image
-              source={{ uri: user.photoPath }}
-              style={styles.fullScreenImage}
-              resizeMode="contain"
-            />
+            <>
+              <Image
+                source={{ uri: user.photoPath }}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+              />
+              <Text style={{ color: "white" }}>hello!</Text>
+            </>
           ) : (
             <Text style={{ color: "white" }}>No photo available</Text>
           )}
@@ -204,6 +173,12 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     marginBottom: 12,
+  },
+  userName: {
+    color: "white",
+    fontSize: 24,
+    textAlign: "center",
+    marginBottom: 10,
   },
   input: {
     backgroundColor: "#1a1a1a",

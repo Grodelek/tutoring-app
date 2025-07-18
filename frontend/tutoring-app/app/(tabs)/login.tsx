@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@context/AuthContext";
 import { useRouter } from "expo-router";
 
 const LoginForm: React.FC = () => {
