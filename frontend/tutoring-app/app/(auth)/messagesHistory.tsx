@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -18,21 +18,10 @@ const ConversationHistoryScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  const fetchConversationHistory = async () => {
-    if (!userId) {
-      console.warn("⚠️ userId is null or undefined");
-      return;
-    }
-
-    const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-      return;
-    }
-
+  const fetchConversationHistory = async (uid: string, token: string) => {
     try {
-      console.log("🔄 Fetching conversation history for userId:", userId);
       const response = await fetch(
-        `http://192.168.1.32:8090/api/conversation-history/${userId}`,
+        `http://192.168.1.32:8090/api/conversation-history/${uid}`,
         {
           method: "GET",
           headers: {
@@ -44,22 +33,13 @@ const ConversationHistoryScreen: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Received conversation data:", data);
-        const conversationsList = data;
-
-        if (!Array.isArray(conversationsList)) {
-          setConversations([]);
-          return;
-        }
-
-        const filtered = conversationsList.filter(
-          (conv) => conv.user1Id === userId,
-        );
+        const filtered = Array.isArray(data)
+          ? data.filter((conv) => conv.user1Id === uid)
+          : [];
 
         setConversations(filtered);
       } else {
         const errorText = await response.text();
-        console.error("❌ Error response:", errorText);
         Alert.alert("Error", `Cannot fetch conversation history: ${errorText}`);
       }
     } catch (error: any) {
@@ -67,32 +47,41 @@ const ConversationHistoryScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    AsyncStorage.getItem("userId").then((id) => {
-      console.log("ℹ️ Loaded userId from storage:", id);
-      setUserId(id);
-    });
+  const loadAndFetch = useCallback(async () => {
+    try {
+      const [uid, token] = await Promise.all([
+        AsyncStorage.getItem("userId"),
+        AsyncStorage.getItem("jwtToken"),
+      ]);
+
+      if (uid && token) {
+        setUserId(uid);
+        await fetchConversationHistory(uid, token);
+      }
+    } catch (error: any) {
+      Alert.alert("Error", `Problem loading user data: ${error.message}`);
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      if (userId) {
-        fetchConversationHistory();
-      }
-    }, [userId]),
+      loadAndFetch();
+    }, [loadAndFetch]),
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchConversationHistory();
+    if (userId) {
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (token) {
+        await fetchConversationHistory(userId, token);
+      }
+    }
     setRefreshing(false);
   };
 
   const handlePressConversation = (item: any) => {
-    console.log("🧪 Pressed conversation:", item);
-
     if (!item?.id || !item?.user1Id || !item?.user2Id || !userId) {
-      console.warn("⚠️ Missing data in conversation item:", item);
       return;
     }
 
@@ -101,11 +90,6 @@ const ConversationHistoryScreen: React.FC = () => {
       String(item.user1Id) === String(userId)
         ? String(item.user2Id)
         : String(item.user1Id);
-
-    console.log(
-      `➡️ Navigating to conversationId: ${conversationId}, receiverId: ${receiverId}`,
-    );
-
     router.push({
       pathname: "/messages/[conversationId]",
       params: {
@@ -124,17 +108,18 @@ const ConversationHistoryScreen: React.FC = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={10}
         ListEmptyComponent={
           <Text style={styles.emptyText}>Brak historii konwersacji.</Text>
         }
         renderItem={({ item }) => {
           if (!item?.user1Id || !item?.user2Id) {
-            console.warn("⚠️ Pominięto rozmowę z brakującym userId:", item);
             return null;
           }
 
           const isUser1 = item.user1Id === userId;
-
           const otherUsername = isUser1
             ? item.user2Username || item.user2Id
             : item.user1Username || item.user1Id;
