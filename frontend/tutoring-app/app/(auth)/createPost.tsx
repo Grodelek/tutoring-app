@@ -25,7 +25,7 @@ const CreatePost: React.FC = () => {
         Alert.alert("Error", "User ID not found in storage");
         return;
       }
-      const response = await fetch("http://192.168.1.32:8090/api/lessons/add", {
+      const response = await fetch("http://16.16.106.84:8090/api/lessons/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

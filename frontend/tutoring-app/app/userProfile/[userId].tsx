@@ -40,7 +40,7 @@ const UserProfile: React.FC = () => {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch(`http://192.168.1.32:8090/api/users/${id}`, {
+      const response = await fetch(`http://16.16.106.84:8090/api/users/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

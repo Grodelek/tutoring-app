@@ -21,7 +21,7 @@ const ConversationHistoryScreen: React.FC = () => {
   const fetchConversationHistory = async (uid: string, token: string) => {
     try {
       const response = await fetch(
-        `http://192.168.1.32:8090/api/conversation-history/${uid}`,
+        `http://16.16.106.84:8090/api/conversation-history/${uid}`,
         {
           method: "GET",
           headers: {

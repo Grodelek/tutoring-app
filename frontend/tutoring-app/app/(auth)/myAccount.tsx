@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import useUpdateUserProfile from "@components/MyAccount/UpdateUserProfile";
+import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
+import { router } from "expo-router";
 
 const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -31,7 +32,6 @@ const MyAccount: React.FC = () => {
     await fetchUser();
     setRefreshing(false);
   };
-
   const fetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
@@ -39,7 +39,7 @@ const MyAccount: React.FC = () => {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch("http://192.168.1.32:8090/api/users/me", {
+      const response = await fetch("http://16.16.106.84:8090/api/users/me", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -54,6 +54,7 @@ const MyAccount: React.FC = () => {
       } else {
         const errorText = await response.text();
         Alert.alert("Error", `Failed to fetch user: ${errorText}`);
+        router.push("/login");
       }
     } catch (error: any) {
       Alert.alert("Error", `Connection error: ${error.message}`);
@@ -91,7 +92,6 @@ const MyAccount: React.FC = () => {
               </Text>
             )}
           </Pressable>
-
           <Text style={styles.userName}>{user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
           <Text style={styles.userText}>Description: {user.description}</Text>

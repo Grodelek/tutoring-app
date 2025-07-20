@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "@context/AuthContext";
+import { useAuth } from "context/AuthContext";
 import { useRouter } from "expo-router";
 
 const LoginForm: React.FC = () => {
@@ -20,7 +20,7 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://192.168.1.32:8090/api/users/login", {
+      const response = await fetch("http://16.16.106.84:8090/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
