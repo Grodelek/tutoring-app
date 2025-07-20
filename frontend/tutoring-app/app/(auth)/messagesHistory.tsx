@@ -21,7 +21,7 @@ const ConversationHistoryScreen: React.FC = () => {
   const fetchConversationHistory = async (uid: string, token: string) => {
     try {
       const response = await fetch(
-        `http://16.16.106.84:8090/api/conversation-history/${uid}`,
+        `http://16.16.106.84:8090/api/conversation/${uid}`,
         {
           method: "GET",
           headers: {
@@ -34,7 +34,7 @@ const ConversationHistoryScreen: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         const filtered = Array.isArray(data)
-          ? data.filter((conv) => conv.user1Id === uid)
+          ? data.filter((conv) => conv.user1Id === uid || conv.user2Id === uid)
           : [];
 
         setConversations(filtered);
