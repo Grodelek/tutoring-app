@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert } from "react-native";
+import { Alert, GestureResponderEvent } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = {
@@ -8,10 +8,10 @@ type Props = {
   password: string;
   description: string;
   setIsEditing: (val: boolean) => void;
-  fetchUser: () => void;
+  fetchUser: () => Promise<void>;
 };
 
-const UpdateUserProfile = ({
+const useUpdateUserProfile = ({
   user,
   username,
   password,
@@ -19,13 +19,15 @@ const UpdateUserProfile = ({
   setIsEditing,
   fetchUser,
 }: Props) => {
-  const updateUserProfile = async () => {
+  const updateUserProfile = async (
+    _event?: GestureResponderEvent,
+  ): Promise<void> => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token || !user) return;
 
       const response = await fetch(
-        `http://192.168.1.32:8090/api/users/${user.id}`,
+        `http://16.16.106.84:8090/api/users/${user.id}`,
         {
           method: "PUT",
           headers: {
@@ -39,7 +41,7 @@ const UpdateUserProfile = ({
       if (response.ok) {
         Alert.alert("Success", "User profile updated.");
         const loginResponse = await fetch(
-          "http://192.168.1.32:8090/api/auth/login",
+          "http://16.16.106.84:8090/api/auth/login",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -61,5 +63,7 @@ const UpdateUserProfile = ({
       Alert.alert("Error", `Connection issue: ${error.message}`);
     }
   };
+
+  return updateUserProfile;
 };
-export default UpdateUserProfile;
+export default useUpdateUserProfile;

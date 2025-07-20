@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://192.168.1.32:8090/api/lessons/all-with-tutors",
+        "http://16.16.106.84:8090/api/lessons/all-with-tutors",
         {
           method: "GET",
           headers: {
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
     }
     try {
       const response = await fetch(
-        "http://192.168.1.32:8090/api/messages/get-or-create",
+        "http://16.16.106.84:8090/api/messages/get-or-create",
         {
           method: "POST",
           headers: {

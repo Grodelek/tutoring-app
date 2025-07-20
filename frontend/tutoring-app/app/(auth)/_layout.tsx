@@ -8,7 +8,7 @@ export default function AuthenticatedTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          href: null, // 👈 ukryj z zakładek
+          href: null,
         }}
       />
       <Tabs.Screen

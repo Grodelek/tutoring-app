@@ -54,7 +54,7 @@ const ChatScreen: React.FC = () => {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch(`http://192.168.1.32:8090/api/users/${id}`, {
+      const response = await fetch(`http://16.16.106.84:8090/api/users/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -80,7 +80,7 @@ const ChatScreen: React.FC = () => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       const res = await fetch(
-        `http://192.168.1.32:8090/api/messages/${conversationId}`,
+        `http://16.16.106.84:8090/api/messages/${conversationId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -102,7 +102,7 @@ const ChatScreen: React.FC = () => {
     if (!newMessage.trim() || !userId || !conversationId) return;
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      const res = await fetch("http://192.168.1.32:8090/api/messages/send", {
+      const res = await fetch("http://16.16.106.84:8090/api/messages/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
