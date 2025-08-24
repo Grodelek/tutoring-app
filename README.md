@@ -16,8 +16,6 @@ Welcome to **Tutoring App** – a sleek, modern **mobile app** for connecting tu
 | **Spring Boot**     | 3.x     |
 | **Spring Security** | 6.x     |
 | **Hibernate**       | 6.x     |
-| **React Navigation**| 6.x     |
-| **AsyncStorage**    | 1.x     |
 
 ---
 
