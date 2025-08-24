@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
+import { BASE_URL } from "@/config/baseUrl";
+import { postRegister } from "@/api/userApi";
 
 const UserForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -23,25 +25,14 @@ const UserForm: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://16.16.106.84:8090/api/users/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, password }),
-      });
-      if (response.ok) {
-        setEmail("");
-        setUsername("");
-        setPassword("");
-        Alert.alert("Success", "User registered successfully!");
-        router.push("/login");
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `User registration failed: ${errorText}`);
-      }
+      const response = await postRegister({ email, username, password });
+      setEmail("");
+      setUsername("");
+      setPassword("");
+      Alert.alert("Success", "User registered successfully!");
+      router.push("/login");
     } catch (error) {
-      Alert.alert("Error", `Problem with connection: ${error}`);
+      Alert.alert("Error", `Error while registering user: ${error}`);
     }
   };
 
