@@ -32,20 +32,6 @@ Welcome to **Tutoring App** – a sleek, modern **mobile app** for connecting tu
 
 ---
 
-## 📦 Project Structure
-
-tutoring-app/
-├── api/ # API fetch functions
-├── assets/ # Images & icons
-├── components/ # Reusable UI components
-├── context/ # React context (AuthContext)
-├── screens/ # Screens like Login, Register, Dashboard
-├── config/ # API configs & constants
-├── App.tsx # Root component
-└── package.json
-
----
-
 ## ⚡ Installation
 
 ```bash
