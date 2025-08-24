@@ -10,7 +10,13 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "context/AuthContext";
 import { useRouter } from "expo-router";
+import { postLogin } from "@/api/userApi";
 
+export interface AuthData {
+  email: string;
+  username: string;
+  password: string;
+}
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -20,31 +26,19 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://16.16.106.84:8090/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, password }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const token = data.token;
-        const userId = data.userId;
-        if (token) {
-          await AsyncStorage.setItem("jwtToken", token);
-          await AsyncStorage.setItem("username", username);
-          await AsyncStorage.setItem("userId", userId.toString());
-          setToken(token);
-          Alert.alert("Success", "User logged in successfully!");
-        } else {
-          Alert.alert("Error", "Token not found in response");
-        }
+      const data = await postLogin({ email, username, password });
+      const token = data.token;
+      const userId = data.userId;
+      if (token) {
+        await AsyncStorage.setItem("jwtToken", token);
+        await AsyncStorage.setItem("username", username);
+        await AsyncStorage.setItem("userId", userId.toString());
+        setToken(token);
+        Alert.alert("Success", "User logged in successfully!");
       } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `User login failed ${errorText}`);
+        Alert.alert("Error", "Token not found in response");
       }
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert("Error", `Problem with connection`);
     }
   };
