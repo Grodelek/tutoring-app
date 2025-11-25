@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, GestureResponderEvent } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { BASE_URL } from "@/config/baseUrl";
 
 type Props = {
   user: any;
@@ -27,8 +28,8 @@ const useUpdateUserProfile = ({
       if (!token || !user) return;
 
       const response = await fetch(
-        `http://16.16.106.84:8090/api/users/${user.id}`,
-        {
+      `${BASE_URL}/api/users/${user.id}`,
+      {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -41,7 +42,7 @@ const useUpdateUserProfile = ({
       if (response.ok) {
         Alert.alert("Success", "User profile updated.");
         const loginResponse = await fetch(
-          "http://16.16.106.84:8090/api/auth/login",
+          `${BASE_URL}/api/auth/login`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

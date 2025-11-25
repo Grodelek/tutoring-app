@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
+import { BASE_URL } from "@/config/baseUrl";
 
 interface Message {
   id: string;
@@ -54,7 +55,7 @@ const ChatScreen: React.FC = () => {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch(`http://16.16.106.84:8090/api/users/${id}`, {
+      const response = await fetch(`${BASE_URL}/api/users/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -80,7 +81,7 @@ const ChatScreen: React.FC = () => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       const res = await fetch(
-        `http://16.16.106.84:8090/api/messages/${conversationId}`,
+        `${BASE_URL}/api/messages/${conversationId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -102,7 +103,7 @@ const ChatScreen: React.FC = () => {
     if (!newMessage.trim() || !userId || !conversationId) return;
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      const res = await fetch("http://16.16.106.84:8090/api/messages/send", {
+      const res = await fetch(`${BASE_URL}/api/messages/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

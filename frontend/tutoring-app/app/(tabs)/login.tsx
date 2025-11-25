@@ -8,7 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { postLogin } from "@/api/userApi";
 
@@ -25,6 +25,11 @@ const LoginForm: React.FC = () => {
   const router = useRouter();
 
   const handleSubmit = async () => {
+    if (!email || !username || !password) {
+      Alert.alert("Error", "Please fill in email, username and password.");
+      return;
+    }
+
     try {
       const data = await postLogin({ email, username, password });
       const token = data.token;
@@ -35,11 +40,15 @@ const LoginForm: React.FC = () => {
         await AsyncStorage.setItem("userId", userId.toString());
         setToken(token);
         Alert.alert("Success", "User logged in successfully!");
+        router.replace("/(auth)");
       } else {
         Alert.alert("Error", "Token not found in response");
       }
     } catch (error: any) {
-      Alert.alert("Error", `Problem with connection`);
+      Alert.alert(
+        "Error",
+        `Problem with connection: ${error?.message ?? "Unknown error"}`,
+      );
     }
   };
 

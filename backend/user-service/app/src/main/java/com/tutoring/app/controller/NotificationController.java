@@ -10,7 +10,6 @@ public class NotificationController {
   @MessageMapping("send-message")
   @SendTo("/topic/notification")
   public String sendMessage(String message) {
-    System.out.println("message: " + message);
     return message;
   }
 }
