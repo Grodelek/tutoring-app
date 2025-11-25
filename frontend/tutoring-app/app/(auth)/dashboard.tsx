@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { BASE_URL } from "@/config/baseUrl";
 
 const Dashboard: React.FC = () => {
   const [lesson, setLesson] = useState<any[]>([]);
@@ -25,7 +26,7 @@ const Dashboard: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://16.16.106.84:8090/api/lessons/all-with-tutors",
+        `${BASE_URL}/api/lessons/all-with-tutors`,
         {
           method: "GET",
           headers: {
@@ -72,7 +73,7 @@ const Dashboard: React.FC = () => {
     }
     try {
       const response = await fetch(
-        "http://16.16.106.84:8090/api/messages/get-or-create",
+        `${BASE_URL}/api/messages/get-or-create`,
         {
           method: "POST",
           headers: {

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { BASE_URL } from "@/config/baseUrl";
 
 const CreatePost: React.FC = () => {
   const [subject, setSubject] = useState("");
@@ -25,7 +26,7 @@ const CreatePost: React.FC = () => {
         Alert.alert("Error", "User ID not found in storage");
         return;
       }
-      const response = await fetch("http://16.16.106.84:8090/api/lessons/add", {
+      const response = await fetch(`${BASE_URL}/api/lessons/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

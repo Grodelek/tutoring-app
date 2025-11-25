@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { BASE_URL } from "@/config/baseUrl";
 
 const ConversationHistoryScreen: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -21,7 +22,7 @@ const ConversationHistoryScreen: React.FC = () => {
   const fetchConversationHistory = async (uid: string, token: string) => {
     try {
       const response = await fetch(
-        `http://16.16.106.84:8090/api/conversation/${uid}`,
+        `${BASE_URL}/api/conversation/${uid}`,
         {
           method: "GET",
           headers: {

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
+import { BASE_URL } from "@/config/baseUrl";
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState("");
@@ -40,7 +41,7 @@ const UserProfile: React.FC = () => {
         Alert.alert("Error", "Missing token – user not logged in.");
         return;
       }
-      const response = await fetch(`http://16.16.106.84:8090/api/users/${id}`, {
+      const response = await fetch(`${BASE_URL}/api/users/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
