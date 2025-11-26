@@ -1,4 +1,4 @@
-package com.tutoring.app.model;
+package com.tutoring.app.domain;
 
 import java.util.ArrayList;
 import java.util.List;

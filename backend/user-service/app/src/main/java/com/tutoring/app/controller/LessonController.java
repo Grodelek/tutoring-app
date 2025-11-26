@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
 import com.tutoring.app.dto.LessonWithTutorResponse;
-import com.tutoring.app.model.Lesson;
+import com.tutoring.app.domain.Lesson;
 import com.tutoring.app.service.LessonService;
 import jakarta.validation.Valid;
 

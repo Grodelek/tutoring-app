@@ -9,15 +9,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
-import com.tutoring.app.dto.LessonWithTutorDTO;
 import com.tutoring.app.dto.LessonWithTutorResponse;
-import com.tutoring.app.model.Lesson;
-import com.tutoring.app.model.User;
+import com.tutoring.app.domain.Lesson;
+import com.tutoring.app.domain.User;
 import com.tutoring.app.repository.LessonRepository;
 import com.tutoring.app.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 
 @Service
 public class LessonService {

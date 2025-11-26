@@ -1,4 +1,4 @@
-package com.tutoring.app.model;
+package com.tutoring.app.domain;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

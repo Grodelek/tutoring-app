@@ -19,8 +19,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.tutoring.app.dto.UpdateUserProfileRequest;
 import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.dto.UserResponseDTO;
-import com.tutoring.app.model.User;
-import com.tutoring.app.model.UserPrincipal;
+import com.tutoring.app.domain.User;
+import com.tutoring.app.domain.UserPrincipal;
 import com.tutoring.app.service.UserService;
 import jakarta.validation.Valid;
 

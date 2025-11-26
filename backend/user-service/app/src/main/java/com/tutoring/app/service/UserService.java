@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.tutoring.app.dto.UpdateUserProfileRequest;
 import com.tutoring.app.dto.UserDTO;
-import com.tutoring.app.model.User;
+import com.tutoring.app.domain.User;
 import com.tutoring.app.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
