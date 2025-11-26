@@ -49,6 +49,7 @@ public class UserService {
     User user = User.builder()
         .username(userDTO.getUsername())
         .email(userDTO.getEmail())
+            .points(0)
         .password(bCryptPasswordEncoder.encode(userDTO.getPassword()))
         .roles("ROLE_USER")
         .photoPath(
@@ -114,7 +115,7 @@ public class UserService {
 
   public User findByUsername(String username) {
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new UsernameNotFoundException("Użytkownik nie znaleziony"));
+        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
   }
 
   public ResponseEntity<?> updateUserProfile(UUID id, UpdateUserProfileRequest request) {
@@ -132,4 +133,6 @@ public class UserService {
     userRepository.save(user);
     return ResponseEntity.ok("Username updated successfully");
   }
+
+
 }

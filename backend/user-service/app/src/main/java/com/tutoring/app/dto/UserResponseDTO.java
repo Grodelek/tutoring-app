@@ -14,6 +14,7 @@ public class UserResponseDTO {
   private String username;
   private String email;
   private String photoPath;
+  private int points;
   private String description;
 
   public UserResponseDTO(User user) {
@@ -21,6 +22,7 @@ public class UserResponseDTO {
     this.username = user.getUsername();
     this.email = user.getEmail();
     this.photoPath = user.getPhotoPath();
+    this.points = user.getPoints();
     this.description = user.getDescription();
   }
 }

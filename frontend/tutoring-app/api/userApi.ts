@@ -1,4 +1,6 @@
 import { BASE_URL } from "../config/baseUrl";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {Alert} from "react-native";
 
 export interface LoginResponse {
   token: string;
@@ -76,3 +78,22 @@ export const postRegister = async (data: AuthData): Promise<User> => {
   const user: User = await response.json();
   return user;
 };
+
+export const getMyAccount = async (): Promise<Response> => {
+    const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+    }
+    const response = await fetch(`${BASE_URL}/api/users/me`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error("Login failed");
+    }
+    return response;
+};
+

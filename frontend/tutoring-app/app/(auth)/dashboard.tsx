@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
-  View,
-  FlatList,
-  Text,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
+    View,
+    FlatList,
+    Text,
+    Alert,
+    StyleSheet,
+    TouchableOpacity,
+    Image
 } from "react-native";
+import { Button } from 'react-native-paper';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { BASE_URL } from "@/config/baseUrl";
+import {MaterialCommunityIcons, MaterialIcons} from "@expo/vector-icons";
 
 const Dashboard: React.FC = () => {
   const [lesson, setLesson] = useState<any[]>([]);
@@ -146,22 +148,35 @@ const Dashboard: React.FC = () => {
               )}
             </TouchableOpacity>
             <Text style={styles.userText}>
-              👤 Tutor: {item.tutorUsername ?? "No data"}
-            </Text>
-            <Text style={styles.userText}>📘 Subject: {item.subject}</Text>
-            <Text style={styles.userText}>
-              📝 Description: {item.description}
+                <MaterialIcons name="person" size={19} color="white" /> Tutor: {item.tutorUsername ?? "No data"}
             </Text>
             <Text style={styles.userText}>
-              ⏱️ Lesson duration: {item.durationTime} minutes
+                <MaterialCommunityIcons name="book-open-page-variant" size={19} color="white" /> Subject: {item.subject}</Text>
+            <Text style={styles.userText}>
+                <MaterialCommunityIcons name="note-outline" size={19} color="white" /> Description: {item.description}
+            </Text>
+            <Text style={styles.userText}>
+                <MaterialIcons name="access-time" size={19} color="white" /> Lesson duration: {item.durationTime} minutes
             </Text>
             {userId !== item.tutorId && (
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => handleMessageTutor(item.tutorId)}
-              >
-                <Text style={styles.buttonText}>Write message</Text>
-              </TouchableOpacity>
+                <Button
+                    mode="outlined"
+                    onPress={() => handleMessageTutor(item.tutorId)}
+                    textColor="#7C4DFF"
+                    style={{
+                        borderColor: "#7C4DFF",
+                        borderWidth: 2,
+                        borderRadius: 12,
+                        paddingVertical: 4,
+                        marginTop: 8,
+                    }}
+                    labelStyle={{
+                        fontSize: 16,
+                        fontWeight: "600",
+                    }}
+                >
+                    Write message
+                </Button>
             )}
           </View>
         )}
