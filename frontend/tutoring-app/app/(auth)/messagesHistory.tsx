@@ -41,7 +41,6 @@ const ConversationHistoryScreen: React.FC = () => {
         setConversations(filtered);
       } else {
         const errorText = await response.text();
-        Alert.alert("Error", `Cannot fetch conversation history: ${errorText}`);
       }
     } catch (error: any) {
       Alert.alert("Error", `Problem with connection: ${error.message}`);

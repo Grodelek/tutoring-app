@@ -17,6 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
 import { router } from "expo-router";
 import { BASE_URL } from "@/config/baseUrl";
+import {AuthData, getMyAccount} from "@/api/userApi";
 
 const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -33,28 +34,17 @@ const MyAccount: React.FC = () => {
     await fetchUser();
     setRefreshing(false);
   };
+
   const fetchUser = async () => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const response = await fetch(`${BASE_URL}/api/users/me`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
+      try {
+          const response = await getMyAccount();
+      if (response) {
         const userData = await response.json();
         setUser(userData);
         setUsername(userData.username);
         setDescription(userData.description || "");
       } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Failed to fetch user: ${errorText}`);
+        Alert.alert("Error", `Failed to fetch user`);
         router.push("/login");
       }
     } catch (error: any) {
@@ -96,6 +86,7 @@ const MyAccount: React.FC = () => {
           <Text style={styles.userName}>{user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
           <Text style={styles.userText}>Description: {user.description}</Text>
+            <Text style={styles.userText}>Points: {user.points}</Text>
           <Button
             title={isEditing ? "Cancel" : "Edit"}
             onPress={() => setIsEditing((prev) => !prev)}

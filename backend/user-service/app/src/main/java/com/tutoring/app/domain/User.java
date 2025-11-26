@@ -51,6 +51,10 @@ public class User {
   @Column(name = "description")
   private String description;
 
+  @Builder.Default
+  @Column(nullable = false)
+  private Integer points = 0;
+
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
   private List<Lesson> lessons = new ArrayList<>();
 }
