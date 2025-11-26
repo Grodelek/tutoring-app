@@ -1,18 +1,14 @@
-package com.tutoring.app.model;
+package com.tutoring.app.domain;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,17 +19,24 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Conversation {
+public class Message {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
-  private UUID user1Id;
-  private String user1Username;
-  private UUID user2Id;
-  private String user2Username;
 
-  @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-  private List<Message> messages;
+  @ManyToOne
+  private User sender;
 
+  @ManyToOne
+  private User receiver;
+
+  private String content;
+
+  private LocalDateTime timestamp = LocalDateTime.now();
+
+  @ManyToOne
+  @JoinColumn(name = "conversation_id")
+  @JsonBackReference
+  private Conversation conversation;
 }

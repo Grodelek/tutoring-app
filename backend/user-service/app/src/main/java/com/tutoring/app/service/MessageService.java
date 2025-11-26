@@ -3,14 +3,13 @@ package com.tutoring.app.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Service;
 
 import com.tutoring.app.dto.MessageDTO;
-import com.tutoring.app.model.Conversation;
-import com.tutoring.app.model.Message;
-import com.tutoring.app.model.User;
+import com.tutoring.app.domain.Conversation;
+import com.tutoring.app.domain.Message;
+import com.tutoring.app.domain.User;
 import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;

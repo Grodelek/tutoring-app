@@ -1,7 +1,7 @@
 package com.tutoring.app.dto;
 
 import java.util.UUID;
-import com.tutoring.app.model.User;
+import com.tutoring.app.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

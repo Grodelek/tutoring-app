@@ -4,7 +4,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.tutoring.app.model.Lesson;
+import com.tutoring.app.domain.Lesson;
 
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, UUID> {

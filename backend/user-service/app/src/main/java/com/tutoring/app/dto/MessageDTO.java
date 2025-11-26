@@ -3,7 +3,7 @@ package com.tutoring.app.dto;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.tutoring.app.model.Message;
+import com.tutoring.app.domain.Message;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

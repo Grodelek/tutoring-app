@@ -3,7 +3,7 @@ package com.tutoring.app.service;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
-import com.tutoring.app.model.Conversation;
+import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.repository.ConversationRepository;
 
 @Service
