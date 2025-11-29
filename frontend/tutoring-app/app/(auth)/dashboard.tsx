@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const fetchLessons = async () => {
-    const token = await AsyncStorage.getItem("jwtToken");
+      const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {
       Alert.alert("Error", "No token – user is not logged in.");
       router.push("/login");
