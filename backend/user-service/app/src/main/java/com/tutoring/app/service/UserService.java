@@ -135,4 +135,12 @@ public class UserService {
   }
 
 
+    public ResponseEntity<String> uploadPhoto(String photoUrl, User user) {
+      if(photoUrl.equals("") || photoUrl == null || photoUrl.isEmpty()){
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid photoUrl");
+      }
+      user.setPhotoPath(photoUrl);
+      userRepository.save(user);
+      return ResponseEntity.ok("User photo uploaded successfully");
+    }
 }

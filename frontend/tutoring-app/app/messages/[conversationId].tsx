@@ -80,6 +80,10 @@ const ChatScreen: React.FC = () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        return;
+      }
       const res = await fetch(
         `${BASE_URL}/api/messages/${conversationId}`,
         {
@@ -103,6 +107,10 @@ const ChatScreen: React.FC = () => {
     if (!newMessage.trim() || !userId || !conversationId) return;
     try {
       const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        return;
+      }
       const res = await fetch(`${BASE_URL}/api/messages/send`, {
         method: "POST",
         headers: {

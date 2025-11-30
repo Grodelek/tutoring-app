@@ -26,6 +26,10 @@ const CreatePost: React.FC = () => {
         Alert.alert("Error", "User ID not found in storage");
         return;
       }
+      if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        return;
+      }
       const response = await fetch(`${BASE_URL}/api/lessons/add`, {
         method: "POST",
         headers: {

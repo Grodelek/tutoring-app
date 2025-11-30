@@ -79,6 +79,9 @@ public class JWTService {
   }
 
   private Claims extractAllClaims(String token) {
+    if (token == null || token.trim().isEmpty()) {
+      throw new IllegalArgumentException("JWT token cannot be null or empty");
+    }
     return Jwts.parser()
         .verifyWith(getKey())
         .build()
@@ -87,11 +90,15 @@ public class JWTService {
   }
 
   public boolean validateToken(String token, UserDetails userDetails) {
-    final String username = extractUserName(token);
-    System.out.println("Token username: " + username);
-    System.out.println("Expected username: " + userDetails.getUsername());
-    System.out.println("token:" + token);
-    return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    if (token == null || token.trim().isEmpty()) {
+      return false;
+    }
+    try {
+      final String username = extractUserName(token);
+      return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private boolean isTokenExpired(String token) {
