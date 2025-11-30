@@ -68,8 +68,12 @@ public class UserController {
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
   public User register(@Valid @RequestBody UserDTO userDTO) {
-    System.out.println("Email: " + userDTO.getEmail());
-    System.out.println("Username: " + userDTO.getUsername());
     return userService.register(userDTO);
+  }
+
+  @PutMapping("/photo/upload")
+  public ResponseEntity<String> uploadPhoto(@RequestBody String photoUrl, @AuthenticationPrincipal UserPrincipal userDetails){
+      User user = userService.findByUsername(userDetails.getUsername());
+      return userService.uploadPhoto(photoUrl, user);
   }
 }

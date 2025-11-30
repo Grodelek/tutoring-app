@@ -12,12 +12,11 @@ import {
   ScrollView,
   RefreshControl,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
 import { router } from "expo-router";
-import { BASE_URL } from "@/config/baseUrl";
-import {AuthData, getMyAccount} from "@/api/userApi";
+import {AuthData, getMyAccount, saveToBackend} from "@/api/userApi";
+import UploadPhoto from "@components/UploadPhoto";
 
 const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -61,7 +60,23 @@ const MyAccount: React.FC = () => {
     fetchUser,
   });
 
-  useEffect(() => {
+  const savePhotoToBackend = async (imageUrl: string) => {
+      try {
+          const response = await saveToBackend(imageUrl);
+          if (!response.ok) {
+              const errorText = await response.text();
+              Alert.alert("Error", `Failed to save photo: ${errorText}`);
+              return;
+          }
+          await fetchUser();
+          Alert.alert("Success", "Profile photo updated!");
+      } catch (e: any) {
+          console.log(e);
+          Alert.alert("Error", `Failed to save photo: ${e.message || "Unknown error"}`);
+      }
+  };
+
+    useEffect(() => {
     fetchUser();
   }, []);
 
@@ -76,14 +91,15 @@ const MyAccount: React.FC = () => {
         <View style={styles.userItem}>
           <Pressable onPress={() => setModalVisible(true)}>
             {user.photoPath ? (
-              <Image source={{ uri: user.photoPath }} style={styles.avatar} />
+              <Image source={{ uri: user.photoPath.replace("http://", "https://") }} style={styles.avatar} />
             ) : (
               <Text style={{ color: "white", textAlign: "center" }}>
                 No photo available
               </Text>
             )}
           </Pressable>
-          <Text style={styles.userName}>{user.username}</Text>
+            <UploadPhoto onUploaded={savePhotoToBackend} />
+            <Text style={styles.userName}>{user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
           <Text style={styles.userText}>Description: {user.description}</Text>
             <Text style={styles.userText}>Points: {user.points}</Text>

@@ -83,6 +83,7 @@ export const getMyAccount = async (): Promise<Response> => {
     const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {
         Alert.alert("Error", "Missing token – user not logged in.");
+        throw new Error("Missing token");
     }
     const response = await fetch(`${BASE_URL}/api/users/me`, {
         method: "GET",
@@ -95,5 +96,20 @@ export const getMyAccount = async (): Promise<Response> => {
         throw new Error("Login failed");
     }
     return response;
+};
+
+export const saveToBackend = async (imageUrl: string) => {
+        const token = await AsyncStorage.getItem("jwtToken");
+        if (!token) {
+            throw new Error("Missing token");
+        }
+        return fetch(`${BASE_URL}/api/users/photo/upload`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(imageUrl),
+        });
 };
 
