@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.tutoring.app.dto.UpdateUserProfileRequest;
@@ -29,6 +32,7 @@ public class UserService {
   private final AuthenticationManager authenticationManager;
   private final JWTService jwtService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
+  private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
       AuthenticationManager authenticationManager, JWTService jwtService) {
@@ -139,7 +143,8 @@ public class UserService {
       if(photoUrl.equals("") || photoUrl == null || photoUrl.isEmpty()){
           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid photoUrl");
       }
-      user.setPhotoPath(photoUrl);
+      String photoUrlTrimmed = photoUrl.substring(1,  photoUrl.length() - 1);
+      user.setPhotoPath(photoUrlTrimmed);
       userRepository.save(user);
       return ResponseEntity.ok("User photo uploaded successfully");
     }

@@ -91,7 +91,7 @@ const MyAccount: React.FC = () => {
         <View style={styles.userItem}>
           <Pressable onPress={() => setModalVisible(true)}>
             {user.photoPath ? (
-              <Image source={{ uri: user.photoPath.replace("http://", "https://") }} style={styles.avatar} />
+              <Image source={{ uri: user.photoPath }} style={styles.avatar} />
             ) : (
               <Text style={{ color: "white", textAlign: "center" }}>
                 No photo available
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   avatar: {
-    width: 90,
+    width: 180,
     height: 90,
     borderRadius: 45,
     marginBottom: 15,

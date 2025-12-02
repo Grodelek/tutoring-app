@@ -1,6 +1,7 @@
 import { BASE_URL } from "../config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Alert} from "react-native";
+import uuid from "expo-modules-core/src/uuid";
 
 export interface LoginResponse {
   token: string;
@@ -111,5 +112,24 @@ export const saveToBackend = async (imageUrl: string) => {
             },
             body: JSON.stringify(imageUrl),
         });
+};
+
+export const fetchUserById = async (id: any) => {
+    const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        throw new Error("Missing token");
+    }
+    const response = await fetch(`${BASE_URL}/api/users/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error("Login failed");
+    }
+    return response.json();
 };
 
