@@ -203,14 +203,14 @@ const ChatScreen: React.FC = () => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Napisz wiadomość..."
+            placeholder="Write message..."
             placeholderTextColor="#888"
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
           />
           <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendText}>Wyślij</Text>
+            <Text style={styles.sendText}>Send</Text>
           </TouchableOpacity>
         </View>
       </View>
