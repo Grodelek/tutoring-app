@@ -93,8 +93,6 @@ const ChatScreen: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
-      } else {
-        Alert.alert("Błąd", "Nie udało się pobrać wiadomości");
       }
     } catch (e) {
       Alert.alert("Błąd", "Problem z połączeniem");

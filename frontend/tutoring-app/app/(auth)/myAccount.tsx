@@ -98,7 +98,6 @@ const MyAccount: React.FC = () => {
               </Text>
             )}
           </Pressable>
-            <UploadPhoto onUploaded={savePhotoToBackend} />
             <Text style={styles.userName}>{user.username}</Text>
           <Text style={styles.userText}>Email: {user.email}</Text>
           <Text style={styles.userText}>Description: {user.description}</Text>
@@ -151,7 +150,7 @@ const MyAccount: React.FC = () => {
                 style={styles.fullScreenImage}
                 resizeMode="contain"
               />
-              <Text style={{ color: "white" }}>hello!</Text>
+                <UploadPhoto onUploaded={savePhotoToBackend} />
             </>
           ) : (
             <Text style={{ color: "white" }}>No photo available</Text>
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   avatar: {
-    width: 180,
+    width: 90,
     height: 90,
     borderRadius: 45,
     marginBottom: 15,
