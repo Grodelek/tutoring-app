@@ -29,22 +29,14 @@ public class MessageController {
   private final SimpMessagingTemplate messagingTemplate;
 
   @PostMapping("/send")
-  public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request) {
-    Message saved = messageService.sendMessage(
+  public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request) throws Exception {
+    MessageDTO saved = messageService.sendMessage(
         request.getSenderId(),
         request.getReceiverId(),
         request.getContent());
 
-    MessageDTO dto = new MessageDTO(
-        saved.getId(),
-        saved.getSender().getId(),
-        saved.getReceiver().getId(),
-        saved.getContent(),
-        saved.getTimestamp(),
-        saved.getConversation().getId());
-
-    messagingTemplate.convertAndSend("/topic/notification", dto);
-    return ResponseEntity.ok(dto);
+    messagingTemplate.convertAndSend("/topic/notification", saved);
+    return ResponseEntity.ok(saved);
   }
 
   @GetMapping("/{conversationId}")
