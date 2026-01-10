@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -58,43 +59,70 @@ const CreatePost: React.FC = () => {
     }
   };
 
-  return (
+  const containerContent = (
+    <View style={styles.container}>
+      <Text style={styles.title}>Add lesson</Text>
+
+      <TextInput
+        placeholder="Subject"
+        placeholderTextColor="#999"
+        value={subject}
+        onChangeText={setSubject}
+        style={styles.input}
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor="#999"
+        value={description}
+        onChangeText={setDescription}
+        style={styles.input}
+        autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
+      />
+      <TextInput
+        placeholder="Duration time"
+        placeholderTextColor="#999"
+        value={durationTime}
+        onChangeText={setDurationTime}
+        style={styles.input}
+        autoCapitalize="none"
+        keyboardType="numeric"
+        returnKeyType="done"
+        autoComplete="off"
+        autoCorrect={false}
+        onSubmitEditing={() => Keyboard.dismiss()}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Text style={styles.buttonText}>Wyślij</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return Platform.OS === 'web' ? (
+    containerContent
+  ) : (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Add lesson</Text>
-
-        <TextInput
-          placeholder="Subject"
-          placeholderTextColor="#999"
-          value={subject}
-          onChangeText={setSubject}
-          style={styles.input}
-          autoCapitalize="none"
-        />
-        <TextInput
-          placeholder="Description"
-          placeholderTextColor="#999"
-          value={description}
-          onChangeText={setDescription}
-          style={styles.input}
-          autoCapitalize="none"
-        />
-        <TextInput
-          placeholder="Duration time"
-          placeholderTextColor="#999"
-          value={durationTime}
-          onChangeText={setDurationTime}
-          style={styles.input}
-          autoCapitalize="none"
-          keyboardType="numeric"
-          returnKeyType="done"
-          onSubmitEditing={() => Keyboard.dismiss()}
-        />
-
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Wyślij</Text>
-        </TouchableOpacity>
-      </View>
+      {containerContent}
     </TouchableWithoutFeedback>
   );
 };
