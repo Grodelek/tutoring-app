@@ -40,12 +40,20 @@ const Dashboard: React.FC = () => {
 
       if (response.ok) {
         const lessonsWithTutors = await response.json();
-        setLesson(lessonsWithTutors);
+        const lessons = Array.isArray(lessonsWithTutors) ? lessonsWithTutors : [];
+        setLesson(lessons);
+        if (lessons.length === 0) {
+          console.log("No lessons found");
+        }
       } else {
         const errorText = await response.text();
-        Alert.alert("Error", `Cannot fetch lessons: ${errorText}`);
+        console.error(`Failed to fetch lessons: ${response.status} - ${errorText}`);
+        setLesson([]);
+        Alert.alert("Error", `Cannot fetch lessons: ${response.status} - ${errorText}`);
       }
     } catch (error: any) {
+      console.error("Error fetching lessons:", error);
+      setLesson([]);
       Alert.alert("Error", `Problem with connection: ${error.message}`);
     }
   };

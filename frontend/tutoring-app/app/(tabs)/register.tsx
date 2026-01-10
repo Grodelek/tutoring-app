@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
@@ -47,6 +48,13 @@ const UserForm: React.FC = () => {
         onChangeText={setEmail}
         style={styles.input}
         autoCapitalize="none"
+        autoComplete="email"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
       />
       <TextInput
         placeholder="Username"
@@ -55,6 +63,13 @@ const UserForm: React.FC = () => {
         onChangeText={setUsername}
         style={styles.input}
         autoCapitalize="none"
+        autoComplete="username"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
       />
       <TextInput
         placeholder="Password"
@@ -64,6 +79,13 @@ const UserForm: React.FC = () => {
         style={styles.input}
         autoCapitalize="none"
         secureTextEntry={true}
+        autoComplete="password"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
       />
 
       <TouchableOpacity onPress={handleSubmit} style={styles.button}>

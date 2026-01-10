@@ -10,7 +10,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
+  Platform as RNPlatform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
@@ -143,9 +143,10 @@ const ChatScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={RNPlatform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
       keyboardVerticalOffset={80}
+      enabled={RNPlatform.OS !== "web"}
     >
       <View style={styles.header}>
         <TouchableOpacity
@@ -206,6 +207,13 @@ const ChatScreen: React.FC = () => {
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
+            autoComplete="off"
+            autoCorrect={false}
+            onFocus={(e) => {
+              if (RNPlatform.OS === 'web') {
+                e.currentTarget?.focus();
+              }
+            }}
           />
           <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
             <Text style={styles.sendText}>Send</Text>
