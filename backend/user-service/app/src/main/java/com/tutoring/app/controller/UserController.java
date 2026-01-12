@@ -50,12 +50,12 @@ public class UserController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<?> getUser(@PathVariable UUID id) {
+  public User getUser(@PathVariable UUID id) {
     return userService.getUserById(id);
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<?> updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
+  public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
@@ -78,7 +78,12 @@ public class UserController {
 
   @PutMapping("/photo/upload")
   public ResponseEntity<String> uploadPhoto(@RequestBody String photoUrl, @AuthenticationPrincipal UserPrincipal userDetails){
+    try {
       User user = userService.findByUsername(userDetails.getUsername());
-      return userService.uploadPhoto(photoUrl, user);
+      userService.uploadPhoto(photoUrl, user);
+      return ResponseEntity.ok("User photo uploaded successfully");
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
   }
 }

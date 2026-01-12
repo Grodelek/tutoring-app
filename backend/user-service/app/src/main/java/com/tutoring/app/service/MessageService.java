@@ -96,6 +96,7 @@ public class MessageService {
             messageDTO.setTimestamp(msg.getTimestamp());
             messageDTO.setReceiverId(msg.getReceiver().getId());
             messageDTO.setSenderId(msg.getSender().getId());
+            messageDTO.setConversationId(msg.getConversation().getId());
             return messageDTO;
         }).toList();
     }
