@@ -44,18 +44,18 @@ const ConversationRow: React.FC<ConversationRowProps> = ({ item, userId, onPress
     useEffect(() => {
         const loadReceiver = async () => {
             try {
-                const otherId =
-                    item.user1Id === userId ? item.user2Id : item.user1Id;
+            const otherId =
+                item.user1Id === userId ? item.user2Id : item.user1Id;
 
-                const data = await fetchUserById(otherId);
-                setReceiver(data);
+            const data = await fetchUserById(otherId);
+            setReceiver(data);
             } catch (error) {
                 console.error("Error loading receiver:", error);
             }
         };
 
         if (userId) {
-            loadReceiver();
+        loadReceiver();
         }
     }, [item, userId]);
 

@@ -1,17 +1,8 @@
 package com.tutoring.app.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -30,16 +21,16 @@ public class User {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(name = "email", unique = true)
+  @Column(name = "email", unique = true, nullable = false)
   private String email;
 
-  @Column(name = "password")
+  @Column(name = "password", nullable = false)
   private String password;
 
-  @Column(name = "roles")
-  private String roles;
+  @ElementCollection(fetch = FetchType.EAGER)
+  private Set<String> roles = new HashSet<>();
 
-  @Column(name = "username", unique = true)
+  @Column(name = "username", unique = true, nullable = false)
   private String username;
 
   @Column(name = "is_confirmed")
@@ -57,4 +48,10 @@ public class User {
 
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
   private List<Lesson> lessons = new ArrayList<>();
+
+  public User(UUID id, String email, String username) {
+    this.id = id;
+    this.email = email;
+    this.username = username;
+  }
 }
