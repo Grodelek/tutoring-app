@@ -3,17 +3,19 @@ package com.tutoring.app.controller;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.UserRepository;
 
 @RestController
+@CrossOrigin(origins = {
+        "http://localhost:8081",
+        "http://localhost:19006",
+        "http://localhost:19000",
+        "exp://192.168.2.167:8081"
+})
 @RequestMapping("/api/conversation")
 public class ConversationController {
   private final ConversationRepository conversationRepository;
@@ -26,10 +28,7 @@ public class ConversationController {
 
   @GetMapping("/{userId}")
   public ResponseEntity<List<Conversation>> getUserConversations(@PathVariable UUID userId) {
-    List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId, userId);
-    if (conversations.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-    }
+    List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId);
     return ResponseEntity.ok(conversations);
   }
 }

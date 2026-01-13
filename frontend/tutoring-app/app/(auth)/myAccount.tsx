@@ -11,6 +11,7 @@ import {
   Pressable,
   ScrollView,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
@@ -115,6 +116,13 @@ const MyAccount: React.FC = () => {
                 style={styles.input}
                 placeholder="New username"
                 placeholderTextColor="#888"
+                autoComplete="username"
+                autoCorrect={false}
+                onFocus={(e) => {
+                  if (Platform.OS === 'web') {
+                    e.currentTarget?.focus();
+                  }
+                }}
               />
               <TextInput
                 value={description}
@@ -122,6 +130,14 @@ const MyAccount: React.FC = () => {
                 style={styles.input}
                 placeholder="New description"
                 placeholderTextColor="#888"
+                autoComplete="off"
+                autoCorrect={false}
+                multiline
+                onFocus={(e) => {
+                  if (Platform.OS === 'web') {
+                    e.currentTarget?.focus();
+                  }
+                }}
               />
               <Button
                 title="Save"

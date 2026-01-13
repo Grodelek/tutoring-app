@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Alert,
     StyleSheet,
+    Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
@@ -94,6 +95,13 @@ const LoginForm: React.FC = () => {
                     style={styles.input}
                     autoCapitalize="none"
                     placeholderTextColor="#aaa"
+                    autoComplete="email"
+                    autoCorrect={false}
+                    onFocus={(e) => {
+                        if (Platform.OS === 'web') {
+                            e.currentTarget?.focus();
+                        }
+                    }}
                 />
                 <TextInput
                     placeholder="Username"
@@ -102,6 +110,13 @@ const LoginForm: React.FC = () => {
                     style={styles.input}
                     autoCapitalize="none"
                     placeholderTextColor="#aaa"
+                    autoComplete="username"
+                    autoCorrect={false}
+                    onFocus={(e) => {
+                        if (Platform.OS === 'web') {
+                            e.currentTarget?.focus();
+                        }
+                    }}
                 />
                 <TextInput
                     placeholder="Password"
@@ -111,6 +126,13 @@ const LoginForm: React.FC = () => {
                     autoCapitalize="none"
                     secureTextEntry
                     placeholderTextColor="#aaa"
+                    autoComplete="password"
+                    autoCorrect={false}
+                    onFocus={(e) => {
+                        if (Platform.OS === 'web') {
+                            e.currentTarget?.focus();
+                        }
+                    }}
                 />
 
                 <View style={styles.rememberMeContainer}>
