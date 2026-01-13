@@ -10,8 +10,8 @@ import {
     Image,
 } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "@/config/baseUrl";
 import {fetchUserById, Lesson} from "@/api/userApi";
 
@@ -40,17 +40,23 @@ interface ConversationRowProps {
 }
 const ConversationRow: React.FC<ConversationRowProps> = ({ item, userId, onPress }) => {
     const [receiver, setReceiver] = useState<User | null>(null);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    
     useEffect(() => {
         const loadReceiver = async () => {
+            try {
             const otherId =
                 item.user1Id === userId ? item.user2Id : item.user1Id;
 
             const data = await fetchUserById(otherId);
             setReceiver(data);
+            } catch (error) {
+                console.error("Error loading receiver:", error);
+            }
         };
 
+        if (userId) {
         loadReceiver();
+        }
     }, [item, userId]);
 
     return (
@@ -89,15 +95,19 @@ const ConversationHistoryScreen: React.FC = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                const filtered = Array.isArray(data)
-                    ? data.filter(
-                        (conv) => conv.user1Id === uid || conv.user2Id === uid
-                    )
-                    : [];
-
-                setConversations(filtered);
+                const conversations = Array.isArray(data) ? data : [];
+                setConversations(conversations);
+            } else {
+                const errorText = await response.text();
+                console.error(`Failed to fetch conversations: ${response.status} - ${errorText}`);
+                setConversations([]);
+                if (response.status !== 404) {
+                    Alert.alert("Error", `Cannot fetch conversations: ${errorText}`);
+                }
             }
         } catch (error: any) {
+            console.error("Error fetching conversations:", error);
+            setConversations([]);
             Alert.alert("Error", `Problem with connection: ${error.message}`);
         }
     };

@@ -24,7 +24,12 @@ import com.tutoring.app.domain.UserPrincipal;
 import com.tutoring.app.service.UserService;
 import jakarta.validation.Valid;
 
-@CrossOrigin(origins = { "http://localhost:8081", "exp://192.168.1.32:8081" })
+@CrossOrigin(origins = {
+        "http://localhost:8081",
+        "http://localhost:19006",
+        "http://localhost:19000",
+        "exp://192.168.2.167:8081"
+})
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -45,12 +50,12 @@ public class UserController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<?> getUser(@PathVariable UUID id) {
+  public User getUser(@PathVariable UUID id) {
     return userService.getUserById(id);
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<?> updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
+  public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
@@ -73,7 +78,12 @@ public class UserController {
 
   @PutMapping("/photo/upload")
   public ResponseEntity<String> uploadPhoto(@RequestBody String photoUrl, @AuthenticationPrincipal UserPrincipal userDetails){
+    try {
       User user = userService.findByUsername(userDetails.getUsername());
-      return userService.uploadPhoto(photoUrl, user);
+      userService.uploadPhoto(photoUrl, user);
+      return ResponseEntity.ok("User photo uploaded successfully");
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
   }
 }

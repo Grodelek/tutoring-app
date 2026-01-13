@@ -1,10 +1,6 @@
 package com.tutoring.app.service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +27,6 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JWTService jwtService;
-  private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
   private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
@@ -50,12 +45,14 @@ public class UserService {
     if (userRepository.existsByEmail(userDTO.getEmail())) {
       throw new IllegalArgumentException("User already has an account.");
     }
+    Set<String> roles = new HashSet<>();
+    roles.add("ROLE_USER");
     User user = User.builder()
         .username(userDTO.getUsername())
         .email(userDTO.getEmail())
             .points(0)
-        .password(bCryptPasswordEncoder.encode(userDTO.getPassword()))
-        .roles("ROLE_USER")
+        .password(passwordEncoder.encode(userDTO.getPassword()))
+        .roles(roles)
         .photoPath(
             "https://ui-avatars.com/api/?name=" + userDTO.getUsername() + "&background=random&bold=true&color=fff")
         .build();
@@ -109,12 +106,9 @@ public class UserService {
     }
   }
 
-  public ResponseEntity<?> getUserById(UUID id) {
+  public User getUserById(UUID id) {
     Optional<User> userOptional = userRepository.findById(id);
-    if (userOptional.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-    }
-    return ResponseEntity.ok(userOptional.get());
+    return userOptional.get();
   }
 
   public User findByUsername(String username) {
@@ -122,30 +116,23 @@ public class UserService {
         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
   }
 
-  public ResponseEntity<?> updateUserProfile(UUID id, UpdateUserProfileRequest request) {
-    Optional<User> userOptional = userRepository.findById(id);
-    if (userOptional.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-    }
-    User user = userOptional.get();
-    if (request.getUsername() != null) {
-      user.setUsername(request.getUsername());
-    }
-    if (request.getDescription() != null) {
-      user.setDescription(request.getDescription());
-    }
-    userRepository.save(user);
-    return ResponseEntity.ok("Username updated successfully");
-  }
-
-
-    public ResponseEntity<String> uploadPhoto(String photoUrl, User user) {
-      if(photoUrl.equals("") || photoUrl == null || photoUrl.isEmpty()){
-          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid photoUrl");
+  public User updateUserProfile(UUID id, UpdateUserProfileRequest request) {
+    User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with this id" + id));
+      if (request.getUsername() != null) {
+        user.setUsername(request.getUsername());
       }
-      String photoUrlTrimmed = photoUrl.substring(1,  photoUrl.length() - 1);
-      user.setPhotoPath(photoUrlTrimmed);
-      userRepository.save(user);
-      return ResponseEntity.ok("User photo uploaded successfully");
+      if (request.getDescription() != null) {
+        user.setDescription(request.getDescription());
+      }
+      return userRepository.save(user);
     }
+
+  public void uploadPhoto(String photoUrl, User user) {
+    if(photoUrl == null || photoUrl.isEmpty()) {
+      throw new IllegalArgumentException("Invalid photoUrl");
+    }
+    String photoUrlTrimmed = photoUrl.substring(1, photoUrl.length() - 1);
+    user.setPhotoPath(photoUrlTrimmed);
+    userRepository.save(user);
+  }
 }

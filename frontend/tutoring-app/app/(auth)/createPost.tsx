@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -58,8 +59,7 @@ const CreatePost: React.FC = () => {
     }
   };
 
-  return (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+  const containerContent = (
       <View style={styles.container}>
         <Text style={styles.title}>Add lesson</Text>
 
@@ -70,6 +70,13 @@ const CreatePost: React.FC = () => {
           onChangeText={setSubject}
           style={styles.input}
           autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
         />
         <TextInput
           placeholder="Description"
@@ -78,6 +85,13 @@ const CreatePost: React.FC = () => {
           onChangeText={setDescription}
           style={styles.input}
           autoCapitalize="none"
+        autoComplete="off"
+        autoCorrect={false}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
         />
         <TextInput
           placeholder="Duration time"
@@ -88,13 +102,27 @@ const CreatePost: React.FC = () => {
           autoCapitalize="none"
           keyboardType="numeric"
           returnKeyType="done"
+        autoComplete="off"
+        autoCorrect={false}
           onSubmitEditing={() => Keyboard.dismiss()}
+        onFocus={(e) => {
+          if (Platform.OS === 'web') {
+            e.currentTarget?.focus();
+          }
+        }}
         />
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Wyślij</Text>
         </TouchableOpacity>
       </View>
+  );
+
+  return Platform.OS === 'web' ? (
+    containerContent
+  ) : (
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      {containerContent}
     </TouchableWithoutFeedback>
   );
 };

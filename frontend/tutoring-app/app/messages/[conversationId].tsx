@@ -10,7 +10,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform,
+  Platform as RNPlatform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
@@ -18,10 +18,14 @@ import { BASE_URL } from "@/config/baseUrl";
 
 interface Message {
   id: string;
-  senderId: string;
+  senderId: string | UUID;
+  receiverId?: string | UUID;
   content: string;
   timestamp: string;
+  conversationId?: string | UUID;
 }
+
+type UUID = string;
 
 const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -87,15 +91,32 @@ const ChatScreen: React.FC = () => {
       const res = await fetch(
         `${BASE_URL}/api/messages/${conversationId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
         },
       );
       if (res.ok) {
         const data = await res.json();
-        setMessages(data);
+        console.log("Fetched messages:", data);
+        const messagesArray = Array.isArray(data) ? data : [];
+        setMessages(messagesArray);
+        if (messagesArray.length === 0) {
+          console.log("No messages found for conversation:", conversationId);
+        }
+      } else {
+        const errorText = await res.text();
+        console.error(`Failed to fetch messages: ${res.status} - ${errorText}`);
+        setMessages([]);
+        if (res.status !== 404) {
+          Alert.alert("Error", `Cannot fetch messages: ${res.status} - ${errorText}`);
+        }
       }
-    } catch (e) {
-      Alert.alert("Błąd", "Problem z połączeniem");
+    } catch (e: any) {
+      console.error("Error fetching messages:", e);
+      setMessages([]);
+      Alert.alert("Błąd", `Problem z połączeniem: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -143,13 +164,14 @@ const ChatScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={RNPlatform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
       keyboardVerticalOffset={80}
+      enabled={RNPlatform.OS !== "web"}
     >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.push("/dashboard")}
+          onPress={() => router.push("/messagesHistory")}
           style={styles.backButton}
         >
           <Text style={styles.backText}>← Wróć</Text>
@@ -174,29 +196,39 @@ const ChatScreen: React.FC = () => {
       <View style={{ flex: 1 }}>
         <FlatList
           data={messages}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           refreshing={loading}
           onRefresh={fetchMessages}
           contentContainerStyle={{ paddingVertical: 10 }}
           keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.message,
-                item.senderId === userId
-                  ? styles.myMessage
-                  : styles.otherMessage,
-              ]}
-            >
-              <Text style={styles.messageText}>{item.content}</Text>
-              <Text style={styles.timestamp}>
-                {new Date(item.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            </View>
-          )}
+          ListEmptyComponent={
+            !loading ? (
+              <View style={{ padding: 20, alignItems: "center" }}>
+                <Text style={{ color: "#888" }}>Brak wiadomości</Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }) => {
+            const isMyMessage = String(item.senderId) === String(userId);
+            return (
+              <View
+                style={[
+                  styles.message,
+                  isMyMessage ? styles.myMessage : styles.otherMessage,
+                ]}
+              >
+                <Text style={styles.messageText}>{item.content}</Text>
+                <Text style={styles.timestamp}>
+                  {item.timestamp
+                    ? new Date(item.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : ""}
+                </Text>
+              </View>
+            );
+          }}
         />
         <View style={styles.inputContainer}>
           <TextInput
@@ -206,6 +238,13 @@ const ChatScreen: React.FC = () => {
             value={newMessage}
             onChangeText={setNewMessage}
             multiline
+            autoComplete="off"
+            autoCorrect={false}
+            onFocus={(e) => {
+              if (RNPlatform.OS === 'web') {
+                e.currentTarget?.focus();
+              }
+            }}
           />
           <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
             <Text style={styles.sendText}>Send</Text>

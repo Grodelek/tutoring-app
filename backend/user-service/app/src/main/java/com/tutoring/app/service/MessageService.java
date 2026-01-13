@@ -39,8 +39,8 @@ public class MessageService {
 
         return conversationRepository.findAll().stream()
                 .filter(c -> {
-                    UUID cUser1Id = c.getUser1Id();
-                    UUID cUser2Id = c.getUser2Id();
+                    UUID cUser1Id = c.getUser1() != null ? c.getUser1().getId() : null;
+                    UUID cUser2Id = c.getUser2() != null ? c.getUser2().getId() : null;
                     return cUser1Id != null && cUser2Id != null &&
                             ((user1Id.equals(cUser1Id) && user2Id.equals(cUser2Id)) ||
                                     (user1Id.equals(cUser2Id) && user2Id.equals(cUser1Id)));
@@ -51,8 +51,8 @@ public class MessageService {
                     User userSender = userSenderOptional.get();
                     User userReceiver = userReceiverOptional.get();
 
-                    newConversation.setUser1Id(user1Id);
-                    newConversation.setUser2Id(user2Id);
+                    newConversation.setUser1(userSender);
+                    newConversation.setUser2(userReceiver);
                     newConversation.setUser1Username(userSender.getUsername());
                     newConversation.setUser2Username(userReceiver.getUsername());
 
@@ -96,6 +96,7 @@ public class MessageService {
             messageDTO.setTimestamp(msg.getTimestamp());
             messageDTO.setReceiverId(msg.getReceiver().getId());
             messageDTO.setSenderId(msg.getSender().getId());
+            messageDTO.setConversationId(msg.getConversation().getId());
             return messageDTO;
         }).toList();
     }
