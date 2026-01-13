@@ -2,6 +2,8 @@ package com.tutoring.app.domain;
 
 public enum LessonStatus {
     SCHEDULED,
-    COMPLETED,
+    STARTED,
+    SUCCESSFULL,
+    UNSUCCESSFULL,
     CANCELLED,
 }

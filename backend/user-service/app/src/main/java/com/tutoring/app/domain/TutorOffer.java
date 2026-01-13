@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -15,25 +17,22 @@ import java.util.UUID;
 public class TutorOffer {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @ManyToOne(optional = false)
     private User tutor;
 
     @ManyToOne(optional = false)
-    private Subject subject;
+    private User student;
 
-    @Column(nullable = false)
-    private String level;
+    @ManyToOne(optional = false)
+    private Lesson lesson;
 
-    private String city;
+    private LocalDateTime sessionStartTime;
 
-    private boolean online;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean accepted = false;
 
-    @Column(nullable = false)
-    private BigDecimal pricePerHour;
-
-    private double rating;
-    private int lessonsCount;
 }

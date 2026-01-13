@@ -1,44 +1,58 @@
 package com.tutoring.app.service;
 
-import com.tutoring.app.domain.Subject;
+import com.tutoring.app.domain.Lesson;
 import com.tutoring.app.domain.TutorOffer;
 import com.tutoring.app.domain.User;
 import com.tutoring.app.dto.TutorOfferDTO;
-import com.tutoring.app.repository.SubjectRepository;
+import com.tutoring.app.repository.LessonRepository;
 import com.tutoring.app.repository.TutorOfferRepository;
 import com.tutoring.app.repository.UserRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class TutorOfferService {
 
-    private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
     private final TutorOfferRepository tutorOfferRepository;
+    private final LessonRepository lessonRepository;
 
-    public TutorOfferService(SubjectRepository subjectRepository, UserRepository userRepository, TutorOfferRepository tutorOfferRepository) {
-        this.subjectRepository = subjectRepository;
+    public TutorOfferService(UserRepository userRepository, TutorOfferRepository tutorOfferRepository, LessonRepository lessonRepository) {
         this.userRepository = userRepository;
         this.tutorOfferRepository = tutorOfferRepository;
+        this.lessonRepository = lessonRepository;
     }
 
 
     public TutorOffer makeOffer(TutorOfferDTO offerDTO) {
-        Subject subject = subjectRepository.findById(offerDTO.getSubjectId())
-                .orElseThrow(() -> new RuntimeException("Subject not found"));
+        if (offerDTO.getTutorId() == null) {
+            throw new IllegalArgumentException("Tutor ID cannot be null");
+        }
+        if (offerDTO.getStudentId() == null) {
+            throw new IllegalArgumentException("Student ID cannot be null");
+        }
+        if (offerDTO.getLessonId() == null) {
+            throw new IllegalArgumentException("Lesson ID cannot be null");
+        }
+        
         User tutor = userRepository.findById(offerDTO.getTutorId())
                 .orElseThrow(() -> new RuntimeException("Tutor not found"));
-        TutorOffer offer = TutorOffer.builder()
-                .subject(subject)
-                .city(offerDTO.getCity())
-                .pricePerHour(offerDTO.getPricePerHour())
-                .tutor(tutor)
-                .level(offerDTO.getLevel())
-                .rating(offerDTO.getRating())
-                .online(offerDTO.isOnline())
-                .lessonsCount(0)
-                .build();
+        User student = userRepository.findById(offerDTO.getStudentId())
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        Lesson lesson = lessonRepository.findById(offerDTO.getLessonId())
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        TutorOffer tutorOffer = TutorOffer.builder().tutor(tutor).student(student).lesson(lesson).build();
+        tutorOfferRepository.save(tutorOffer);
+        return tutorOffer;
+    }
+
+    public TutorOffer acceptOffer(UUID uuid){
+        TutorOffer offer = tutorOfferRepository.findById(uuid)
+                .orElseThrow(() -> new RuntimeException("Offer not found"));
+        offer.setAccepted(true);
+        offer.setSessionStartTime(LocalDateTime.now());
         tutorOfferRepository.save(offer);
         return offer;
     }

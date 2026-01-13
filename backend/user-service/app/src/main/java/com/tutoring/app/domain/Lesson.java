@@ -3,9 +3,6 @@ package com.tutoring.app.domain;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,11 +22,14 @@ public class Lesson {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @ManyToOne(optional = false)
-  private TutorOffer offer;
+  @ManyToOne(optional = true)
+  @JoinColumn(name = "student_id", nullable = true)
+  private User student;
 
   @ManyToOne(optional = false)
-  private User student;
+  private User tutor;
+
+  private String subject;
 
   private LocalDateTime startTime;
   private int durationMinutes;
@@ -38,4 +38,6 @@ public class Lesson {
   private LessonStatus status;
 
   private BigDecimal price;
+  private String description;
+  private int durationTime;
 }
