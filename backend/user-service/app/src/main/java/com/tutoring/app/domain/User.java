@@ -2,6 +2,7 @@ package com.tutoring.app.domain;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,7 @@ public class User {
   private String email;
 
   @Column(name = "password", nullable = false)
+  @JsonIgnore
   private String password;
 
   @ElementCollection(fetch = FetchType.EAGER)
@@ -47,6 +49,7 @@ public class User {
   private Integer points = 0;
 
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
+  @JsonIgnore
   private List<Lesson> lessons = new ArrayList<>();
 
   public User(UUID id, String email, String username) {

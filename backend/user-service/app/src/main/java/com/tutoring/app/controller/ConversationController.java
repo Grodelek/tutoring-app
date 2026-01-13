@@ -28,7 +28,7 @@ public class ConversationController {
 
   @GetMapping("/{userId}")
   public ResponseEntity<List<Conversation>> getUserConversations(@PathVariable UUID userId) {
-    List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId, userId);
+    List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId);
     return ResponseEntity.ok(conversations);
   }
 }

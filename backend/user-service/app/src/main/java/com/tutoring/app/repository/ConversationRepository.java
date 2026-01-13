@@ -11,10 +11,12 @@ import com.tutoring.app.domain.Conversation;
 
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
-  List<Conversation> findByUser1IdOrUser2Id(UUID user1Id, UUID user2Id);
+  @Query("SELECT c FROM Conversation c WHERE " +
+      "c.user1.id = :userId OR c.user2.id = :userId")
+  List<Conversation> findByUser1IdOrUser2Id(@Param("userId") UUID userId);
 
   @Query("SELECT c FROM Conversation c WHERE " +
-      "(c.user1Id = :userA AND c.user2Id = :userB) OR " +
-      "(c.user1Id = :userB AND c.user2Id = :userA)")
+      "(c.user1.id = :userA AND c.user2.id = :userB) OR " +
+      "(c.user1.id = :userB AND c.user2.id = :userA)")
   Optional<Conversation> findByUsers(@Param("userA") UUID userA, @Param("userB") UUID userB);
 }
