@@ -10,7 +10,6 @@ import com.tutoring.app.dto.ConversationRequest;
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.dto.MessageRequest;
 import com.tutoring.app.domain.Conversation;
-import com.tutoring.app.domain.Message;
 import com.tutoring.app.service.ConversationService;
 import com.tutoring.app.service.MessageService;
 import lombok.RequiredArgsConstructor;
