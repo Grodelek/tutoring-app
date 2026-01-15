@@ -11,108 +11,59 @@ import {
 import { Button } from 'react-native-paper';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { BASE_URL } from "@/config/baseUrl";
 import {MaterialCommunityIcons, MaterialIcons} from "@expo/vector-icons";
+import {fetchLessonsFromApi, sendMessageToTutor} from "@/api/lessonApi";
 
 const Dashboard: React.FC = () => {
   const [lesson, setLesson] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const fetchLessons = async () => {
-      const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-      Alert.alert("Error", "No token – user is not logged in.");
-      router.push("/login");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${BASE_URL}/api/lessons/all-with-tutors`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (response.ok) {
-        const lessonsWithTutors = await response.json();
-        const lessons = Array.isArray(lessonsWithTutors) ? lessonsWithTutors : [];
-        setLesson(lessons);
-        if (lessons.length === 0) {
-          console.log("No lessons found");
+    const fetchLessons = async () => {
+        try {
+            const lessons = await fetchLessonsFromApi();
+            setLesson(lessons);
+        } catch (error: any) {
+            console.error("Error fetching lessons:", error);
+            if (error.message === "Authentication token not found") {
+                Alert.alert("Session expired", "Please log in again.");
+                router.push("/login");
+                return;
+            }
+            setLesson([]);
+            Alert.alert("Error", `Problem with connection: ${error.message}`);
         }
-      } else {
-        const errorText = await response.text();
-        console.error(`Failed to fetch lessons: ${response.status} - ${errorText}`);
-        setLesson([]);
-        Alert.alert("Error", `Cannot fetch lessons: ${response.status} - ${errorText}`);
-      }
-    } catch (error: any) {
-      console.error("Error fetching lessons:", error);
-      setLesson([]);
-      Alert.alert("Error", `Problem with connection: ${error.message}`);
-    }
-  };
+    };
 
-  const initialize = async () => {
-    const storedUserId = await AsyncStorage.getItem("userId");
-    setUserId(storedUserId);
-    await fetchLessons();
-  };
+    const initialize = async () => {
+        const storedUserId = await AsyncStorage.getItem("userId");
+        setUserId(storedUserId);
+        await fetchLessons();
+    };
 
   useEffect(() => {
     initialize();
   }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchLessons();
-    setRefreshing(false);
+  const handleMessageTutor = async (tutorId: string) => {
+      try {
+          const conversation = await sendMessageToTutor(tutorId);
+          router.push({
+              pathname: "/messages/[conversationId]",
+              params: {
+                  conversationId: conversation.id,
+                  receiverId: tutorId,
+              },
+          });
+      } catch (error: any) {
+          console.error("Error starting conversation:", error);
+          Alert.alert("Error", `Problem with connection: ${error.message}`);
+      }
   };
 
-  const handleMessageTutor = async (tutorId: string) => {
-    const token = await AsyncStorage.getItem("jwtToken");
-    const currentUserId = await AsyncStorage.getItem("userId");
-    if (!token || !currentUserId) {
-      Alert.alert("Error", "No user info");
-      return;
-    }
-    try {
-      const response = await fetch(
-        `${BASE_URL}/api/messages/get-or-create`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user1Id: currentUserId,
-            user2Id: tutorId,
-          }),
-        },
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        router.push({
-          pathname: "/messages/[conversationId]",
-          params: { conversationId: data.id, receiverId: tutorId },
-        });
-      } else {
-        const errorText = await response.text();
-        Alert.alert(
-          "Error",
-          `Cannot start conversation: ${response.status} - ${errorText}`,
-        );
-      }
-    } catch (error: any) {
-      Alert.alert("Error", `Connection error: ${error.message}`);
-    }
+  const onRefresh = async () => {
+      setRefreshing(true);
+      await fetchLessons();
+      setRefreshing(false);
   };
 
   return (

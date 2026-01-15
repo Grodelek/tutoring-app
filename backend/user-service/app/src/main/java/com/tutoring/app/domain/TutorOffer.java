@@ -34,5 +34,5 @@ public class TutorOffer {
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean accepted = false;
-
+    
 }

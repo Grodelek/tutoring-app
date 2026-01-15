@@ -1,5 +1,6 @@
 package com.tutoring.app.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,7 +40,7 @@ public class LessonService {
         .subject(lessonRequestDTO.getSubject())
         .description(lessonRequestDTO.getDescription())
         .tutor(tutor)
-        .student(tutor) // Set tutor as student initially (can be updated later when booked)
+        .student(tutor)
         .durationTime(lessonRequestDTO.getDurationTime())
         .build();
     Lesson savedLesson = lessonRepository.save(lesson);
@@ -59,6 +60,13 @@ public class LessonService {
       return ResponseEntity.ok(lesson);
     }
     return ResponseEntity.notFound().build();
+  }
+
+  public List<Lesson> getLessonsByTutor(User user){
+    if(user == null) {
+      throw new IllegalArgumentException("User cannot be null");
+    }
+      return user.getLessons();
   }
 
   public ResponseEntity<LessonResponseDTO> updateLesson(UUID id, LessonRequestDTO lessonRequestDTO) {
