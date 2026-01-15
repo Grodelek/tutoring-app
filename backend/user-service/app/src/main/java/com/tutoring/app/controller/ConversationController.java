@@ -2,9 +2,11 @@ package com.tutoring.app.controller;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.tutoring.app.dto.ConversationDTO;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.UserRepository;
@@ -27,8 +29,11 @@ public class ConversationController {
   }
 
   @GetMapping("/{userId}")
-  public ResponseEntity<List<Conversation>> getUserConversations(@PathVariable UUID userId) {
+  public ResponseEntity<List<ConversationDTO>> getUserConversations(@PathVariable UUID userId) {
     List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId);
-    return ResponseEntity.ok(conversations);
+    List<ConversationDTO> conversationDTOs = conversations.stream()
+        .map(ConversationDTO::new)
+        .collect(Collectors.toList());
+    return ResponseEntity.ok(conversationDTOs);
   }
 }
