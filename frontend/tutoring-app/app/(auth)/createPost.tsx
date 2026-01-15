@@ -18,6 +18,7 @@ const CreatePost: React.FC = () => {
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [durationTime, setDurationTime] = useState("");
+  const [price, setPrice] = useState("");
 
   const handleSubmit = async () => {
     try {
@@ -40,6 +41,7 @@ const CreatePost: React.FC = () => {
         body: JSON.stringify({
           subject,
           description,
+          price,
           durationTime: parseInt(durationTime, 10),
           tutorId: storedUserId,
         }),
@@ -111,9 +113,26 @@ const CreatePost: React.FC = () => {
           }
         }}
         />
-
+        <TextInput
+            placeholder="Price"
+            placeholderTextColor="#999"
+            value={price}
+            onChangeText={setPrice}
+            style={styles.input}
+            autoCapitalize="none"
+            keyboardType="numeric"
+            returnKeyType="done"
+            autoComplete="off"
+            autoCorrect={false}
+            onSubmitEditing={() => Keyboard.dismiss()}
+            onFocus={(e) => {
+              if (Platform.OS === 'web') {
+                e.currentTarget?.focus();
+              }
+            }}
+        />
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Wyślij</Text>
+          <Text style={styles.buttonText}>Create</Text>
         </TouchableOpacity>
       </View>
   );

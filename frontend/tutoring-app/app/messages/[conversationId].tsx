@@ -11,10 +11,13 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform as RNPlatform,
+  Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
+import {fetchLesson as fetchLessonFromApi, fetchLessonsFromApi} from "@/api/lessonApi";
+import {sendOffer} from "@/api/offerApi";
 
 interface Message {
   id: string;
@@ -25,17 +28,27 @@ interface Message {
   conversationId?: string | UUID;
 }
 
+interface OfferRequest{
+  tutorId: string,
+  studentId: string,
+  lessonId: string
+}
 type UUID = string;
 
 const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const { conversationId, receiverId } = useLocalSearchParams();
+  const { conversationId, receiverId, lessonId: lessonIdParam } = useLocalSearchParams();
   const router = useRouter();
   const [Receiver, setReceiver] = useState<any>(null);
-
+  const [userId, setUserId] = useState<string | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [lessonId, setLessonId] = useState<string | null>(null);
+  const [lesson, setLesson] = useState<any>(null);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [availableLessons, setAvailableLessons] = useState<any[]>([]);
+  const [loadingLessons, setLoadingLessons] = useState(false);
   useWebSocketMessages(conversationId, (incomingMessage) => {
     setMessages((prev) => [...prev, incomingMessage]);
   });
@@ -51,7 +64,27 @@ const ChatScreen: React.FC = () => {
 
   useEffect(() => {
     fetchMessages();
-  }, [conversationId]);
+    if (lessonIdParam) {
+      fetchLesson(lessonIdParam.toString());
+    }
+  }, [conversationId, lessonIdParam]);
+
+  const fetchLesson = async (id: string) => {
+    try {
+      const lessonData = await fetchLessonFromApi(id);
+      setLesson(lessonData);
+      setLessonId(id);
+    } catch (error: any) {
+      console.error("Error fetching lesson:", error);
+      if (error.message === "Authentication token not found") {
+        Alert.alert("Session expired", "Please log in again.");
+        router.push("/login");
+        return;
+      }
+      console.log("Lesson not found or error:", error.message);
+    }
+  };
+
   const fetchReceiver = async (id: string) => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
@@ -70,6 +103,7 @@ const ChatScreen: React.FC = () => {
         const data = await response.json();
         console.log("Fetched user data:", data);
         setReceiver(data);
+        setStudentId(data.id)
       } else {
         const errorText = await response.text();
         Alert.alert("Error", `Failed to fetch user: ${errorText}`);
@@ -162,6 +196,61 @@ const ChatScreen: React.FC = () => {
     );
   }
 
+  const chooseLesson = async () => {
+    setShowLessonModal(true);
+    setLoadingLessons(true);
+    try {
+      const lessons = await fetchLessonsFromApi();
+      setAvailableLessons(lessons);
+    } catch (error: any) {
+      console.error("Error fetching lessons:", error);
+      Alert.alert("Error", `Cannot load lessons: ${error.message}`);
+    } finally {
+      setLoadingLessons(false);
+    }
+  };
+
+  const startSession = async (selectedLessonId: string) => {
+    if (!userId || !receiverId) {
+      Alert.alert("Error", "Missing required data");
+      return;
+    }
+
+    try {
+      let tutorId: string;
+      let studentId: string;
+      const selectedLesson = availableLessons.find(l => l.id === selectedLessonId);
+      
+      if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
+        tutorId = selectedLesson.tutor.id;
+        studentId = userId === tutorId ? receiverId.toString() : userId;
+      } else {
+        tutorId = userId;
+        studentId = receiverId.toString();
+      }
+
+      const offerData: OfferRequest = {
+        tutorId: tutorId,
+        studentId: studentId,
+        lessonId: selectedLessonId
+      };
+
+      const offer = await sendOffer(offerData);
+      setShowLessonModal(false);
+      Alert.alert("Success", "Session offer sent!");
+    } catch (error: any) {
+      Alert.alert("Error", `Cannot send offer: ${error.message}`);
+    }
+  };
+
+  if (!userId || !conversationId) {
+    return (
+        <View style={styles.loadingContainer}>
+          <Text style={{ color: "#fff" }}>Loading...</Text>
+        </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={RNPlatform.OS === "ios" ? "padding" : "height"}
@@ -171,10 +260,10 @@ const ChatScreen: React.FC = () => {
     >
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.push("/messagesHistory")}
+          onPress={() => router.push("/conversations")}
           style={styles.backButton}
         >
-          <Text style={styles.backText}>← Wróć</Text>
+          <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <View style={styles.receiverInfo}>
           {Receiver && (
@@ -249,8 +338,75 @@ const ChatScreen: React.FC = () => {
           <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
             <Text style={styles.sendText}>Send</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
+            <Text style={styles.sendText}>Start Session</Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        visible={showLessonModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowLessonModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Choose a Lesson</Text>
+              <TouchableOpacity
+                onPress={() => setShowLessonModal(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loadingLessons ? (
+              <View style={styles.modalCenter}>
+                <Text style={styles.modalText}>Loading lessons...</Text>
+              </View>
+            ) : availableLessons.length === 0 ? (
+              <View style={styles.modalCenter}>
+                <Text style={styles.modalText}>No lessons available</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={availableLessons}
+                keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.lessonModalItem}
+                    onPress={() => startSession(item.id)}
+                  >
+                    <View style={styles.lessonModalContent}>
+                      {item.tutor?.photoPath && (
+                        <Image
+                          source={{ uri: item.tutor.photoPath }}
+                          style={styles.lessonModalAvatar}
+                        />
+                      )}
+                      <View style={styles.lessonModalInfo}>
+                        <Text style={styles.lessonModalSubject}>{item.subject}</Text>
+                        <Text style={styles.lessonModalTutor}>
+                          Tutor: {item.tutor?.username || "Unknown"}
+                        </Text>
+                        <Text style={styles.lessonModalDescription} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+                        <Text style={styles.lessonModalDuration}>
+                          Duration: {item.durationTime} minutes
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -355,10 +511,100 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
   },
+  sessionStartButton: {
+    backgroundColor: "#BB86FC",
+    paddingHorizontal: 16,
+    marginLeft: 10,
+    borderRadius: 20,
+    justifyContent: "center",
+  },
   sendText: {
     color: "#121212",
     fontWeight: "700",
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#1F1B24",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "80%",
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+    paddingBottom: 15,
+  },
+  modalTitle: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    padding: 5,
+  },
+  closeButtonText: {
+    color: "#BB86FC",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  modalCenter: {
+    padding: 40,
+    alignItems: "center",
+  },
+  modalText: {
+    color: "#888",
+    fontSize: 16,
+  },
+  lessonModalItem: {
+    backgroundColor: "#333",
+    padding: 15,
+    marginVertical: 8,
+    borderRadius: 10,
+  },
+  lessonModalContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  lessonModalAvatar: {
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    marginRight: 15,
+    borderWidth: 1,
+    borderColor: "#BB86FC",
+  },
+  lessonModalInfo: {
+    flex: 1,
+  },
+  lessonModalSubject: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  lessonModalTutor: {
+    color: "#BB86FC",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  lessonModalDescription: {
+    color: "#ccc",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  lessonModalDuration: {
+    color: "#888",
+    fontSize: 12,
   },
 });
 
