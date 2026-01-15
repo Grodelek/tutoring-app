@@ -37,15 +37,15 @@ type UUID = string;
 
 const getImageUri = (photoPath: string | null | undefined): string | null => {
   if (!photoPath) return null;
-  
+
   if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
     return photoPath;
   }
-  
+
   if (photoPath.startsWith("/")) {
     return `${BASE_URL}${photoPath}`;
   }
-  
+
   return photoPath;
 };
 
@@ -235,7 +235,7 @@ const ChatScreen: React.FC = () => {
       let tutorId: string;
       let studentId: string;
       const selectedLesson = availableLessons.find(l => l.id === selectedLessonId);
-      
+
       if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
         tutorId = selectedLesson.tutor.id;
         studentId = userId === tutorId ? receiverId.toString() : userId;
