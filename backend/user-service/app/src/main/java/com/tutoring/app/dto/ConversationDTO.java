@@ -26,4 +26,3 @@ public class ConversationDTO {
         this.user2Username = conversation.getUser2Username();
     }
 }
-
