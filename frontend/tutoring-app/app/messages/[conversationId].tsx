@@ -35,6 +35,20 @@ interface OfferRequest{
 }
 type UUID = string;
 
+const getImageUri = (photoPath: string | null | undefined): string | null => {
+  if (!photoPath) return null;
+  
+  if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+    return photoPath;
+  }
+  
+  if (photoPath.startsWith("/")) {
+    return `${BASE_URL}${photoPath}`;
+  }
+  
+  return photoPath;
+};
+
 const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -49,6 +63,7 @@ const ChatScreen: React.FC = () => {
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [availableLessons, setAvailableLessons] = useState<any[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   useWebSocketMessages(conversationId, (incomingMessage) => {
     setMessages((prev) => [...prev, incomingMessage]);
   });
@@ -101,9 +116,9 @@ const ChatScreen: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched user data:", data);
         setReceiver(data);
-        setStudentId(data.id)
+        setStudentId(data.id);
+        setAvatarError(false);
       } else {
         const errorText = await response.text();
         Alert.alert("Error", `Failed to fetch user: ${errorText}`);
@@ -268,14 +283,29 @@ const ChatScreen: React.FC = () => {
         <View style={styles.receiverInfo}>
           {Receiver && (
             <>
-              {Receiver.photoPath ? (
-                <Image
-                  source={{ uri: Receiver.photoPath }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <Text>no image</Text>
-              )}
+              {(() => {
+                const imageUri = getImageUri(Receiver.photoPath);
+                return imageUri && !avatarError ? (
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={styles.avatar}
+                    onError={(e) => {
+                      console.error("Error loading avatar:", e.nativeEvent.error);
+                      console.error("Failed URI:", imageUri);
+                      setAvatarError(true);
+                    }}
+                    onLoad={() => {
+                      setAvatarError(false);
+                    }}
+                  />
+                ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <Text style={styles.avatarPlaceholderText}>
+                    {Receiver.username?.[0]?.toUpperCase() || "?"}
+                  </Text>
+                </View>
+              );
+              })()}
               <Text style={styles.receiverName}>{Receiver.username}</Text>
             </>
           )}
@@ -381,12 +411,25 @@ const ChatScreen: React.FC = () => {
                     onPress={() => startSession(item.id)}
                   >
                     <View style={styles.lessonModalContent}>
-                      {item.tutor?.photoPath && (
-                        <Image
-                          source={{ uri: item.tutor.photoPath }}
-                          style={styles.lessonModalAvatar}
-                        />
-                      )}
+                      {(() => {
+                        const tutorImageUri = getImageUri(item.tutor?.photoPath);
+                        return tutorImageUri ? (
+                          <Image
+                            source={{ uri: tutorImageUri }}
+                            style={styles.lessonModalAvatar}
+                            onError={(e) => {
+                              console.error("Error loading tutor avatar:", e.nativeEvent.error);
+                              console.error("Failed URI:", tutorImageUri);
+                            }}
+                          />
+                        ) : (
+                        <View style={[styles.lessonModalAvatar, styles.avatarPlaceholder]}>
+                          <Text style={styles.avatarPlaceholderText}>
+                            {item.tutor?.username?.[0]?.toUpperCase() || "?"}
+                          </Text>
+                        </View>
+                      );
+                      })()}
                       <View style={styles.lessonModalInfo}>
                         <Text style={styles.lessonModalSubject}>{item.subject}</Text>
                         <Text style={styles.lessonModalTutor}>
@@ -456,6 +499,16 @@ const styles = StyleSheet.create({
     color: "#E0E0E0",
     fontSize: 18,
     fontWeight: "700",
+  },
+  avatarPlaceholder: {
+    backgroundColor: "#555",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarPlaceholderText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
   message: {
     marginVertical: 5,
