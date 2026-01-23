@@ -86,9 +86,14 @@ public class MessageService {
         return messages.stream().map(msg -> {
             String decryptedContent;
             try {
-                decryptedContent = aesUtils.decrypt(msg.getContent());
+                String content = msg.getContent();
+                if (content == null || content.isEmpty()) {
+                    decryptedContent = "[Empty message]";
+                } else {
+                    decryptedContent = aesUtils.decrypt(content);
+                }
             } catch (Exception e) {
-                throw new RuntimeException("Decrypting error: " + msg.getId(), e);
+                decryptedContent = "[Message could not be decrypted - possibly encrypted with different key]";
             }
             MessageDTO messageDTO = new MessageDTO();
             messageDTO.setContent(decryptedContent);
