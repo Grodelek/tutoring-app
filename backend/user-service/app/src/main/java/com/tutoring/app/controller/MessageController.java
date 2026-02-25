@@ -2,11 +2,13 @@ package com.tutoring.app.controller;
 
 import java.util.List;
 import java.util.UUID;
+
+import com.tutoring.app.dto.ConversationDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
-import com.tutoring.app.dto.ConversationRequest;
+import com.tutoring.app.dto.ConversationDTO;
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.dto.MessageRequest;
 import com.tutoring.app.domain.Conversation;
@@ -46,7 +48,7 @@ public class MessageController {
   }
 
   @PostMapping("/get-or-create")
-  public ResponseEntity<?> getOrCreateConversation(@RequestBody ConversationRequest req) {
+  public ResponseEntity<?> getOrCreateConversation(@RequestBody ConversationDTO req) {
     try {
       Conversation conversation = messageService.getOrCreateConversation(req.getUser1Id(), req.getUser2Id());
       return ResponseEntity.ok(conversation);
