@@ -26,6 +26,8 @@ interface Message {
   content: string;
   timestamp: string;
   conversationId?: string | UUID;
+  messageType: string;
+  lessonId: string | UUID;
 }
 
 interface OfferRequest{
@@ -206,7 +208,7 @@ const ChatScreen: React.FC = () => {
   if (!userId || !conversationId) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={{ color: "#fff" }}>Ładowanie...</Text>
+        <Text style={{ color: "#fff" }}>Loading...</Text>
       </View>
     );
   }
@@ -235,7 +237,6 @@ const ChatScreen: React.FC = () => {
       let tutorId: string;
       let studentId: string;
       const selectedLesson = availableLessons.find(l => l.id === selectedLessonId);
-      
       if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
         tutorId = selectedLesson.tutor.id;
         studentId = userId === tutorId ? receiverId.toString() : userId;
@@ -244,17 +245,38 @@ const ChatScreen: React.FC = () => {
         studentId = receiverId.toString();
       }
 
-      const offerData: OfferRequest = {
-        tutorId: tutorId,
-        studentId: studentId,
-        lessonId: selectedLessonId
-      };
-
-      const offer = await sendOffer(offerData);
+      const token = await AsyncStorage.getItem("jwtToken");
+      if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        return;
+      }
+      const invitationContent = selectedLesson
+        ? `Invitation to lesson: ${selectedLesson.subject || ''} (${selectedLesson.scheduledTime || selectedLesson.startTime || ''})`
+        : "Lesson invitation";
+      const res = await fetch(`${BASE_URL}/api/messages/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          senderId: userId,
+          receiverId: receiverId,
+          content: invitationContent,
+          messageType: "INVITATION",
+          lessonId: selectedLessonId,
+        }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText);
+      }
+      const message = await res.json();
+      setMessages((prev) => [...prev, message]);
       setShowLessonModal(false);
-      Alert.alert("Success", "Session offer sent!");
+      Alert.alert("Success", "Invitation sent!");
     } catch (error: any) {
-      Alert.alert("Error", `Cannot send offer: ${error.message}`);
+      Alert.alert("Error", `Cannot send invitation: ${error.message}`);
     }
   };
 
@@ -329,6 +351,105 @@ const ChatScreen: React.FC = () => {
           }
           renderItem={({ item }) => {
             const isMyMessage = String(item.senderId) === String(userId);
+            if (item.messageType === "INVITATION") {
+              console.log('RENDER INVITATION CARD:', item);
+              const isReceiver = String(item.receiverId) === String(userId);
+              let lessonDetails = null;
+              if (lesson && lesson.id === item.lessonId) {
+                lessonDetails = lesson;
+              } else if (availableLessons && Array.isArray(availableLessons)) {
+                lessonDetails = availableLessons.find(l => l.id === item.lessonId);
+              }
+              const scheduledTime = lessonDetails?.startTime || lessonDetails?.scheduledTime || "-";
+              const price = lessonDetails?.price ? `$${lessonDetails.price}` : "-";
+              const subject = lessonDetails?.subject || "-";
+              const tutor = lessonDetails?.tutor?.username || "-";
+              return (
+                  <View style={[
+                    styles.invitationCard,
+                  ]}>
+                    <View style={styles.invitationHeaderRow}>
+                      <Text style={styles.invitationEmoji}>📅</Text>
+                      <Text style={styles.invitationTitleStrong}>Pending invitation</Text>
+                    </View>
+                    <View style={styles.invitationDetailsBlock}>
+                      <Text style={styles.invitationDetailStrong}>Subject:</Text>
+                      <Text style={styles.invitationDetailValue}>{subject}</Text>
+                    </View>
+                    <View style={styles.invitationDetailsBlock}>
+                      <Text style={styles.invitationDetailStrong}>Tutor:</Text>
+                      <Text style={styles.invitationDetailValue}>{tutor}</Text>
+                    </View>
+                    <View style={styles.invitationDetailsBlock}>
+                      <Text style={styles.invitationDetailStrong}>Scheduled for:</Text>
+                      <Text style={styles.invitationDetailValue}>{scheduledTime}</Text>
+                    </View>
+                    <View style={styles.invitationDetailsBlock}>
+                      <Text style={styles.invitationDetailStrong}>Price:</Text>
+                      <Text style={styles.invitationDetailValue}>{price}</Text>
+                    </View>
+                    {isReceiver && (
+                        <>
+                          <TouchableOpacity style={styles.acceptButton}>Decline</TouchableOpacity><TouchableOpacity
+                            style={styles.acceptButton}
+                            onPress={async () => {
+                              try {
+                                const token = await AsyncStorage.getItem("jwtToken");
+                                if (!token) throw new Error("No token");
+                                const res = await fetch(`${BASE_URL}/api/lessons/${item.lessonId}/status`, {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                  },
+                                  body: JSON.stringify({status: "STARTED"}),
+                                });
+                                if (!res.ok) throw new Error("Failed to accept invitation");
+                                Alert.alert("Success", "Invitation accepted");
+                                fetchMessages();
+                              } catch (e: any) {
+                                Alert.alert("Error", e.message);
+                              }
+                            }}
+                        >
+                          <Text style={styles.acceptButtonText}>Accept</Text>
+                        </TouchableOpacity></>
+                    )}
+                    {isMyMessage && (
+                      <TouchableOpacity
+                        style={styles.declineButton}
+                        onPress={async () => {
+                          try {
+                            const token = await AsyncStorage.getItem("jwtToken");
+                            if (!token) throw new Error("No token");
+                            const res = await fetch(`${BASE_URL}/api/messages/${item.id}`, {
+                              method: "DELETE",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            });
+                            if (!res.ok) throw new Error("Failed to remove invitation");
+                            Alert.alert("Removed", "Invitation has been removed.");
+                            fetchMessages();
+                          } catch (e: any) {
+                            Alert.alert("Error", e.message);
+                          }
+                        }}
+                      >
+                        <Text style={styles.declineButtonText}>Remove invitation</Text>
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.timestamp}>
+                      {item.timestamp
+                          ? new Date(item.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                          : ""}
+                    </Text>
+                  </View>
+              );
+            }
             return (
               <View
                 style={[
@@ -658,6 +779,82 @@ const styles = StyleSheet.create({
   lessonModalDuration: {
     color: "#888",
     fontSize: 12,
+  },
+  invitationCard: {
+    backgroundColor: '#E6F0FF',
+    borderColor: '#2196F3',
+    borderWidth: 2.5,
+    borderRadius: 18,
+    padding: 20,
+    marginVertical: 14,
+    marginHorizontal: 8,
+    shadowColor: '#2196F3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    minWidth: '70%',
+    maxWidth: '90%',
+    alignSelf: 'center',
+  },
+  invitationHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  invitationEmoji: {
+    fontSize: 28,
+    marginRight: 10,
+  },
+  invitationTitleStrong: {
+    fontWeight: 'bold',
+    fontSize: 20,
+    color: '#1565C0',
+  },
+  invitationDetailsBlock: {
+    flexDirection: 'row',
+    marginBottom: 6,
+    alignItems: 'center',
+  },
+  invitationDetailStrong: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: '#0D47A1',
+    marginRight: 6,
+    minWidth: 90,
+  },
+  invitationDetailValue: {
+    fontSize: 15,
+    color: '#333',
+    flexShrink: 1,
+  },
+  acceptButton: {
+    backgroundColor: '#BB86FC',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  acceptButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  declineButton: {
+    backgroundColor: '#FF5252',
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  declineButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
   },
 });
 

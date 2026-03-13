@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
-import com.tutoring.app.dto.ConversationDTO;
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.dto.MessageRequest;
 import com.tutoring.app.domain.Conversation;
@@ -35,8 +34,10 @@ public class MessageController {
     MessageDTO saved = messageService.sendMessage(
         request.getSenderId(),
         request.getReceiverId(),
-        request.getContent());
-
+        request.getContent(),
+        request.getMessageType(),
+        request.getLessonId()
+    );
     messagingTemplate.convertAndSend("/topic/notification", saved);
     return ResponseEntity.ok(saved);
   }
@@ -56,6 +57,16 @@ public class MessageController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Wystąpił błąd serwera");
+    }
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<?> deleteMessage(@PathVariable UUID id) {
+    try {
+      messageService.deleteMessage(id);
+      return ResponseEntity.ok().build();
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found");
     }
   }
 }
