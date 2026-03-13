@@ -14,8 +14,6 @@ import com.tutoring.app.repository.UserRepository;
 @RestController
 @CrossOrigin(origins = {
         "http://localhost:8081",
-        "http://localhost:19006",
-        "http://localhost:19000",
         "exp://192.168.2.167:8081"
 })
 @RequestMapping("/api/conversation")

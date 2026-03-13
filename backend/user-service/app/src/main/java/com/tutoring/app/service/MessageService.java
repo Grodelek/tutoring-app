@@ -10,22 +10,27 @@ import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.domain.Message;
 import com.tutoring.app.domain.User;
+import com.tutoring.app.domain.MessageType;
 import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;
+import com.tutoring.app.repository.LessonRepository;
+import com.tutoring.app.domain.Lesson;
 
 @Service
 public class MessageService {
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
+    private final LessonRepository lessonRepository;
     private final AesUtils aesUtils;
 
     public MessageService(MessageRepository messageRepository, ConversationRepository conversationRepository,
-                          UserRepository userRepository, AesUtils aesUtils) {
+                          UserRepository userRepository, LessonRepository lessonRepository, AesUtils aesUtils) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
+        this.lessonRepository = lessonRepository;
         this.aesUtils = aesUtils;
     }
 
@@ -60,7 +65,7 @@ public class MessageService {
                 });
     }
 
-    public MessageDTO sendMessage(UUID senderId, UUID receiverId, String content) throws Exception {
+    public MessageDTO sendMessage(UUID senderId, UUID receiverId, String content, MessageType messageType, UUID lessonId) throws Exception {
         Conversation conversation = getOrCreateConversation(senderId, receiverId);
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
@@ -71,14 +76,14 @@ public class MessageService {
         message.setReceiver(receiver);
         message.setContent(aesUtils.encrypt(content));
         message.setConversation(conversation);
+        message.setMessageType(messageType);
+        if (messageType == MessageType.INVITATION && lessonId != null) {
+            Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new IllegalArgumentException("Lesson not found"));
+            message.setLesson(lesson);
+        }
         messageRepository.save(message);
-        MessageDTO messageDTO = new MessageDTO();
-        messageDTO.setContent(content);
-        messageDTO.setId(message.getId());
-        messageDTO.setTimestamp(message.getTimestamp());
-        messageDTO.setReceiverId(message.getReceiver().getId());
-        messageDTO.setSenderId(message.getSender().getId());
-        return messageDTO;
+        return new MessageDTO(message);
     }
 
     public List<MessageDTO> getMessages(UUID conversationId) {
@@ -95,14 +100,16 @@ public class MessageService {
             } catch (Exception e) {
                 decryptedContent = "[Message could not be decrypted - possibly encrypted with different key]";
             }
-            MessageDTO messageDTO = new MessageDTO();
+            MessageDTO messageDTO = new MessageDTO(msg);
             messageDTO.setContent(decryptedContent);
-            messageDTO.setId(msg.getId());
-            messageDTO.setTimestamp(msg.getTimestamp());
-            messageDTO.setReceiverId(msg.getReceiver().getId());
-            messageDTO.setSenderId(msg.getSender().getId());
-            messageDTO.setConversationId(msg.getConversation().getId());
             return messageDTO;
         }).toList();
+    }
+
+    public void deleteMessage(UUID id) {
+        if (!messageRepository.existsById(id)) {
+            throw new IllegalArgumentException("Message not found");
+        }
+        messageRepository.deleteById(id);
     }
 }
