@@ -46,12 +46,23 @@ const Dashboard: React.FC = () => {
 
   const handleMessageTutor = async (tutorId: string) => {
       try {
-          const conversation = await sendMessageToTutor(tutorId);
+          const normalizedTutorId = String(tutorId);
+          const currentUserId = await AsyncStorage.getItem("userId");
+
+          if (currentUserId && String(currentUserId) === normalizedTutorId) {
+              Alert.alert(
+                  "Info",
+                  "Nie możesz wysłać wiadomości do samego siebie. Wybierz innego tutora."
+              );
+              return;
+          }
+
+          const conversation = await sendMessageToTutor(normalizedTutorId);
           router.push({
               pathname: "/messages/[conversationId]",
               params: {
                   conversationId: conversation.id,
-                  receiverId: tutorId,
+                  receiverId: normalizedTutorId,
               },
           });
       } catch (error: any) {
@@ -117,10 +128,10 @@ const Dashboard: React.FC = () => {
             <Text style={styles.userText}>
                 <MaterialIcons name="access-time" size={19} color="white" /> Lesson duration: {item.durationTime} minutes
             </Text>
-            {userId !== item.tutorId && (
+            {userId && String(userId) !== String(item.tutorId) && (
                 <Button
                     mode="outlined"
-                    onPress={() => handleMessageTutor(item.tutorId)}
+                    onPress={() => handleMessageTutor(String(item.tutorId))}
                     textColor="#7C4DFF"
                     style={{
                         borderColor: "#7C4DFF",

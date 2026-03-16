@@ -36,7 +36,7 @@ export interface User {
 
 export interface AuthData {
   email: string;
-  username: string;
+  username?: string;
   password: string;
 }
 
@@ -48,7 +48,6 @@ export const postLogin = async (data: AuthData): Promise<LoginResponse> => {
     },
     body: JSON.stringify({
       email: data.email,
-      username: data.username,
       password: data.password,
     }),
   });

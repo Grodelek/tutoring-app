@@ -4,33 +4,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.tutoring.app.domain.MessageType;
+import com.tutoring.app.repository.ConversationRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.domain.Message;
 import com.tutoring.app.domain.User;
-import com.tutoring.app.domain.MessageType;
-import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;
-import com.tutoring.app.repository.LessonRepository;
-import com.tutoring.app.domain.Lesson;
 
 @Service
 public class MessageService {
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
-    private final LessonRepository lessonRepository;
     private final AesUtils aesUtils;
 
     public MessageService(MessageRepository messageRepository, ConversationRepository conversationRepository,
-                          UserRepository userRepository, LessonRepository lessonRepository, AesUtils aesUtils) {
+                          UserRepository userRepository, AesUtils aesUtils) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
-        this.lessonRepository = lessonRepository;
         this.aesUtils = aesUtils;
     }
 
@@ -77,13 +74,15 @@ public class MessageService {
         message.setContent(aesUtils.encrypt(content));
         message.setConversation(conversation);
         message.setMessageType(messageType);
-        if (messageType == MessageType.INVITATION && lessonId != null) {
-            Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new IllegalArgumentException("Lesson not found"));
-            message.setLesson(lesson);
-        }
         messageRepository.save(message);
-        return new MessageDTO(message);
+        MessageDTO messageDTO = new MessageDTO();
+        messageDTO.setContent(content);
+        messageDTO.setId(message.getId());
+        messageDTO.setTimestamp(message.getTimestamp());
+        messageDTO.setReceiverId(message.getReceiver().getId());
+        messageDTO.setSenderId(message.getSender().getId());
+        messageDTO.setMessageType(message.getMessageType());
+        return messageDTO;
     }
 
     public List<MessageDTO> getMessages(UUID conversationId) {
@@ -100,16 +99,25 @@ public class MessageService {
             } catch (Exception e) {
                 decryptedContent = "[Message could not be decrypted - possibly encrypted with different key]";
             }
-            MessageDTO messageDTO = new MessageDTO(msg);
+            MessageDTO messageDTO = new MessageDTO();
             messageDTO.setContent(decryptedContent);
+            messageDTO.setId(msg.getId());
+            messageDTO.setTimestamp(msg.getTimestamp());
+            messageDTO.setReceiverId(msg.getReceiver().getId());
+            messageDTO.setSenderId(msg.getSender().getId());
+            messageDTO.setConversationId(msg.getConversation().getId());
             return messageDTO;
         }).toList();
     }
 
-    public void deleteMessage(UUID id) {
-        if (!messageRepository.existsById(id)) {
-            throw new IllegalArgumentException("Message not found");
+    public ResponseEntity<String> deleteMessage(UUID id) {
+        Optional<Message> optionalMessage = messageRepository.findById(id);
+        if (optionalMessage.isEmpty()) {
+            return new ResponseEntity<>("Message not found", HttpStatus.NOT_FOUND);
         }
-        messageRepository.deleteById(id);
+
+        messageRepository.delete(optionalMessage.get());
+        return new ResponseEntity<>("Message deleted", HttpStatus.OK);
     }
 }
+
