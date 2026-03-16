@@ -4,13 +4,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.tutoring.app.domain.MessageType;
+import com.tutoring.app.repository.ConversationRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.domain.Message;
 import com.tutoring.app.domain.User;
-import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;
 
@@ -60,7 +62,7 @@ public class MessageService {
                 });
     }
 
-    public MessageDTO sendMessage(UUID senderId, UUID receiverId, String content) throws Exception {
+    public MessageDTO sendMessage(UUID senderId, UUID receiverId, String content, MessageType messageType, UUID lessonId) throws Exception {
         Conversation conversation = getOrCreateConversation(senderId, receiverId);
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
@@ -71,6 +73,7 @@ public class MessageService {
         message.setReceiver(receiver);
         message.setContent(aesUtils.encrypt(content));
         message.setConversation(conversation);
+        message.setMessageType(messageType);
         messageRepository.save(message);
         MessageDTO messageDTO = new MessageDTO();
         messageDTO.setContent(content);
@@ -78,6 +81,7 @@ public class MessageService {
         messageDTO.setTimestamp(message.getTimestamp());
         messageDTO.setReceiverId(message.getReceiver().getId());
         messageDTO.setSenderId(message.getSender().getId());
+        messageDTO.setMessageType(message.getMessageType());
         return messageDTO;
     }
 
@@ -86,9 +90,14 @@ public class MessageService {
         return messages.stream().map(msg -> {
             String decryptedContent;
             try {
-                decryptedContent = aesUtils.decrypt(msg.getContent());
+                String content = msg.getContent();
+                if (content == null || content.isEmpty()) {
+                    decryptedContent = "[Empty message]";
+                } else {
+                    decryptedContent = aesUtils.decrypt(content);
+                }
             } catch (Exception e) {
-                throw new RuntimeException("Decrypting error: " + msg.getId(), e);
+                decryptedContent = "[Message could not be decrypted - possibly encrypted with different key]";
             }
             MessageDTO messageDTO = new MessageDTO();
             messageDTO.setContent(decryptedContent);
@@ -100,4 +109,15 @@ public class MessageService {
             return messageDTO;
         }).toList();
     }
+
+    public ResponseEntity<String> deleteMessage(UUID id) {
+        Optional<Message> optionalMessage = messageRepository.findById(id);
+        if (optionalMessage.isEmpty()) {
+            return new ResponseEntity<>("Message not found", HttpStatus.NOT_FOUND);
+        }
+
+        messageRepository.delete(optionalMessage.get());
+        return new ResponseEntity<>("Message deleted", HttpStatus.OK);
+    }
 }
+

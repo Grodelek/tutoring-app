@@ -24,16 +24,28 @@ const UserForm: React.FC = () => {
     router.push("/login");
   };
 
+  const showAlert = (message: string) => {
+    if (Platform.OS === "web") {
+      alert(message);
+    } else {
+      Alert.alert("Error", message);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
+      if (username.length < 6) {
+        showAlert("Username must have at least 6 characters.");
+        return;
+      }
       const response = await postRegister({ email, username, password });
       setEmail("");
       setUsername("");
       setPassword("");
-      Alert.alert("Success", "User registered successfully!");
+      showAlert("Success, User registered successfully!");
       router.push("/login");
     } catch (error) {
-      Alert.alert("Error", `Error while registering user: ${error}`);
+      showAlert("Error while registering user");
     }
   };
 
