@@ -487,12 +487,14 @@ const ChatScreen: React.FC = () => {
               }
             }}
           />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendText}>Send</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
-            <Text style={styles.sendText}>Start Session</Text>
-          </TouchableOpacity>
+          <View style={styles.actionsRow}>
+            <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+              <Text style={styles.sendText}>Send</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
+              <Text style={styles.sendText}>Start Session</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -662,41 +664,53 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
+    alignItems: "flex-end",
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderTopWidth: 1,
-    marginBottom: 20,
+    paddingBottom: 12,
     borderTopColor: "#333",
     backgroundColor: "#1F1B24",
   },
   input: {
-    flex: 2,
+    flex: 1,
     backgroundColor: "#2a2a2a",
     color: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     fontSize: 16,
-    maxHeight: 50,
+    maxHeight: 80,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexShrink: 1,
+    flexWrap: "wrap",
+    marginLeft: 8,
   },
   sendButton: {
     backgroundColor: "#BB86FC",
-    paddingHorizontal: 16,
-    marginLeft: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
     justifyContent: "center",
+    marginBottom: 4,
   },
   sessionStartButton: {
     backgroundColor: "#BB86FC",
-    paddingHorizontal: 16,
-    marginLeft: 10,
+    paddingHorizontal: 12,
+    marginLeft: 6,
+    paddingVertical: 6,
     borderRadius: 20,
     justifyContent: "center",
+    marginBottom: 4,
   },
   sendText: {
     color: "#121212",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
