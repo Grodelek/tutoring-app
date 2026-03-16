@@ -16,7 +16,6 @@ import Checkbox from "expo-checkbox";
 
 const LoginForm: React.FC = () => {
     const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [checked, setChecked] = useState(false);
     const { setToken } = useAuth();
@@ -49,13 +48,13 @@ const LoginForm: React.FC = () => {
     };
 
     const handleSubmit = async () => {
-        if (!email || !username || !password) {
-            Alert.alert("Error", "Please fill in email, username and password.");
+        if (!email || !password) {
+            Alert.alert("Error", "Please fill in email and password.");
             return;
         }
 
         try {
-            const data = await postLogin({ email, username, password });
+            const data = await postLogin({ email, password });
             const token = data.token;
             const userId = data.userId;
 
@@ -66,7 +65,6 @@ const LoginForm: React.FC = () => {
 
             if (token) {
                 await AsyncStorage.setItem("jwtToken", token);
-                await AsyncStorage.setItem("username", username);
                 await AsyncStorage.setItem("userId", userId.toString());
 
                 setToken(token);
@@ -96,21 +94,6 @@ const LoginForm: React.FC = () => {
                     autoCapitalize="none"
                     placeholderTextColor="#aaa"
                     autoComplete="email"
-                    autoCorrect={false}
-                    onFocus={(e) => {
-                        if (Platform.OS === 'web') {
-                            e.currentTarget?.focus();
-                        }
-                    }}
-                />
-                <TextInput
-                    placeholder="Username"
-                    value={username}
-                    onChangeText={setUsername}
-                    style={styles.input}
-                    autoCapitalize="none"
-                    placeholderTextColor="#aaa"
-                    autoComplete="username"
                     autoCorrect={false}
                     onFocus={(e) => {
                         if (Platform.OS === 'web') {

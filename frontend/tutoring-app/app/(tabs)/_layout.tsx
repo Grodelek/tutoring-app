@@ -19,14 +19,14 @@ export default function GuestTabsLayout() {
       <Tabs.Screen
         name="login"
         options={{
-          title: 'Logowanie',
+          title: 'Login',
           tabBarIcon: ({ color }) => <IconSymbol name="person.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="register"
         options={{
-          title: 'Rejestracja',
+          title: 'Register',
           tabBarIcon: ({ color }) => <IconSymbol name="person.badge.plus.fill" color={color} />,
         }}
       />

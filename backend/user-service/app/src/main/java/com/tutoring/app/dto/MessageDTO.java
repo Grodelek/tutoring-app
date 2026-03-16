@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tutoring.app.domain.Message;
+import com.tutoring.app.domain.MessageType;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,9 @@ public class MessageDTO {
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private LocalDateTime timestamp;
   private UUID conversationId;
+  private MessageType messageType;
+  private UUID lessonId;
+  private LessonResponseDTO lesson;
 
   public MessageDTO(Message message) {
     this.id = message.getId();
@@ -30,5 +34,15 @@ public class MessageDTO {
     this.content = message.getContent();
     this.timestamp = message.getTimestamp();
     this.conversationId = message.getConversation().getId();
+    this.messageType = message.getMessageType();
+    if (message.getLesson() != null) {
+      this.lessonId = message.getLesson().getId();
+      this.lesson = new LessonResponseDTO();
+      this.lesson.setId(message.getLesson().getId());
+      this.lesson.setSubject(message.getLesson().getSubject());
+      this.lesson.setDescription(message.getLesson().getDescription());
+      this.lesson.setDurationTime(message.getLesson().getDurationTime());
+      this.lesson.setTutorId(message.getLesson().getTutor().getId());
+    }
   }
 }

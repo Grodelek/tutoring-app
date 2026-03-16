@@ -46,7 +46,7 @@ export default function AuthenticatedTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="messagesHistory"
+        name="conversations"
         options={{
           title: "Conversations",
           tabBarIcon: ({ color, size }) => (
