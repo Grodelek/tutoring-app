@@ -1,8 +1,10 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { Ionicons } from "@expo/vector-icons";
+import { Pressable } from "react-native";
 
 export default function AuthenticatedTabsLayout() {
+  const router = useRouter();
   return (
     <Tabs>
       <Tabs.Screen
@@ -12,11 +14,11 @@ export default function AuthenticatedTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="dashboard"
+        name="exploreTutors"
         options={{
-          title: "Dashboard",
+          title: "Explore",
           tabBarIcon: ({ color }) => (
-            <IconSymbol name="person.crop.circle" color={color} />
+            <IconSymbol name="magnifyingglass" color={color} />
           ),
         }}
       />
@@ -34,6 +36,14 @@ export default function AuthenticatedTabsLayout() {
         options={{
           title: "My Account",
           tabBarIcon: ({ color }) => <IconSymbol name="gear" color={color} />,
+          headerRight: () => (
+            <Pressable
+              style={{ marginRight: 16 }}
+              onPress={() => router.push("/settings/userSettings")}
+            >
+              <IconSymbol name="gear" color="white" size={24} />
+            </Pressable>
+          ),
         }}
       />
       <Tabs.Screen

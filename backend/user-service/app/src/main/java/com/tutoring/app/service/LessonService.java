@@ -107,4 +107,20 @@ public class LessonService {
             .build())
         .collect(Collectors.toList());
   }
+
+  public List<LessonWithTutorResponse> getLessonByTutor(UUID tutorId) {
+    List<Lesson> lessons = lessonRepository.getLessonByTutorId(tutorId);
+    return lessons.stream()
+            .map(lesson -> LessonWithTutorResponse.builder()
+                    .id(lesson.getId())
+                    .subject(lesson.getSubject())
+                    .description(lesson.getDescription())
+                    .durationTime(lesson.getDurationTime())
+                    .tutorId(lesson.getTutor().getId())
+                    .tutorEmail(lesson.getTutor().getEmail())
+                    .tutorUsername(lesson.getTutor().getUsername())
+                    .tutorPhotoPath(lesson.getTutor().getPhotoPath())
+                    .build())
+            .collect(Collectors.toList());
+  }
 }
