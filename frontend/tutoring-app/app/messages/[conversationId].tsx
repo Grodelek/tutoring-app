@@ -16,7 +16,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import {fetchLesson as fetchLessonFromApi, fetchLessonsFromApi} from "@/api/lessonApi";
+import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsFromApi} from "@/api/lessonApi";
 import {sendOffer} from "@/api/offerApi";
 
 interface Message {
@@ -217,7 +217,7 @@ const ChatScreen: React.FC = () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
     try {
-      const lessons = await fetchLessonsFromApi();
+      const lessons = await fetchLessonByTutor();
       setAvailableLessons(lessons);
     } catch (error: any) {
       console.error("Error fetching lessons:", error);

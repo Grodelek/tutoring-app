@@ -151,7 +151,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               Stats
             </Text>
             <View style={styles.statsRow}>
@@ -171,7 +171,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               Weekly progress
             </Text>
             <View style={styles.progressChart}>
@@ -199,7 +199,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               About me
             </Text>
             {isEditing ? (
@@ -251,7 +251,7 @@ const MyAccount: React.FC = () => {
                     }
                   }}
                 />
-                <Text style={[styles.charCount, { color: themeColors.secondaryText }]}> 
+                <Text style={[styles.charCount, { color: themeColors.secondaryText }]}>
                   {description.length}/160
                 </Text>
 

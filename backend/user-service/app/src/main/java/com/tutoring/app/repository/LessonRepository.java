@@ -12,5 +12,5 @@ import com.tutoring.app.domain.Lesson;
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, UUID> {
   public Lesson getLessonById(UUID id);
-  public List<Lesson> getLessonByTutor(User user);
+  public List<Lesson> getLessonByTutorId(UUID tutorId);
 }
