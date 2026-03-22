@@ -253,6 +253,35 @@ const ExploreTutors: React.FC = () => {
             >
               {currentCard.subject}
             </Text>
+            <View style={styles.badgeRow}>
+              {currentCard.tutorUserType && (
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {currentCard.tutorUserType === "STUDENT"
+                      ? "Student tutor"
+                      : "Professional tutor"}
+                  </Text>
+                </View>
+              )}
+              {currentCard.tutorTeachingStyle && (
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {currentCard.tutorTeachingStyle === "CASUAL"
+                      ? "Casual style"
+                      : currentCard.tutorTeachingStyle === "PROFESSIONAL"
+                      ? "Professional style"
+                      : "Flexible style"}
+                  </Text>
+                </View>
+              )}
+              {currentCard.tutorAvailability && (
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {currentCard.tutorAvailability}
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text
               style={[styles.cardDescription, { color: themeColors.text }]}
               numberOfLines={3}
@@ -365,6 +394,22 @@ const styles = StyleSheet.create({
   cardDescription: {
     fontSize: 14,
     marginBottom: 8,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 4,
+  },
+  metaBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#333",
+  },
+  metaBadgeText: {
+    color: "#eee",
+    fontSize: 11,
   },
   cardMetaRow: {
     flexDirection: "row",

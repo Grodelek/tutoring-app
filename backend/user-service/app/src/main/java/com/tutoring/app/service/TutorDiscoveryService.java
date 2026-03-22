@@ -1,7 +1,6 @@
 package com.tutoring.app.service;
 
-import com.tutoring.app.domain.Lesson;
-import com.tutoring.app.domain.User;
+import com.tutoring.app.domain.*;
 import com.tutoring.app.dto.TutorSearchRequestDTO;
 import com.tutoring.app.dto.TutorSearchResultDTO;
 import com.tutoring.app.repository.LessonRepository;
@@ -30,19 +29,13 @@ public class TutorDiscoveryService {
           request.getUserId(), lessons.size());
     }
 
-    // Filter only lessons that have a tutor and are available (if status is used)
     List<Lesson> filtered = lessons.stream()
         .filter(lesson -> lesson.getTutor() != null)
-        // do not return own offers
         .filter(lesson -> {
           if (request.getUserId() == null) {
             return true;
           }
           boolean isOwn = lesson.getTutor().getId().equals(request.getUserId());
-          if (isOwn) {
-            log.debug("Filtering out own lesson {} for tutor {}", lesson.getId(),
-                lesson.getTutor().getId());
-          }
           return !isOwn;
         })
         .filter(lesson -> request.getSubject() == null
@@ -51,12 +44,10 @@ public class TutorDiscoveryService {
         .filter(lesson -> matchesPriceRange(lesson, request.getMinPrice(), request.getMaxPrice()))
         .collect(Collectors.toList());
 
-    // Group by tutor and pick one representative lesson per tutor
     Map<UUID, Lesson> representativeLessonPerTutor = filtered.stream()
         .collect(Collectors.toMap(
             lesson -> lesson.getTutor().getId(),
             lesson -> lesson,
-            // if multiple lessons per tutor, keep the cheapest
             (l1, l2) -> {
               if (l1.getPrice() == null) return l2;
               if (l2.getPrice() == null) return l1;
@@ -64,7 +55,6 @@ public class TutorDiscoveryService {
             }
         ));
 
-    // Compute score per tutor
     return representativeLessonPerTutor.values().stream()
         .map(lesson -> toResultWithScore(lesson, request))
         .sorted(Comparator.comparingDouble(TutorSearchResultDTO::getRating).reversed())
@@ -87,36 +77,66 @@ public class TutorDiscoveryService {
 
     double score = 0.0;
 
-    // Subject match
     if (request.getSubject() != null && lesson.getSubject() != null
         && lesson.getSubject().equalsIgnoreCase(request.getSubject())) {
-      score += 50.0;
+      score += 20.0;
     }
 
-    // Price scoring: middle of range gets more points
+    double priceScore = 0.0;
     if (lesson.getPrice() != null && request.getMinPrice() != null && request.getMaxPrice() != null) {
       BigDecimal mid = request.getMinPrice()
-          .add(request.getMaxPrice())
-          .divide(BigDecimal.valueOf(2), BigDecimal.ROUND_HALF_UP);
+           .add(request.getMaxPrice())
+           .divide(BigDecimal.valueOf(2));
       BigDecimal diff = lesson.getPrice().subtract(mid).abs();
-      // linear penalty – closer to mid is better
-      score += Math.max(0, 30 - diff.doubleValue());
+      priceScore = Math.max(0, 25 - diff.doubleValue());
     } else if (lesson.getPrice() != null && (request.getMinPrice() != null || request.getMaxPrice() != null)) {
-      score += 10.0;
+      priceScore = 10.0;
     }
 
-    // Simple rating derived from user points (for now)
+    Integer priceImportance = request.getPriceImportance();
+    if (priceImportance == null) {
+      priceImportance = 3;
+    }
+    double priceWeightFactor = 0.5 + 0.5 * (Math.min(5, Math.max(1, priceImportance)) / 5.0);
+    score += priceScore * priceWeightFactor;
+
+    LessonType preferredStyle = request.getPreferredTeachingStyle();
+    LessonType tutorStyle = tutor.getTeachingStyle();
+    if (preferredStyle != null && tutorStyle != null) {
+      if (tutorStyle == preferredStyle) {
+        score += 20.0;
+      } else if (tutorStyle == LessonType.FLEXIBLE) {
+        score += 15.0;
+      }
+    }
+
+    UserType preferredUserType = request.getPreferredUserType();
+    UserType tutorType = tutor.getUserType();
+    if (preferredUserType != null && tutorType != null) {
+      if (tutorType == preferredUserType) {
+        score += 15.0;
+      }
+    }
+
+    Availability preferredAvailability = request.getPreferredAvailability();
+    Availability tutorAvailability = tutor.getAvailability();
+    if (preferredAvailability != null && tutorAvailability != null
+        && preferredAvailability == tutorAvailability) {
+      score += 15.0;
+    }
+
     int points = tutor.getPoints() != null ? tutor.getPoints() : 0;
-    double baseRating = Math.min(5.0, 1.0 + points / 100.0); // map points to ~1-5 stars
+    double baseRating = Math.min(5.0, 1.0 + points / 100.0);
 
     if (request.getMinRating() != null && baseRating < request.getMinRating()) {
-      // hard filter – if rating is below minRating, give very low score
       score -= 100;
     } else {
-      score += baseRating * 10;
+      score += baseRating * 2.0;
     }
 
-    // store score in rating field for now so we can sort and also show something meaningful
+    double randomFactor = 0.8 + Math.random() * 0.4;
+    double finalScore = score * randomFactor;
+
     return TutorSearchResultDTO
         .builder()
         .tutorId(tutor.getId())
@@ -126,9 +146,12 @@ public class TutorDiscoveryService {
         .lessonId(lesson.getId())
         .subject(lesson.getSubject())
         .lessonDescription(lesson.getDescription())
-        .durationTime(lesson.getDurationTime())
+        .durationTime(lesson.getDurationMinutes())
         .price(lesson.getPrice())
-        .rating(score)
+        .rating(finalScore)
+        .tutorTeachingStyle(tutor.getTeachingStyle())
+        .tutorUserType(tutor.getUserType())
+        .tutorAvailability(tutor.getAvailability())
         .build();
   }
 }

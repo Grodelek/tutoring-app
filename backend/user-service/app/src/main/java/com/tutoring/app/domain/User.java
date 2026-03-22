@@ -52,6 +52,18 @@ public class User {
   @JsonIgnore
   private List<Lesson> lessons = new ArrayList<>();
 
+  @Enumerated(EnumType.STRING)
+  private UserType userType;
+
+  @Enumerated(EnumType.STRING)
+  private ExperienceTime experienceTime;
+
+  @Enumerated(EnumType.STRING)
+  private Availability availability;
+
+  @Enumerated(EnumType.STRING)
+  private LessonType teachingStyle;
+
   public User(UUID id, String email, String username) {
     this.id = id;
     this.email = email;

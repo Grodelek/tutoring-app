@@ -1,5 +1,8 @@
 package com.tutoring.app.dto;
 
+import com.tutoring.app.domain.Availability;
+import com.tutoring.app.domain.LessonType;
+import com.tutoring.app.domain.UserType;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.Getter;
@@ -15,5 +18,10 @@ public class TutorSearchRequestDTO {
   private BigDecimal minPrice;
   private BigDecimal maxPrice;
   private Double minRating;
+
+  private Integer priceImportance;
+  private LessonType preferredTeachingStyle;
+  private UserType preferredUserType;
+  private Availability preferredAvailability;
 }
 
