@@ -39,5 +39,5 @@ public class Lesson {
 
   private BigDecimal price;
   private String description;
-  private int durationTime;
+
 }

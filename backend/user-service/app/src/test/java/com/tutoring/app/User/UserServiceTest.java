@@ -1,6 +1,7 @@
 package com.tutoring.app.User;
 
 import com.tutoring.app.domain.User;
+import com.tutoring.app.dto.UpdateUserProfileRequest;
 import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.service.UserService;
@@ -14,8 +15,7 @@ import static org.mockito.ArgumentMatchers.any;
 import java.util.Optional;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -55,5 +55,23 @@ public class UserServiceTest {
         assertEquals("abc@wp.pl", registered.getEmail());
         assertEquals("hashedPassword", registered.getPassword());
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void shouldUpdateUserProfile(){
+        UUID userId = UUID.randomUUID();
+        User mockUser = new User(userId, "abc@wp.pl", "Ala");
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest();
+        request.setUsername("Ola");
+        request.setDescription("New description");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
+        when(userRepository.save(mockUser)).thenReturn(mockUser);
+
+        User user = userService.updateUserProfile(userId, request);
+
+        assertEquals("Ola", user.getUsername());
+        assertEquals("New description", user.getDescription());
+        verify(userRepository).save(mockUser);
     }
 }

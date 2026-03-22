@@ -27,6 +27,10 @@ const ExplorePreferences: React.FC = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minRating, setMinRating] = useState("4");
+  const [priceImportance, setPriceImportance] = useState("3");
+  const [preferredTeachingStyle, setPreferredTeachingStyle] = useState<string | null>(null);
+  const [preferredUserType, setPreferredUserType] = useState<string | null>(null);
+  const [preferredAvailability, setPreferredAvailability] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,6 +43,10 @@ const ExplorePreferences: React.FC = () => {
         if (saved.minPrice != null) setMinPrice(String(saved.minPrice));
         if (saved.maxPrice != null) setMaxPrice(String(saved.maxPrice));
         if (saved.minRating != null) setMinRating(String(saved.minRating));
+        if (saved.priceImportance != null) setPriceImportance(String(saved.priceImportance));
+        if (saved.preferredTeachingStyle) setPreferredTeachingStyle(saved.preferredTeachingStyle);
+        if (saved.preferredUserType) setPreferredUserType(saved.preferredUserType);
+        if (saved.preferredAvailability) setPreferredAvailability(saved.preferredAvailability);
       } catch {
       }
     };
@@ -54,12 +62,16 @@ const ExplorePreferences: React.FC = () => {
   const handleStartSwiping = useCallback(async () => {
     try {
       setLoading(true);
-      const filters = {
+       const filters = {
         subject: subject.trim() || null,
         minPrice: minPrice ? Number(minPrice) : null,
         maxPrice: maxPrice ? Number(maxPrice) : null,
         minRating: minRating ? Number(minRating) : null,
-      };
+        priceImportance: priceImportance ? Number(priceImportance) : null,
+        preferredTeachingStyle,
+        preferredUserType,
+        preferredAvailability,
+       };
 
       await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(filters));
 
@@ -70,7 +82,7 @@ const ExplorePreferences: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [subject, minPrice, maxPrice, minRating, router]);
+  }, [subject, minPrice, maxPrice, minRating, priceImportance, preferredTeachingStyle, preferredUserType, preferredAvailability, router]);
 
   return (
     <View style={[styles.screen, { backgroundColor: themeColors.background }]}>
@@ -157,6 +169,142 @@ const ExplorePreferences: React.FC = () => {
           onChangeText={setMinRating}
         />
 
+        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Price importance (1-5)</Text>
+        <TextInput
+          keyboardType="numeric"
+          placeholder="3"
+          placeholderTextColor={themeColors.placeholder}
+          style={[
+            styles.input,
+            {
+              backgroundColor: themeColors.inputBackground,
+              borderColor: themeColors.inputBorder,
+              color: themeColors.text,
+            },
+          ]}
+          value={priceImportance}
+          onChangeText={setPriceImportance}
+        />
+
+        {/* Teaching style preference */}
+        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Teaching style</Text>
+        <View style={styles.chipRow}>
+          {[
+            { label: "Casual", value: "CASUAL" },
+            { label: "Professional", value: "PROFESSIONAL" },
+            { label: "Flexible", value: "FLEXIBLE" },
+          ].map((option) => {
+            const selected = preferredTeachingStyle === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() =>
+                  setPreferredTeachingStyle(selected ? null : option.value)
+                }
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBackground,
+                    borderColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: selected ? "#000" : themeColors.text,
+                    fontSize: 12,
+                  }}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Tutor type preference */}
+        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Tutor type</Text>
+        <View style={styles.chipRow}>
+          {[
+            { label: "Student", value: "STUDENT" },
+            { label: "Professional", value: "TUTOR" },
+          ].map((option) => {
+            const selected = preferredUserType === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() =>
+                  setPreferredUserType(selected ? null : option.value)
+                }
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBackground,
+                    borderColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: selected ? "#000" : themeColors.text,
+                    fontSize: 12,
+                  }}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Availability preference */}
+        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Availability</Text>
+        <View style={styles.chipRow}>
+          {[
+            { label: "Weekdays", value: "WEEKDAYS" },
+            { label: "Evenings", value: "EVENINGS" },
+            { label: "Weekends", value: "WEEKENDS" },
+          ].map((option) => {
+            const selected = preferredAvailability === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() =>
+                  setPreferredAvailability(selected ? null : option.value)
+                }
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBackground,
+                    borderColor: selected
+                      ? themeColors.tint
+                      : themeColors.inputBorder,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: selected ? "#000" : themeColors.text,
+                    fontSize: 12,
+                  }}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <Pressable
           style={[styles.searchButton, { backgroundColor: themeColors.tint }]}
           onPress={handleStartSwiping}
@@ -227,6 +375,18 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
     alignItems: "center",
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   searchButtonText: {
     color: "#000",
