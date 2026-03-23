@@ -37,18 +37,20 @@ public class LessonService {
         .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
 
     Lesson lesson = Lesson.builder()
-        .subject(lessonRequestDTO.getSubject())
-        .description(lessonRequestDTO.getDescription())
-        .tutor(tutor)
-        .student(tutor)
-        .durationMinutes(lessonRequestDTO.getDurationTime())
-        .build();
+            .student(tutor)
+            .tutor(tutor)
+            .subject(lessonRequestDTO.getSubject())
+            .durationTime(lessonRequestDTO.getDurationTime())
+            .price(lessonRequestDTO.getPrice())
+            .description(lessonRequestDTO.getDescription())
+            .build();
     Lesson savedLesson = lessonRepository.save(lesson);
     LessonResponseDTO response = new LessonResponseDTO();
     response.setId(savedLesson.getId());
     response.setSubject(savedLesson.getSubject());
     response.setDescription(savedLesson.getDescription());
-    response.setDurationTime(savedLesson.getDurationMinutes());
+    response.setDurationTime(savedLesson.getDurationTime());
+    response.setPrice(savedLesson.getPrice());
     response.setTutorId(savedLesson.getTutor().getId());
     return response;
   }
@@ -79,14 +81,14 @@ public class LessonService {
         .orElseThrow(
             () -> new EntityNotFoundException("Tutor with id " + lessonRequestDTO.getTutorId() + " not found"));
     lesson.setSubject(lessonRequestDTO.getSubject());
-    lesson.setDurationMinutes(lessonRequestDTO.getDurationTime());
+    lesson.setDurationTime(lessonRequestDTO.getDurationTime());
     lesson.setDescription(lessonRequestDTO.getDescription());
     lesson.setTutor(tutor);
     Lesson updated = lessonRepository.save(lesson);
     LessonResponseDTO responseDTO = new LessonResponseDTO();
     responseDTO.setId(updated.getId());
     responseDTO.setSubject(updated.getSubject());
-    responseDTO.setDurationTime(updated.getDurationMinutes());
+    responseDTO.setDurationTime(updated.getDurationTime());
     responseDTO.setDescription(updated.getDescription());
     responseDTO.setTutorId(updated.getTutor().getId());
     return ResponseEntity.ok(responseDTO);
@@ -99,7 +101,7 @@ public class LessonService {
             .id(lesson.getId())
             .subject(lesson.getSubject())
             .description(lesson.getDescription())
-            .durationTime(lesson.getDurationMinutes())
+            .durationTime(lesson.getDurationTime())
             .tutorId(lesson.getTutor().getId())
             .tutorEmail(lesson.getTutor().getEmail())
             .tutorUsername(lesson.getTutor().getUsername())
@@ -115,7 +117,7 @@ public class LessonService {
                     .id(lesson.getId())
                     .subject(lesson.getSubject())
                     .description(lesson.getDescription())
-                    .durationTime(lesson.getDurationMinutes())
+                    .durationTime(lesson.getDurationTime())
                     .tutorId(lesson.getTutor().getId())
                     .tutorEmail(lesson.getTutor().getEmail())
                     .tutorUsername(lesson.getTutor().getUsername())

@@ -146,7 +146,7 @@ public class TutorDiscoveryService {
         .lessonId(lesson.getId())
         .subject(lesson.getSubject())
         .lessonDescription(lesson.getDescription())
-        .durationTime(lesson.getDurationMinutes())
+        .durationTime(lesson.getDurationTime())
         .price(lesson.getPrice())
         .rating(finalScore)
         .tutorTeachingStyle(tutor.getTeachingStyle())

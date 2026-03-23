@@ -25,15 +25,15 @@ public class User {
   @Column(name = "email", unique = true, nullable = false)
   private String email;
 
+  @Column(name = "username", unique = true, nullable = false)
+  private String username;
+
   @Column(name = "password", nullable = false)
   @JsonIgnore
   private String password;
 
   @ElementCollection(fetch = FetchType.EAGER)
   private Set<String> roles = new HashSet<>();
-
-  @Column(name = "username", unique = true, nullable = false)
-  private String username;
 
   @Column(name = "is_confirmed")
   private boolean isConfirmed;
