@@ -41,7 +41,7 @@ public class MessageDTO {
       this.lesson.setId(message.getLesson().getId());
       this.lesson.setSubject(message.getLesson().getSubject());
       this.lesson.setDescription(message.getLesson().getDescription());
-      this.lesson.setDurationTime(message.getLesson().getDurationMinutes());
+      this.lesson.setDurationTime(message.getLesson().getDurationTime());
       this.lesson.setTutorId(message.getLesson().getTutor().getId());
     }
   }
