@@ -1,11 +1,9 @@
 package com.tutoring.app.service;
 
 import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
 import com.tutoring.app.dto.UpdateUserProfileRequest;
 import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.domain.User;
@@ -18,7 +16,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
@@ -74,9 +71,6 @@ public class UserService {
   @Transactional
   public ResponseEntity<Map<String, Object>> verify(UserDTO userDTO) {
     try {
-      Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(userDTO.getUsername(), userDTO.getPassword()));
-
       Optional<User> userOptional = userRepository.findByEmail(userDTO.getEmail());
       if (userOptional.isEmpty()) {
         Map<String, Object> errorResponse = new HashMap<>();
@@ -84,8 +78,10 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
       }
 
-      String token = jwtService.generateToken(userDTO.getUsername());
       User user = userOptional.get();
+      Authentication authentication = authenticationManager.authenticate(
+          new UsernamePasswordAuthenticationToken(user.getUsername(), userDTO.getPassword()));
+      String token = jwtService.generateToken(user.getUsername());
       UUID id = user.getId();
 
       Map<String, Object> response = new HashMap<>();

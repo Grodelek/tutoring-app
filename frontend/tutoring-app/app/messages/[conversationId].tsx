@@ -16,7 +16,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import {fetchLesson as fetchLessonFromApi, fetchLessonsFromApi} from "@/api/lessonApi";
+import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsFromApi} from "@/api/lessonApi";
 import {sendOffer} from "@/api/offerApi";
 
 interface Message {
@@ -39,15 +39,15 @@ type UUID = string;
 
 const getImageUri = (photoPath: string | null | undefined): string | null => {
   if (!photoPath) return null;
-  
+
   if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
     return photoPath;
   }
-  
+
   if (photoPath.startsWith("/")) {
     return `${BASE_URL}${photoPath}`;
   }
-  
+
   return photoPath;
 };
 
@@ -217,7 +217,7 @@ const ChatScreen: React.FC = () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
     try {
-      const lessons = await fetchLessonsFromApi();
+      const lessons = await fetchLessonByTutor();
       setAvailableLessons(lessons);
     } catch (error: any) {
       console.error("Error fetching lessons:", error);
@@ -237,6 +237,7 @@ const ChatScreen: React.FC = () => {
       let tutorId: string;
       let studentId: string;
       const selectedLesson = availableLessons.find(l => l.id === selectedLessonId);
+
       if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
         tutorId = selectedLesson.tutor.id;
         studentId = userId === tutorId ? receiverId.toString() : userId;
@@ -486,12 +487,14 @@ const ChatScreen: React.FC = () => {
               }
             }}
           />
-          <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-            <Text style={styles.sendText}>Send</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
-            <Text style={styles.sendText}>Start Session</Text>
-          </TouchableOpacity>
+          <View style={styles.actionsRow}>
+            <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+              <Text style={styles.sendText}>Send</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
+              <Text style={styles.sendText}>Start Session</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -661,41 +664,53 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
+    alignItems: "flex-end",
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderTopWidth: 1,
-    marginBottom: 20,
+    paddingBottom: 12,
     borderTopColor: "#333",
     backgroundColor: "#1F1B24",
   },
   input: {
-    flex: 2,
+    flex: 1,
     backgroundColor: "#2a2a2a",
     color: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     fontSize: 16,
-    maxHeight: 50,
+    maxHeight: 80,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flexShrink: 1,
+    flexWrap: "wrap",
+    marginLeft: 8,
   },
   sendButton: {
     backgroundColor: "#BB86FC",
-    paddingHorizontal: 16,
-    marginLeft: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
     justifyContent: "center",
+    marginBottom: 4,
   },
   sessionStartButton: {
     backgroundColor: "#BB86FC",
-    paddingHorizontal: 16,
-    marginLeft: 10,
+    paddingHorizontal: 12,
+    marginLeft: 6,
+    paddingVertical: 6,
     borderRadius: 20,
     justifyContent: "center",
+    marginBottom: 4,
   },
   sendText: {
     color: "#121212",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,

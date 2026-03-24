@@ -37,18 +37,20 @@ public class LessonService {
         .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
 
     Lesson lesson = Lesson.builder()
-        .subject(lessonRequestDTO.getSubject())
-        .description(lessonRequestDTO.getDescription())
-        .tutor(tutor)
-        .student(tutor)
-        .durationTime(lessonRequestDTO.getDurationTime())
-        .build();
+            .student(tutor)
+            .tutor(tutor)
+            .subject(lessonRequestDTO.getSubject())
+            .durationTime(lessonRequestDTO.getDurationTime())
+            .price(lessonRequestDTO.getPrice())
+            .description(lessonRequestDTO.getDescription())
+            .build();
     Lesson savedLesson = lessonRepository.save(lesson);
     LessonResponseDTO response = new LessonResponseDTO();
     response.setId(savedLesson.getId());
     response.setSubject(savedLesson.getSubject());
     response.setDescription(savedLesson.getDescription());
     response.setDurationTime(savedLesson.getDurationTime());
+    response.setPrice(savedLesson.getPrice());
     response.setTutorId(savedLesson.getTutor().getId());
     return response;
   }
@@ -106,5 +108,21 @@ public class LessonService {
             .tutorPhotoPath(lesson.getTutor().getPhotoPath())
             .build())
         .collect(Collectors.toList());
+  }
+
+  public List<LessonWithTutorResponse> getLessonByTutor(UUID tutorId) {
+    List<Lesson> lessons = lessonRepository.getLessonByTutorId(tutorId);
+    return lessons.stream()
+            .map(lesson -> LessonWithTutorResponse.builder()
+                    .id(lesson.getId())
+                    .subject(lesson.getSubject())
+                    .description(lesson.getDescription())
+                    .durationTime(lesson.getDurationTime())
+                    .tutorId(lesson.getTutor().getId())
+                    .tutorEmail(lesson.getTutor().getEmail())
+                    .tutorUsername(lesson.getTutor().getUsername())
+                    .tutorPhotoPath(lesson.getTutor().getPhotoPath())
+                    .build())
+            .collect(Collectors.toList());
   }
 }
