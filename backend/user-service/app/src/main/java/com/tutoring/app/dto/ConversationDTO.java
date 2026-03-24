@@ -1,5 +1,6 @@
 package com.tutoring.app.dto;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class ConversationDTO {
     private UUID user2Id;
     private String user1Username;
     private String user2Username;
+    private LocalDateTime lastMessageAt;
 
     public ConversationDTO(Conversation conversation) {
         this.id = conversation.getId();

@@ -4,14 +4,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.tutoring.app.domain.MessageType;
+import com.tutoring.app.repository.ConversationRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.domain.Conversation;
 import com.tutoring.app.domain.Message;
 import com.tutoring.app.domain.User;
-import com.tutoring.app.domain.MessageType;
-import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.repository.LessonRepository;
@@ -77,13 +78,15 @@ public class MessageService {
         message.setContent(aesUtils.encrypt(content));
         message.setConversation(conversation);
         message.setMessageType(messageType);
-        if (messageType == MessageType.INVITATION && lessonId != null) {
-            Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new IllegalArgumentException("Lesson not found"));
-            message.setLesson(lesson);
-        }
         messageRepository.save(message);
-        return new MessageDTO(message);
+        MessageDTO messageDTO = new MessageDTO();
+        messageDTO.setContent(content);
+        messageDTO.setId(message.getId());
+        messageDTO.setTimestamp(message.getTimestamp());
+        messageDTO.setReceiverId(message.getReceiver().getId());
+        messageDTO.setSenderId(message.getSender().getId());
+        messageDTO.setMessageType(message.getMessageType());
+        return messageDTO;
     }
 
     public List<MessageDTO> getMessages(UUID conversationId) {
@@ -106,10 +109,14 @@ public class MessageService {
         }).toList();
     }
 
-    public void deleteMessage(UUID id) {
-        if (!messageRepository.existsById(id)) {
-            throw new IllegalArgumentException("Message not found");
+    public ResponseEntity<String> deleteMessage(UUID id) {
+        Optional<Message> optionalMessage = messageRepository.findById(id);
+        if (optionalMessage.isEmpty()) {
+            return new ResponseEntity<>("Message not found", HttpStatus.NOT_FOUND);
         }
-        messageRepository.deleteById(id);
+
+        messageRepository.delete(optionalMessage.get());
+        return new ResponseEntity<>("Message deleted", HttpStatus.OK);
     }
 }
+

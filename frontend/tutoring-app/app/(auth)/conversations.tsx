@@ -21,6 +21,8 @@ interface Conversation {
     user2Id: string;
     user1Username?: string;
     user2Username?: string;
+    lastMessageSnippet?: string;
+    unreadCount?: number;
 }
 interface User {
     id: string;
@@ -59,15 +61,66 @@ const ConversationRow: React.FC<ConversationRowProps> = ({ item, userId, onPress
         }
     }, [item, userId]);
 
+    const unreadCount = item.unreadCount ?? 0;
+    const lastMessage = item.lastMessageSnippet ?? "Tap to continue your chat";
+
+    const formatLastMessageTime = () => {
+        if (!("lastMessageAt" in item) || !(item as any).lastMessageAt) return "";
+        const raw = (item as any).lastMessageAt as string;
+        if (!raw) return "";
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return "";
+
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMinutes < 1) return "just now";
+        if (diffMinutes < 60) return `${diffMinutes} min ago`;
+        if (diffHours < 24) return `${diffHours} h ago`;
+        if (diffDays === 1) return "yesterday";
+        if (diffDays < 7) return `${diffDays} days ago`;
+        return date.toLocaleDateString();
+    };
+
+    const lastMessageTimeLabel = formatLastMessageTime();
+
     return (
         <TouchableOpacity style={styles.conversationItem} onPress={onPress}>
             {receiver ? (
                 <>
-                    <Image source={{ uri: receiver.photoPath }} style={styles.avatar} />
-                    <Text style={styles.conversationId}>{receiver.username}</Text>
+                    <View style={styles.conversationHeaderRow}>
+                        <Image source={{ uri: receiver.photoPath }} style={styles.avatar} />
+                        <View style={styles.conversationTextWrapper}>
+                            <View style={styles.nameRow}>
+                                <Text style={styles.conversationName}>{receiver.username}</Text>
+                                {unreadCount > 0 && (
+                                    <View style={styles.unreadBadge}>
+                                        <Text style={styles.unreadBadgeText}>
+                                            {unreadCount > 9 ? "9+" : unreadCount}
+                                        </Text>
+                                    </View>
+                                )}
+                            </View>
+                            <Text
+                                style={styles.conversationSub}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                            >
+                                {lastMessage}
+                            </Text>
+                            {lastMessageTimeLabel ? (
+                                <Text style={styles.conversationMeta}>
+                                    Last message · {lastMessageTimeLabel}
+                                </Text>
+                            ) : null}
+                        </View>
+                    </View>
                 </>
             ) : (
-                <Text style={{ color: "#888" }}>Loading...</Text>
+                <Text style={styles.loadingText}>Loading...</Text>
             )}
         </TouchableOpacity>
     );
@@ -164,15 +217,24 @@ const ConversationHistoryScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Conversation History</Text>
+            <View style={styles.headerCard}>
+                <Text style={styles.header}>Your conversations</Text>
+                <Text style={styles.subHeader}>Jump back into chats with your tutors</Text>
+            </View>
             <FlatList<Conversation>
                 data={conversations}
                 keyExtractor={(item) => String(item.id)}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
+                contentContainerStyle={
+                    conversations.length === 0 ? styles.emptyListContainer : undefined
+                }
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>Empty conversation history</Text>
+                    <Text style={styles.emptyText}>
+                        You don't have any conversations yet.
+                        {"\n"}Find a tutor and start your first chat!
+                    </Text>
                 }
                 renderItem={({ item }) => (
                     <ConversationRow
@@ -187,28 +249,104 @@ const ConversationHistoryScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: "#121212" },
-    header: { fontSize: 24, fontWeight: "bold", marginBottom: 15, color: "#fff" },
-
-    conversationItem: {
-        backgroundColor: "#222",
-        padding: 15,
-        marginVertical: 8,
-        borderRadius: 10,
+    container: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 24,
+        backgroundColor: "#121212",
     },
-
+    headerCard: {
+        paddingVertical: 16,
+        paddingHorizontal: 14,
+        borderRadius: 18,
+        marginBottom: 16,
+        backgroundColor: "#181020",
+    },
+    header: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#ECEDEE",
+        marginBottom: 4,
+    },
+    subHeader: {
+        fontSize: 14,
+        color: "#9BA1A6",
+    },
+    conversationItem: {
+        backgroundColor: "#1e1e1e",
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        marginVertical: 8,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    conversationHeaderRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
     avatar: {
-        width: 45,
-        height: 45,
-        borderRadius: 45,
-        marginBottom: 15,
-        alignSelf: "flex-start",
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        marginRight: 12,
         borderWidth: 2,
         borderColor: "#c678dd",
     },
-
-    conversationId: { color: "#BB86FC", fontWeight: "900", marginBottom: 5 },
-    emptyText: { color: "#888", marginTop: 50, textAlign: "center" },
+    conversationTextWrapper: {
+        flex: 1,
+    },
+    nameRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    conversationName: {
+        color: "#ECEDEE",
+        fontWeight: "700",
+        fontSize: 16,
+        marginBottom: 2,
+    },
+    conversationSub: {
+        color: "#9BA1A6",
+        fontSize: 13,
+        marginTop: 1,
+    },
+    conversationMeta: {
+        color: "#555",
+        fontSize: 11,
+        marginTop: 2,
+    },
+    unreadBadge: {
+        marginLeft: 8,
+        backgroundColor: "#FF6B6B",
+        borderRadius: 999,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        minWidth: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    unreadBadgeText: {
+        color: "#fff",
+        fontSize: 11,
+        fontWeight: "700",
+    },
+    loadingText: {
+        color: "#888",
+    },
+    emptyListContainer: {
+        flexGrow: 1,
+        justifyContent: "center",
+    },
+    emptyText: {
+        color: "#888",
+        marginTop: 32,
+        textAlign: "center",
+        fontSize: 14,
+        lineHeight: 20,
+    },
 });
 
 export default ConversationHistoryScreen;
