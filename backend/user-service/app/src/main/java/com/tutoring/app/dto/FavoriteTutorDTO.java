@@ -21,5 +21,11 @@ public class FavoriteTutorDTO {
   private String tutorUsername;
   private String tutorPhotoPath;
   private String tutorDescription;
+
+  public FavoriteTutorDTO(UUID id, UUID studentId, UUID tutorId) {
+    this.id = id;
+    this.studentId = studentId;
+    this.tutorId = tutorId;
+  }
 }
 

@@ -67,7 +67,14 @@ public class UserController {
   @GetMapping("/me")
   public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserPrincipal userDetails) {
     User user = userService.findByUsername(userDetails.getUsername());
-    return ResponseEntity.ok(new UserResponseDTO(user));
+    return ResponseEntity.ok(new UserResponseDTO(
+        user.getId(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getPhotoPath(),
+        user.getPoints(),
+        user.getDescription()
+    ));
   }
 
   @PostMapping("/add")

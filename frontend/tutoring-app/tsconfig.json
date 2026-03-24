@@ -22,7 +22,8 @@
       "@assets/*": [
         "assets/*"
       ]
-    }
+    },
+    "jsx": "react"
   },
   "include": [
     "**/*.ts",

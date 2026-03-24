@@ -1,5 +1,6 @@
 package com.tutoring.app.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -72,13 +73,24 @@ public class MessageService {
                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+
         Message message = new Message();
         message.setSender(sender);
         message.setReceiver(receiver);
         message.setContent(aesUtils.encrypt(content));
         message.setConversation(conversation);
         message.setMessageType(messageType);
+
+        if(lessonId != null) {
+            Lesson lesson = lessonRepository.findById(lessonId)
+                    .orElseThrow(() -> new IllegalArgumentException("Lesson not found"));
+            message.setLesson(lesson);
+        }
+
+        conversation.setLastMessageAt(LocalDateTime.now());
+        conversationRepository.save(conversation);
         messageRepository.save(message);
+
         MessageDTO messageDTO = new MessageDTO();
         messageDTO.setContent(content);
         messageDTO.setId(message.getId());
