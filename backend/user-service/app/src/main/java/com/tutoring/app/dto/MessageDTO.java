@@ -5,8 +5,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tutoring.app.domain.Message;
 import com.tutoring.app.domain.MessageType;
-
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,7 +12,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class MessageDTO {
   private UUID id;
   private UUID senderId;
@@ -26,7 +23,6 @@ public class MessageDTO {
   private MessageType messageType;
   private UUID lessonId;
   private LessonResponseDTO lesson;
-
   public MessageDTO(Message message) {
     this.id = message.getId();
     this.senderId = message.getSender().getId();

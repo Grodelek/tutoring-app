@@ -49,7 +49,6 @@ public class UserServiceTest {
         when(passwordEncoder.encode("abc123")).thenReturn("hashedPassword");
         when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-
         User registered = userService.register(userDTO);
         assertEquals("Username", registered.getUsername());
         assertEquals("abc@wp.pl", registered.getEmail());

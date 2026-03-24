@@ -26,5 +26,6 @@ public class ConversationDTO {
         this.user2Id = conversation.getUser2() != null ? conversation.getUser2().getId() : null;
         this.user1Username = conversation.getUser1Username();
         this.user2Username = conversation.getUser2Username();
+        this.lastMessageAt = conversation.getLastMessageAt();
     }
 }
