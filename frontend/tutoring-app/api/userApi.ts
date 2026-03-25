@@ -7,13 +7,6 @@ export interface LoginResponse {
   token: string;
   userId: string;
 }
-
-export interface UserProfile {
-  id: string;
-  email: string;
-  username: string;
-}
-
 export interface Lesson {
   id: string;
   subject: string;

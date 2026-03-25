@@ -43,7 +43,6 @@ const CreatePost: React.FC = () => {
           description,
           price,
           durationTime: parseInt(durationTime, 10),
-          tutorId: storedUserId,
         }),
       });
       if (response.ok) {
@@ -51,7 +50,7 @@ const CreatePost: React.FC = () => {
         setDescription("");
         setDurationTime("");
         Alert.alert("Success", "Lesson added!");
-        router.push("/dashboard");
+        router.push("/exploreTutors");
       } else {
         const errorText = await response.text();
         Alert.alert("Error", `User registration failed: ${errorText}`);

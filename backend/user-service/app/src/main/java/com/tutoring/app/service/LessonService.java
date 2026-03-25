@@ -1,12 +1,17 @@
 package com.tutoring.app.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.tutoring.app.domain.UserPrincipal;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.tutoring.app.dto.LessonRequestDTO;
 import com.tutoring.app.dto.LessonResponseDTO;
@@ -18,10 +23,12 @@ import com.tutoring.app.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
+@Slf4j
 @Service
 public class LessonService {
   private final LessonRepository lessonRepository;
   private final UserRepository userRepository;
+  private static final Logger logger = LoggerFactory.getLogger(LessonService.class);
 
   public LessonService(LessonRepository lessonRepository, UserRepository userRepository) {
     this.lessonRepository = lessonRepository;
@@ -33,11 +40,16 @@ public class LessonService {
   }
 
   public LessonResponseDTO createLesson(LessonRequestDTO lessonRequestDTO) {
-    User tutor = userRepository.findById(lessonRequestDTO.getTutorId())
-        .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
+    Authentication loggedInUser = SecurityContextHolder.getContext().getAuthentication();
+    if (loggedInUser == null){
+      throw new EntityNotFoundException("User not found");
+    }
+    UserPrincipal principal = (UserPrincipal) loggedInUser.getPrincipal();
+    String loggedInUsername = principal.getUsername();
+    User tutor = userRepository.findByUsername(loggedInUsername)
+            .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
 
     Lesson lesson = Lesson.builder()
-            .student(tutor)
             .tutor(tutor)
             .subject(lessonRequestDTO.getSubject())
             .durationTime(lessonRequestDTO.getDurationTime())
@@ -72,14 +84,19 @@ public class LessonService {
   }
 
   public ResponseEntity<LessonResponseDTO> updateLesson(UUID id, LessonRequestDTO lessonRequestDTO) {
+    //TODO separate to new method (code duplication)
+    Authentication loggedInUser = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal principal = (UserPrincipal) loggedInUser.getPrincipal();
+    String loggedInUsername = principal.getUsername();
+    User tutor = userRepository.findByUsername(loggedInUsername)
+            .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
+
     Optional<Lesson> lessonOptional = lessonRepository.findById(id);
     if (lessonOptional.isEmpty()) {
       return ResponseEntity.notFound().build();
+
     }
     Lesson lesson = lessonOptional.get();
-    User tutor = userRepository.findById(lessonRequestDTO.getTutorId())
-        .orElseThrow(
-            () -> new EntityNotFoundException("Tutor with id " + lessonRequestDTO.getTutorId() + " not found"));
     lesson.setSubject(lessonRequestDTO.getSubject());
     lesson.setDurationTime(lessonRequestDTO.getDurationTime());
     lesson.setDescription(lessonRequestDTO.getDescription());
@@ -110,19 +127,4 @@ public class LessonService {
         .collect(Collectors.toList());
   }
 
-  public List<LessonWithTutorResponse> getLessonByTutor(UUID tutorId) {
-    List<Lesson> lessons = lessonRepository.getLessonByTutorId(tutorId);
-    return lessons.stream()
-            .map(lesson -> LessonWithTutorResponse.builder()
-                    .id(lesson.getId())
-                    .subject(lesson.getSubject())
-                    .description(lesson.getDescription())
-                    .durationTime(lesson.getDurationTime())
-                    .tutorId(lesson.getTutor().getId())
-                    .tutorEmail(lesson.getTutor().getEmail())
-                    .tutorUsername(lesson.getTutor().getUsername())
-                    .tutorPhotoPath(lesson.getTutor().getPhotoPath())
-                    .build())
-            .collect(Collectors.toList());
-  }
 }

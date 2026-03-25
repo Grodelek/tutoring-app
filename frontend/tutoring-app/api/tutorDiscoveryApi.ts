@@ -8,7 +8,7 @@ export interface TutorSearchRequest {
   minPrice?: number | null;
   maxPrice?: number | null;
   minRating?: number | null;
-  priceImportance?: number | null; // 1-5
+  priceImportance?: number | null;
   preferredTeachingStyle?: "CASUAL" | "PROFESSIONAL" | "FLEXIBLE" | null;
   preferredUserType?: "STUDENT" | "TUTOR" | null;
   preferredAvailability?: string | null;
@@ -26,7 +26,6 @@ export interface TutorCard {
   price: number | null;
   rating: number;
 
-   // Extra tutor metadata used to explain matches in UI
    tutorTeachingStyle?: "CASUAL" | "PROFESSIONAL" | "FLEXIBLE" | null;
    tutorUserType?: "STUDENT" | "TUTOR" | null;
    tutorAvailability?: string | null;

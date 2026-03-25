@@ -23,7 +23,7 @@ const UserProfile: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const navigateToDashboard = () => {
-    router.push("/dashboard");
+    router.push("/exploreTutors");
   };
 
   const onRefresh = async () => {

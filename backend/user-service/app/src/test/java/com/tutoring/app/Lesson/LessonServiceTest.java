@@ -6,8 +6,10 @@ import com.tutoring.app.dto.LessonResponseDTO;
 import com.tutoring.app.repository.LessonRepository;
 import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.service.LessonService;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.tutoring.app.domain.Lesson;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +34,7 @@ public class LessonServiceTest {
 
 
     @Test
-    public void shouldCreateLesson(){
+    public void shouldCreateLesson() {
         UUID tutorId = UUID.randomUUID();
         User user = new User();
         user.setId(tutorId);
@@ -45,7 +47,6 @@ public class LessonServiceTest {
                 .durationTime(60)
                 .price(BigDecimal.valueOf(50.00))
                 .description("Algebra lesson")
-                .tutorId(tutorId)
                 .build();
 
         Lesson lesson = new Lesson();
@@ -59,8 +60,19 @@ public class LessonServiceTest {
         when(lessonRepository.save(any())).thenReturn(lesson);
 
         LessonResponseDTO result = lessonService.createLesson(lessonRequestDTO);
-        assertNotNull(result);
+        assertAll(
+                () ->
+                {
+                    assertNotNull(result);
+                },
+                () -> {
+                    assertEquals(lessonRequestDTO.getSubject(), result.getSubject());
+                    assertEquals(lessonRequestDTO.getDescription(), result.getDescription());
+                    assertEquals(lessonRequestDTO.getDurationTime(), result.getDurationTime());
+                    assertEquals(lessonRequestDTO.getPrice(), result.getPrice());
+                });
     }
+
 
     @Test
     public void shouldUpdateLesson(){
@@ -88,7 +100,6 @@ public class LessonServiceTest {
                 .durationTime(45)
                 .price(BigDecimal.valueOf(60.00))
                 .description("Polish lesson")
-                .tutorId(userId)
                 .build();
 
         Lesson updatedLesson = Lesson.builder()
