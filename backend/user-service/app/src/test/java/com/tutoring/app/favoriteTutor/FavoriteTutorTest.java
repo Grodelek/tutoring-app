@@ -3,6 +3,7 @@ package com.tutoring.app.favoriteTutor;
 import com.tutoring.app.domain.FavoriteTutor;
 import com.tutoring.app.dto.FavoriteTutorDTO;
 import com.tutoring.app.repository.FavoriteTutorRepository;
+import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.service.FavoriteTutorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,14 +13,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.tutoring.app.domain.User;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FavoriteTutorTest {
     @Mock
     FavoriteTutorRepository favoriteTutorRepository;
+    @Mock
+    UserRepository userRepository;
     @InjectMocks
     FavoriteTutorService favoriteTutorService;
 
@@ -48,11 +54,11 @@ public class FavoriteTutorTest {
                 .tutor(tutor)
                 .build();
 
-        FavoriteTutorDTO favoriteTutorDTO = new FavoriteTutorDTO(favoriteTutor.getId(), studentId, tutorId);
-
-        when(favoriteTutorRepository.save(favoriteTutor)).thenReturn(favoriteTutor);
-        when(favoriteTutorService.addFavorite(studentId, tutorId)).thenReturn(favoriteTutorDTO);
-
+        when(favoriteTutorRepository.findByStudentIdAndTutorId(studentId, tutorId))
+                .thenReturn(Optional.empty());
+        when(userRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(userRepository.findById(tutorId)).thenReturn(Optional.of(tutor));
+        when(favoriteTutorRepository.save(any(FavoriteTutor.class))).thenReturn(favoriteTutor);
         FavoriteTutorDTO result = favoriteTutorService.addFavorite(studentId, tutorId);
 
         assertNotNull(result);
