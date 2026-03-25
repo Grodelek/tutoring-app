@@ -43,18 +43,11 @@ const MyAccount: React.FC = () => {
   };
 
   const fetchUser = async () => {
-      try {
-          const response = await getMyAccount();
-      if (response) {
-        const userData = await response.json();
-        setUser(userData);
-        setUsername(userData.username);
-        setDescription(userData.description || "");
-      } else {
-        Alert.alert("Error", `Failed to fetch user`);
-        await AsyncStorage.removeItem("jwtToken");
-        setToken(null);
-      }
+    try {
+      const userData = await getMyAccount();
+      setUser(userData);
+      setUsername(userData.username);
+      setDescription(userData.description || "");
     } catch (error: any) {
       if (error?.status === 401) {
         await AsyncStorage.removeItem("jwtToken");
@@ -151,7 +144,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               Stats
             </Text>
             <View style={styles.statsRow}>
@@ -171,7 +164,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               Weekly progress
             </Text>
             <View style={styles.progressChart}>
@@ -199,7 +192,7 @@ const MyAccount: React.FC = () => {
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}> 
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
               About me
             </Text>
             {isEditing ? (
@@ -251,7 +244,7 @@ const MyAccount: React.FC = () => {
                     }
                   }}
                 />
-                <Text style={[styles.charCount, { color: themeColors.secondaryText }]}> 
+                <Text style={[styles.charCount, { color: themeColors.secondaryText }]}>
                   {description.length}/160
                 </Text>
 

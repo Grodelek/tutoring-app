@@ -1,7 +1,6 @@
 import { BASE_URL } from "../config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Alert} from "react-native";
-import uuid from "expo-modules-core/src/uuid";
 
 export interface LoginResponse {
   token: string;
@@ -31,6 +30,15 @@ export interface AuthData {
   email: string;
   username?: string;
   password: string;
+}
+
+interface UserResponseDTO {
+    id: string;
+    username: string;
+    email: string;
+    photoPath?: string;
+    points: number;
+    description?: string;
 }
 
 export const postLogin = async (data: AuthData): Promise<LoginResponse> => {
@@ -72,23 +80,25 @@ export const postRegister = async (data: AuthData): Promise<User> => {
   return user;
 };
 
-export const getMyAccount = async (): Promise<Response> => {
+export const getMyAccount = async (): Promise<UserResponseDTO> => {
     const token = await AsyncStorage.getItem("jwtToken");
     if (!token) {
         Alert.alert("Error", "Missing token – user not logged in.");
         throw new Error("Missing token");
     }
+    console.log("token:", token);
     const response = await fetch(`${BASE_URL}/api/users/me`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
         },
     });
     if (!response.ok) {
         throw new Error("Login failed");
     }
-    return response;
+    return response.json();
 };
 
 export const saveToBackend = async (imageUrl: string) => {

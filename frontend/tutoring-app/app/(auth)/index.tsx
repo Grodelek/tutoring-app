@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
 
-export default function RedirectToExplore() {
+export default function RedirectToAuth() {
   return <Redirect href="/(auth)/exploreTutors" />;
 }
