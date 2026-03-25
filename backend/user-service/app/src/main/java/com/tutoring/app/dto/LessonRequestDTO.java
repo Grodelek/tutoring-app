@@ -25,5 +25,4 @@ public class LessonRequestDTO {
   @NotBlank
   @Size(min = 4)
   private String description;
-  private UUID tutorId;
 }
