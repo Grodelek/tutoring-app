@@ -16,8 +16,8 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const themeColors = useMemo(
-    () => (colorScheme === "dark" ? Colors.dark : Colors.light),
-    [colorScheme]
+      () => (colorScheme === "dark" ? Colors.dark : Colors.light),
+      [colorScheme]
   );
 
   const handleGetStarted = () => {
@@ -25,112 +25,112 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: themeColors.background },
-      ]}
-    >
-      <View style={styles.heroSection}>
-        <RNImage
-          source={require("@/assets/images/logo.png")}
-          style={styles.logo}
-        />
-        <Text style={[styles.heroTitle, { color: themeColors.text }]}>
-          Skill Swap
-        </Text>
-        <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>
-          Exchange knowledge with your community
-        </Text>
-      </View>
-
-      <View
-        style={[
-          styles.sectionCard,
-          { backgroundColor: themeColors.cardBackground },
-        ]}
+      <ScrollView
+          contentContainerStyle={[
+            styles.container,
+            { backgroundColor: themeColors.background },
+          ]}
       >
-        <Text style={[styles.featureTitle, { color: themeColors.text }]}>
-          How it works
-        </Text>
-        <View style={styles.stepContainer}>
-          <View style={styles.step}>
-            <View
-              style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
-            >
-              <Text style={styles.stepNumberText}>1</Text>
+        <View style={styles.heroSection}>
+          <RNImage
+              source={require("@/assets/images/logo.png")}
+              style={styles.logo}
+          />
+          <Text style={[styles.heroTitle, { color: themeColors.text }]}>
+            Skill Swap
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>
+            Exchange knowledge with your community
+          </Text>
+        </View>
+
+        <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: themeColors.cardBackground },
+            ]}
+        >
+          <Text style={[styles.featureTitle, { color: themeColors.text }]}>
+            How it works
+          </Text>
+          <View style={styles.stepContainer}>
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Share your skills
+              </Text>
             </View>
-            <Text style={[styles.stepText, { color: themeColors.text }]}>
-              Share your skills
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Find what you want to learn
+              </Text>
+            </View>
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Connect and learn together
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: themeColors.cardBackground },
+            ]}
+        >
+          <Text style={[styles.featureTitle, { color: themeColors.text }]}>
+            Why join us?
+          </Text>
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Learn anything
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              From coding to cooking, find someone who knows what you want to learn
             </Text>
           </View>
-          <View style={styles.step}>
-            <View
-              style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
-            >
-              <Text style={styles.stepNumberText}>2</Text>
-            </View>
-            <Text style={[styles.stepText, { color: themeColors.text }]}>
-              Find what you want to learn
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Teach your passion
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              Share your expertise and help others grow
             </Text>
           </View>
-          <View style={styles.step}>
-            <View
-              style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
-            >
-              <Text style={styles.stepNumberText}>3</Text>
-            </View>
-            <Text style={[styles.stepText, { color: themeColors.text }]}>
-              Connect and learn together
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Earn points
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              Build your reputation and track your progress
             </Text>
           </View>
         </View>
-      </View>
 
-      <View
-        style={[
-          styles.sectionCard,
-          { backgroundColor: themeColors.cardBackground },
-        ]}
-      >
-        <Text style={[styles.featureTitle, { color: themeColors.text }]}>
-          Why join us?
-        </Text>
-        <View style={styles.benefitItem}>
-          <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
-            Learn anything
-          </Text>
-          <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
-            From coding to cooking, find someone who knows what you want to learn
-          </Text>
-        </View>
-        <View style={styles.benefitItem}>
-          <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
-            Teach your passion
-          </Text>
-          <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
-            Share your expertise and help others grow
-          </Text>
-        </View>
-        <View style={styles.benefitItem}>
-          <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
-            Earn points
-          </Text>
-          <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
-            Build your reputation and track your progress
-          </Text>
-        </View>
-      </View>
+        <Pressable
+            style={[styles.ctaButton, { backgroundColor: themeColors.tint }]}
+            onPress={handleGetStarted}
+        >
+          <Text style={styles.ctaButtonText}>Get started</Text>
+        </Pressable>
 
-      <Pressable
-        style={[styles.ctaButton, { backgroundColor: themeColors.tint }]}
-        onPress={handleGetStarted}
-      >
-        <Text style={styles.ctaButtonText}>Get started</Text>
-      </Pressable>
-
-      <View style={styles.spacer} />
-    </ScrollView>
+        <View style={styles.spacer} />
+      </ScrollView>
   );
 }
 

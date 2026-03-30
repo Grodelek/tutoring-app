@@ -1,6 +1,6 @@
 import { BASE_URL } from "../config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {Alert} from "react-native";
+import { Alert } from "react-native";
 
 export interface LoginResponse {
   token: string;
@@ -23,13 +23,47 @@ export interface User {
   photoPath: string;
   description: string;
   lessons: Lesson[];
+  userType: string;
   confirmed: boolean;
 }
 
-export interface AuthData {
+export interface AuthDataRegister {
   email: string;
   username?: string;
   password: string;
+  userType: string;
+}
+
+export interface AuthData{
+    email: string;
+    username?: string;
+    password: string;
+}
+
+export type ExperienceTime =
+  | "BEGINNER"
+  | "INTERMEDIATE"
+  | "ADVANCED"
+  | "EXPERT";
+
+export type Availability =
+  | "WEEKDAYS_ONLY"
+  | "WEEKENDS_ONLY"
+  | "EVENING_ONLY"
+  | "FLEXIBLE";
+
+export type LessonType = "PROFESSIONAL" | "CASUAL" | "FLEXIBLE";
+
+export interface TutorInfoRequest {
+  experienceTime: ExperienceTime;
+  availability: Availability;
+  lessonType: LessonType;
+}
+
+export interface TutorInfoResponse {
+  experienceTime: ExperienceTime;
+  availability: Availability;
+  lessonType: LessonType;
 }
 
 interface UserResponseDTO {
@@ -39,6 +73,13 @@ interface UserResponseDTO {
     photoPath?: string;
     points: number;
     description?: string;
+}
+
+interface TutorResponse {
+    username: string;
+    experienceTime: string,
+    availability: string,
+    lessonType: string
 }
 
 export const postLogin = async (data: AuthData): Promise<LoginResponse> => {
@@ -58,7 +99,7 @@ export const postLogin = async (data: AuthData): Promise<LoginResponse> => {
   return response.json();
 };
 
-export const postRegister = async (data: AuthData): Promise<User> => {
+export const postRegister = async (data: AuthDataRegister): Promise<User> => {
   const response = await fetch(`${BASE_URL}/api/users/add`, {
     method: "POST",
     headers: {
@@ -68,6 +109,7 @@ export const postRegister = async (data: AuthData): Promise<User> => {
       email: data.email,
       username: data.username,
       password: data.password,
+      userType: data.userType
     }),
   });
 
@@ -92,7 +134,26 @@ export const getMyAccount = async (): Promise<UserResponseDTO> => {
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "true",
+        },
+    });
+    if (!response.ok) {
+        throw new Error("Login failed");
+    }
+    return response.json();
+};
+
+
+export const getTutorMyAccount = async (): Promise<TutorResponse> => {
+        const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+        Alert.alert("Error", "Missing token – user not logged in.");
+        throw new Error("Missing token");
+    }
+    const response = await fetch(`${BASE_URL}/api/users/tutor/me`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
         },
     });
     if (!response.ok) {
@@ -135,3 +196,34 @@ export const fetchUserById = async (id: any) => {
     return response.json();
 };
 
+export const addMoreInfo = async (
+  data: TutorInfoRequest,
+): Promise<TutorInfoResponse> => {
+  const token = await AsyncStorage.getItem("jwtToken");
+  console.log("Token in addMoreInfo:", token);
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE_URL}/api/users/tutor/info`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      experienceTime: data.experienceTime,
+      availability: data.availability,
+      lessonType: data.lessonType,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.log("addMoreInfo error status:", response.status, "body:", errorText);
+    throw new Error(errorText || `Failed to save tutor info (${response.status})`);
+  }
+
+  return response.json();
+};

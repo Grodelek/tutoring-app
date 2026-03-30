@@ -101,7 +101,7 @@ public class TutorDiscoveryService {
     score += priceScore * priceWeightFactor;
 
     LessonType preferredStyle = request.getPreferredTeachingStyle();
-    LessonType tutorStyle = tutor.getTeachingStyle();
+    LessonType tutorStyle = tutor.getLessonType();
     if (preferredStyle != null && tutorStyle != null) {
       if (tutorStyle == preferredStyle) {
         score += 20.0;
@@ -149,7 +149,7 @@ public class TutorDiscoveryService {
         .durationTime(lesson.getDurationTime())
         .price(lesson.getPrice())
         .rating(finalScore)
-        .tutorTeachingStyle(tutor.getTeachingStyle())
+        .tutorTeachingStyle(tutor.getLessonType())
         .tutorUserType(tutor.getUserType())
         .tutorAvailability(tutor.getAvailability())
         .build();

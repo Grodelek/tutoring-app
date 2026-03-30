@@ -53,6 +53,7 @@ public class User {
   private List<Lesson> lessons = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
+  @Column(name = "user_type", nullable = false)
   private UserType userType;
 
   @Enumerated(EnumType.STRING)
@@ -62,7 +63,7 @@ public class User {
   private Availability availability;
 
   @Enumerated(EnumType.STRING)
-  private LessonType teachingStyle;
+  private LessonType lessonType;
 
   public User(UUID id, String email, String username) {
     this.id = id;
