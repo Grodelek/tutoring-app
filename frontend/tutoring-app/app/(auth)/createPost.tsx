@@ -10,9 +10,7 @@ import {
   TouchableOpacity,
   Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import { BASE_URL } from "@/config/baseUrl";
+import { handleSubmitPost } from "@/api/postApi";
 
 const CreatePost: React.FC = () => {
   const [subject, setSubject] = useState("");
@@ -20,45 +18,15 @@ const CreatePost: React.FC = () => {
   const [durationTime, setDurationTime] = useState("");
   const [price, setPrice] = useState("");
 
-  const handleSubmit = async () => {
-    try {
-      const storedUserId = await AsyncStorage.getItem("userId");
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!storedUserId) {
-        Alert.alert("Error", "User ID not found in storage");
-        return;
-      }
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const response = await fetch(`${BASE_URL}/api/lessons/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          subject,
-          description,
-          price,
-          durationTime: parseInt(durationTime, 10),
-        }),
-      });
-      if (response.ok) {
-        setSubject("");
-        setDescription("");
-        setDurationTime("");
-        Alert.alert("Success", "Lesson added!");
-        router.push("/exploreTutors");
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `User registration failed: ${errorText}`);
-      }
-    } catch (error) {
-      Alert.alert("Error", `Problem with connection: ${error}`);
+
+  const handleSubmit= async () => {
+    if(!subject.trim() || !description.trim() || !durationTime.trim() || !price.trim()) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
     }
-  };
+    await handleSubmitPost({ subject, description, price, durationTime });
+  }
+
 
   const containerContent = (
     <View style={styles.container}>

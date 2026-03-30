@@ -3,6 +3,8 @@ package com.tutoring.app.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.tutoring.app.dto.*;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.tutoring.app.dto.UpdateUserProfileRequest;
-import com.tutoring.app.dto.UserDTO;
-import com.tutoring.app.dto.UserResponseDTO;
 import com.tutoring.app.domain.User;
 import com.tutoring.app.domain.UserPrincipal;
 import com.tutoring.app.service.UserService;
@@ -92,5 +91,15 @@ public class UserController {
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
+  }
+
+  @PutMapping("/tutor/info")
+  public TutorInfoResponse addTutorInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestBody TutorInfoDTO tutorInfoDTO) throws Exception {
+    return userService.addTutorInfo(tutorInfoDTO, userDetails);
+  }
+
+  @GetMapping("/tutor/me")
+  public TutorWithInfoResponse getTutorInfo(@AuthenticationPrincipal UserDetails userDetails){
+    return userService.getTutorInfo(userDetails);
   }
 }
