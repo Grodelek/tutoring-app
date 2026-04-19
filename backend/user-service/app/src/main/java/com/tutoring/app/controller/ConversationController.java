@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.tutoring.app.dto.ConversationDTO;
 import com.tutoring.app.domain.Conversation;
@@ -15,6 +16,7 @@ import com.tutoring.app.repository.ConversationRepository.ConversationLastMessag
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:8081"})
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @RequestMapping("/api/conversation")
 public class ConversationController {
 

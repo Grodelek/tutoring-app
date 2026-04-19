@@ -4,11 +4,13 @@ import com.tutoring.app.domain.TutorOffer;
 import com.tutoring.app.dto.TutorOfferDTO;
 import com.tutoring.app.service.ConversationService;
 import com.tutoring.app.service.TutorOfferService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
 @RestController
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @RequestMapping("/api/offer")
 public class TutorOfferController {
     private final ConversationService conversationService;

@@ -64,8 +64,8 @@ const ExploreTutors: React.FC = () => {
           }
         }
         const filters = parsed ?? {};
-        const results = await searchTutors(filters);
-        setCards(results ?? []);
+          const results = await searchTutors(filters);
+          setCards(results ?? []);
         setCurrentIndex(0);
         swipe.setValue({ x: 0, y: 0 });
       } catch (e: any) {
