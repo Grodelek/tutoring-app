@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import com.tutoring.app.dto.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,6 +45,7 @@ public class UserController {
   }
 
   @GetMapping("/all")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public List<User> getUsers() {
     return userService.getUsers();
   }
@@ -54,11 +56,13 @@ public class UserController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public ResponseEntity<String> delete(@PathVariable UUID id) {
     return userService.delete(id);
   }
@@ -83,6 +87,7 @@ public class UserController {
   }
 
   @PutMapping("/photo/upload")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public ResponseEntity<String> uploadPhoto(@RequestBody String photoUrl, @AuthenticationPrincipal UserPrincipal userDetails){
     try {
       User user = userService.findByUsername(userDetails.getUsername());

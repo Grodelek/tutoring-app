@@ -32,7 +32,7 @@ export interface TutorCard {
 }
 
 export const searchTutors = async (
-  filters: TutorSearchRequest
+    filters: TutorSearchRequest
 ): Promise<TutorCard[]> => {
   const token = await AsyncStorage.getItem("jwtToken");
   const userId = await AsyncStorage.getItem("userId");

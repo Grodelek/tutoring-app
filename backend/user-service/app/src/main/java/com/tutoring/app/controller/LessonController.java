@@ -7,6 +7,7 @@ import com.tutoring.app.domain.User;
 import com.tutoring.app.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,13 +29,14 @@ import com.tutoring.app.service.LessonService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/lessons")
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @CrossOrigin(origins = {
         "http://localhost:8081",
         "http://localhost:19006",
         "http://localhost:19000",
         "exp://192.168.2.167:8081"
 })
+@RequestMapping("/api/lessons")
 class LessonController {
   private final UserService userService;
   private LessonService lessonService;
