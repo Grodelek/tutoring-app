@@ -1,21 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  Image,
-  Alert,
-  Dimensions,
-} from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { searchTutors, TutorCard } from "@/api/tutorDiscoveryApi";
-import { addFavoriteTutor } from "@/api/favoriteApi";
-import { sendMessageToTutor } from "@/api/lessonApi";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
+import {ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View,} from "react-native";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {useColorScheme} from "@/hooks/useColorScheme";
+import {Colors} from "@/constants/Colors";
+import {fetchTutors, TutorCard} from "@/api/tutorDiscoveryApi";
+import {addFavoriteTutor} from "@/api/favoriteApi";
+import {sendMessageToTutor} from "@/api/lessonApi";
 import SwipeCards from "@components/SwipeCards";
+
 const ExploreTutors: React.FC = () => {
   const colorScheme = useColorScheme();
   const themeColors = useMemo(
@@ -32,25 +24,24 @@ const ExploreTutors: React.FC = () => {
 
   const [cards, setCards] = useState<TutorCard[]>([]);
   const [loading, setLoading] = useState(false);
-
   const currentCard = cards[0];
+
+  const filters = useMemo(() => {
+    const raw = rawFilters;
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }, [rawFilters]);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        const raw = rawFilters;
-        let parsed: any = null;
-        if (raw) {
-          try {
-            parsed = JSON.parse(raw);
-          } catch {
-            parsed = null;
-          }
-        }
-        const filters = parsed ?? {};
-          const results = await searchTutors(filters);
-          setCards(results ?? []);
+        const results = await fetchTutors(filters);
+        setCards(results ?? []);
       } catch (e: any) {
         Alert.alert("Error", e.message || "Failed to load tutors");
       } finally {
@@ -58,19 +49,22 @@ const ExploreTutors: React.FC = () => {
       }
     };
     load();
-  }, [rawFilters]);
+  }, [filters]);
 
   const handleSkip = useCallback(() => {
     setCards((prev) => prev.slice(1));
   }, []);
 
   const handleConnect = useCallback(async () => {
-    const card = cards[0];
+    const card = currentCard;
     if (!card) return;
-
     try {
       await addFavoriteTutor(card.tutorId);
       const conversation = await sendMessageToTutor(card.tutorId);
+
+      const refreshed = await fetchTutors(filters);
+      const nextCards = (refreshed ?? []).filter((c) => c.tutorId !== card.tutorId);
+      setCards(nextCards);
 
       router.push({
         pathname: "/messages/[conversationId]",
@@ -81,10 +75,10 @@ const ExploreTutors: React.FC = () => {
       });
     } catch (e: any) {
       Alert.alert("Error", e.message || "Failed to connect with tutor");
-    } finally {
+      // If something failed, at least remove the card from the current deck.
       setCards((prev) => prev.slice(1));
     }
-  }, [cards, router]);
+  }, [currentCard, router, filters]);
 
   const headerRight = (
     <Pressable
@@ -229,27 +223,27 @@ const ExploreTutors: React.FC = () => {
                     </View>
                   )}
               />
-              <View style={styles.actionsRow}>
-                <Pressable
-                    style={[styles.skipButton, { borderColor: themeColors.tint }]}
-                    onPress={handleSkip}
-                >
-                  <Text style={[styles.skipButtonText, { color: themeColors.tint }]}>
-                    Skip
-                  </Text>
-                </Pressable>
-                <Pressable
-                    style={[
-                      styles.connectButton,
-                      { backgroundColor: themeColors.tint },
-                    ]}
-                    onPress={handleConnect}
-                >
-                  <Text style={styles.connectButtonText}>Connect</Text>
-                </Pressable>
-              </View>
             </>
         )}
+      </View>
+      <View style={styles.actionsRow}>
+        <Pressable
+            style={[styles.skipButton, { borderColor: themeColors.tint }]}
+            onPress={handleSkip}
+        >
+          <Text style={[styles.skipButtonText, { color: themeColors.tint }]}>
+            Skip
+          </Text>
+        </Pressable>
+        <Pressable
+            style={[
+              styles.connectButton,
+              { backgroundColor: themeColors.tint },
+            ]}
+            onPress={handleConnect}
+        >
+          <Text style={styles.connectButtonText}>Connect</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -350,6 +344,7 @@ const styles = StyleSheet.create({
   },
   connectButton: {
     flex: 1,
+    borderWidth: 1,
     borderRadius: 999,
     alignItems: "center",
     paddingVertical: 10,

@@ -7,11 +7,13 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.tutoring.app.domain.UserPrincipal;
 
 @RestController
 @RequestMapping("/api/tutors/discover")
@@ -24,8 +26,9 @@ public class TutorDiscoveryController {
 
   @PostMapping("/search")
   public ResponseEntity<List<TutorSearchResultDTO>> searchTutors(
+      @AuthenticationPrincipal UserPrincipal userDetails,
       @RequestBody TutorSearchRequestDTO request) {
-    return ResponseEntity.ok(tutorDiscoveryService.searchTutors(request));
+    return ResponseEntity.ok(tutorDiscoveryService.searchTutors(userDetails, request));
   }
 }
 

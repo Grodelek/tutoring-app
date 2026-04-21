@@ -1,7 +1,5 @@
 import {BASE_URL} from "@/config/baseUrl";
-import {Alert} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useState} from "react";
 
 export interface User {
     id: string;
@@ -84,6 +82,31 @@ export const fetchLessonByTutor = async(): Promise<Lesson[]> => {
     }
     const response = await fetch(
         `${BASE_URL}/api/lessons/by-tutor`,
+        {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    );
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+            `Failed to fetch lessons: ${response.status} - ${errorText}`
+        )
+    }
+    return response.json();
+};
+
+export const fetchLessonsByTutorId = async (tutorId: string): Promise<Lesson[]> => {
+    const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+        throw new Error("Authentication token not found");
+    }
+    const response = await fetch(
+        `${BASE_URL}/api/lessons/by-tutor/${tutorId}`,
         {
             method: "GET",
             headers: {
