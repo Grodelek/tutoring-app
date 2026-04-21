@@ -3,6 +3,9 @@ package com.tutoring.app.controller;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.tutoring.app.dto.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import com.tutoring.app.dto.UpdateUserProfileRequest;
-import com.tutoring.app.dto.UserDTO;
-import com.tutoring.app.dto.UserResponseDTO;
 import com.tutoring.app.domain.User;
 import com.tutoring.app.domain.UserPrincipal;
 import com.tutoring.app.service.UserService;
@@ -45,6 +45,7 @@ public class UserController {
   }
 
   @GetMapping("/all")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public List<User> getUsers() {
     return userService.getUsers();
   }
@@ -55,11 +56,13 @@ public class UserController {
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public ResponseEntity<String> delete(@PathVariable UUID id) {
     return userService.delete(id);
   }
@@ -67,7 +70,14 @@ public class UserController {
   @GetMapping("/me")
   public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserPrincipal userDetails) {
     User user = userService.findByUsername(userDetails.getUsername());
-    return ResponseEntity.ok(new UserResponseDTO(user));
+    return ResponseEntity.ok(new UserResponseDTO(
+        user.getId(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getPhotoPath(),
+        user.getPoints(),
+        user.getDescription()
+    ));
   }
 
   @PostMapping("/add")
@@ -77,6 +87,7 @@ public class UserController {
   }
 
   @PutMapping("/photo/upload")
+  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
   public ResponseEntity<String> uploadPhoto(@RequestBody String photoUrl, @AuthenticationPrincipal UserPrincipal userDetails){
     try {
       User user = userService.findByUsername(userDetails.getUsername());
@@ -85,5 +96,15 @@ public class UserController {
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
     }
+  }
+
+  @PutMapping("/tutor/info")
+  public TutorInfoResponse addTutorInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestBody TutorInfoDTO tutorInfoDTO) throws Exception {
+    return userService.addTutorInfo(tutorInfoDTO, userDetails);
+  }
+
+  @GetMapping("/tutor/me")
+  public TutorWithInfoResponse getTutorInfo(@AuthenticationPrincipal UserDetails userDetails){
+    return userService.getTutorInfo(userDetails);
   }
 }

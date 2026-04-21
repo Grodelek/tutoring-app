@@ -7,6 +7,7 @@ import com.tutoring.app.dto.ConversationDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.tutoring.app.dto.MessageDTO;
 import com.tutoring.app.dto.MessageRequest;
@@ -16,7 +17,7 @@ import com.tutoring.app.service.MessageService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/messages")
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @CrossOrigin(origins = {
         "http://localhost:8081",
         "http://localhost:19006",
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
         "exp://192.168.2.167:8081"
 })
 @RequiredArgsConstructor
+@RequestMapping("/api/messages")
 public class MessageController {
   private final MessageService messageService;
   private final ConversationService conversationService;

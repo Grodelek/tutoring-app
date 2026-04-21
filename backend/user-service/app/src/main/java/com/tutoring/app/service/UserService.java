@@ -1,11 +1,11 @@
 package com.tutoring.app.service;
 
 import java.util.*;
+import com.tutoring.app.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import com.tutoring.app.dto.UpdateUserProfileRequest;
-import com.tutoring.app.dto.UserDTO;
 import com.tutoring.app.domain.User;
 import com.tutoring.app.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +18,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import static com.tutoring.app.domain.UserType.STUDENT;
+
 @Service
 public class UserService {
   private final UserRepository userRepository;
@@ -27,7 +29,7 @@ public class UserService {
   private final Logger logger = LoggerFactory.getLogger(UserService.class);
 
   public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-      AuthenticationManager authenticationManager, JWTService jwtService) {
+                     AuthenticationManager authenticationManager, JWTService jwtService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.authenticationManager = authenticationManager;
@@ -45,14 +47,15 @@ public class UserService {
     Set<String> roles = new HashSet<>();
     roles.add("ROLE_USER");
     User user = User.builder()
-        .username(userDTO.getUsername())
-        .email(userDTO.getEmail())
+            .username(userDTO.getUsername())
+            .email(userDTO.getEmail())
             .points(0)
-        .password(passwordEncoder.encode(userDTO.getPassword()))
-        .roles(roles)
-        .photoPath(
-            "https://ui-avatars.com/api/?name=" + userDTO.getUsername() + "&background=random&bold=true&color=fff")
-        .build();
+            .password(passwordEncoder.encode(userDTO.getPassword()))
+            .roles(roles)
+            .userType(userDTO.getUserType())
+            .photoPath(
+                    "https://ui-avatars.com/api/?name=" + userDTO.getUsername() + "&background=random&bold=true&color=fff")
+            .build();
     userRepository.save(user);
     return user;
   }
@@ -80,7 +83,7 @@ public class UserService {
 
       User user = userOptional.get();
       Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(user.getUsername(), userDTO.getPassword()));
+              new UsernamePasswordAuthenticationToken(user.getUsername(), userDTO.getPassword()));
       String token = jwtService.generateToken(user.getUsername());
       UUID id = user.getId();
 
@@ -109,26 +112,53 @@ public class UserService {
 
   public User findByUsername(String username) {
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
   }
 
   public User updateUserProfile(UUID id, UpdateUserProfileRequest request) {
     User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with this id" + id));
-      if (request.getUsername() != null) {
-        user.setUsername(request.getUsername());
-      }
-      if (request.getDescription() != null) {
-        user.setDescription(request.getDescription());
-      }
-      return userRepository.save(user);
+    if (request.getUsername() != null) {
+      user.setUsername(request.getUsername());
     }
+    if (request.getDescription() != null) {
+      user.setDescription(request.getDescription());
+    }
+    return userRepository.save(user);
+  }
 
   public void uploadPhoto(String photoUrl, User user) {
-    if(photoUrl == null || photoUrl.isEmpty()) {
+    if (photoUrl == null || photoUrl.isEmpty()) {
       throw new IllegalArgumentException("Invalid photoUrl");
     }
     String photoUrlTrimmed = photoUrl.substring(1, photoUrl.length() - 1);
     user.setPhotoPath(photoUrlTrimmed);
     userRepository.save(user);
+  }
+
+  public TutorInfoResponse addTutorInfo(TutorInfoDTO tutorInfoDTO, UserDetails userDetails) throws Exception {
+    User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+    user.setAvailability(tutorInfoDTO.getAvailability());
+    user.setExperienceTime(tutorInfoDTO.getExperienceTime());
+    user.setLessonType(tutorInfoDTO.getLessonType());
+    if (user.getUserType().equals(STUDENT)){
+      throw new Exception("Only tutors can add tutor info");
+    }
+    userRepository.save(user);
+      return TutorInfoResponse.builder()
+                      .availability(user.getAvailability())
+                      .experienceTime(user.getExperienceTime())
+                      .lessonType(user.getLessonType())
+                      .build();
+  }
+
+  public TutorWithInfoResponse getTutorInfo(UserDetails userDetails){
+    User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow();
+    TutorWithInfoResponse response = TutorWithInfoResponse.builder()
+            .username(user.getUsername())
+            .experienceTime(user.getExperienceTime())
+            .availability(user.getAvailability())
+            .lessonType(user.getLessonType())
+            .build();
+    return response;
   }
 }

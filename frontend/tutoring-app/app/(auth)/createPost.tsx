@@ -4,15 +4,11 @@ import {
   TextInput,
   Alert,
   Keyboard,
-  TouchableWithoutFeedback,
   StyleSheet,
   Text,
   TouchableOpacity,
-  Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import { BASE_URL } from "@/config/baseUrl";
+import { handleSubmitPost } from "@/api/postApi";
 
 const CreatePost: React.FC = () => {
   const [subject, setSubject] = useState("");
@@ -20,46 +16,13 @@ const CreatePost: React.FC = () => {
   const [durationTime, setDurationTime] = useState("");
   const [price, setPrice] = useState("");
 
-  const handleSubmit = async () => {
-    try {
-      const storedUserId = await AsyncStorage.getItem("userId");
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!storedUserId) {
-        Alert.alert("Error", "User ID not found in storage");
-        return;
-      }
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const response = await fetch(`${BASE_URL}/api/lessons/add`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          subject,
-          description,
-          price,
-          durationTime: parseInt(durationTime, 10),
-          tutorId: storedUserId,
-        }),
-      });
-      if (response.ok) {
-        setSubject("");
-        setDescription("");
-        setDurationTime("");
-        Alert.alert("Success", "Lesson added!");
-        router.push("/dashboard");
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `User registration failed: ${errorText}`);
-      }
-    } catch (error) {
-      Alert.alert("Error", `Problem with connection: ${error}`);
+  const handleSubmit= async () => {
+    if(!subject.trim() || !description.trim() || !durationTime.trim() || !price.trim()) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
     }
-  };
+    await handleSubmitPost({ subject, description, price, durationTime });
+  }
 
   const containerContent = (
     <View style={styles.container}>
@@ -68,7 +31,6 @@ const CreatePost: React.FC = () => {
         <Text style={styles.subtitle}>
           Share what you teach and help students reach their goals.
         </Text>
-
         <Text style={styles.label}>Subject</Text>
         <TextInput
           placeholder="e.g. Math, English, Guitar"
@@ -79,13 +41,7 @@ const CreatePost: React.FC = () => {
           autoCapitalize="none"
           autoComplete="off"
           autoCorrect={false}
-          onFocus={(e) => {
-            if (Platform.OS === "web") {
-              e.currentTarget?.focus();
-            }
-          }}
         />
-
         <Text style={styles.label}>Description</Text>
         <TextInput
           placeholder="Describe your lesson, level, and what students can expect."
@@ -98,13 +54,7 @@ const CreatePost: React.FC = () => {
           autoCorrect={false}
           multiline
           numberOfLines={3}
-          onFocus={(e) => {
-            if (Platform.OS === "web") {
-              e.currentTarget?.focus();
-            }
-          }}
         />
-
         <View style={styles.row}>
           <View style={styles.rowItem}>
             <Text style={styles.label}>Duration</Text>
@@ -120,11 +70,6 @@ const CreatePost: React.FC = () => {
               autoComplete="off"
               autoCorrect={false}
               onSubmitEditing={() => Keyboard.dismiss()}
-              onFocus={(e) => {
-                if (Platform.OS === "web") {
-                  e.currentTarget?.focus();
-                }
-              }}
             />
             <Text style={styles.helperText}>minutes</Text>
           </View>
@@ -142,16 +87,10 @@ const CreatePost: React.FC = () => {
               autoComplete="off"
               autoCorrect={false}
               onSubmitEditing={() => Keyboard.dismiss()}
-              onFocus={(e) => {
-                if (Platform.OS === "web") {
-                  e.currentTarget?.focus();
-                }
-              }}
             />
             <Text style={styles.helperText}>per lesson</Text>
           </View>
         </View>
-
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Publish offer</Text>
         </TouchableOpacity>
@@ -159,13 +98,7 @@ const CreatePost: React.FC = () => {
     </View>
   );
 
-  return Platform.OS === 'web' ? (
-    containerContent
-  ) : (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      {containerContent}
-    </TouchableWithoutFeedback>
-  );
+  return containerContent;
 };
 
 const styles = StyleSheet.create({

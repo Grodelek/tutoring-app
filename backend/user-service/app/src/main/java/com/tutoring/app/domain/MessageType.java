@@ -4,4 +4,3 @@ public enum MessageType {
     TEXT,
     INVITATION
 }
-

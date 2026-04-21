@@ -25,15 +25,15 @@ public class User {
   @Column(name = "email", unique = true, nullable = false)
   private String email;
 
+  @Column(name = "username", unique = true, nullable = false)
+  private String username;
+
   @Column(name = "password", nullable = false)
   @JsonIgnore
   private String password;
 
   @ElementCollection(fetch = FetchType.EAGER)
   private Set<String> roles = new HashSet<>();
-
-  @Column(name = "username", unique = true, nullable = false)
-  private String username;
 
   @Column(name = "is_confirmed")
   private boolean isConfirmed;
@@ -51,6 +51,19 @@ public class User {
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
   @JsonIgnore
   private List<Lesson> lessons = new ArrayList<>();
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "user_type", nullable = false)
+  private UserType userType;
+
+  @Enumerated(EnumType.STRING)
+  private ExperienceTime experienceTime;
+
+  @Enumerated(EnumType.STRING)
+  private Availability availability;
+
+  @Enumerated(EnumType.STRING)
+  private LessonType lessonType;
 
   public User(UUID id, String email, String username) {
     this.id = id;

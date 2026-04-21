@@ -47,12 +47,25 @@ const LoginForm: React.FC = () => {
         }
     };
 
+    const navigateAfterLogin = async () => {
+        try {
+            const userType = await AsyncStorage.getItem("userType");
+            const isTutorProfileCompleted = await AsyncStorage.getItem("hasCompletedTutorProfile");
+            if (userType === "TUTOR" && isTutorProfileCompleted !== "true") {
+                router.push("/registerForm/moreInfoAboutTutor");
+            } else {
+                router.replace("/(auth)");
+            }
+        } catch (e) {
+            router.replace("/(auth)");
+        }
+    };
+
     const handleSubmit = async () => {
         if (!email || !password) {
             Alert.alert("Error", "Please fill in email and password.");
             return;
         }
-
         try {
             const data = await postLogin({ email, password });
             const token = data.token;
@@ -60,7 +73,6 @@ const LoginForm: React.FC = () => {
 
             if (checked) {
                 await AsyncStorage.setItem("savedEmail", email);
-                await AsyncStorage.setItem("password", password);
             }
 
             if (token) {
@@ -68,8 +80,10 @@ const LoginForm: React.FC = () => {
                 await AsyncStorage.setItem("userId", userId.toString());
 
                 setToken(token);
+                await navigateAfterLogin();
+
                 Alert.alert("Success", "User logged in successfully!");
-                router.replace("/(auth)");
+                await navigateAfterLogin();
             } else {
                 Alert.alert("Error", "Token not found in response");
             }
@@ -138,56 +152,71 @@ const LoginForm: React.FC = () => {
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
-        backgroundColor: "#202040",
+        backgroundColor: "#0B0C10",
         alignItems: "center",
         justifyContent: "center",
+        paddingHorizontal: 20,
     },
     formContainer: {
-        backgroundColor: "#202040",
-        padding: 30,
-        borderRadius: 10,
-        width: "85%",
+        width: "100%",
+        maxWidth: 420,
+        backgroundColor: "#111827",
+        paddingVertical: 28,
+        paddingHorizontal: 24,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 6,
     },
     title: {
         fontSize: 24,
-        color: "white",
-        fontWeight: "bold",
+        color: "#F9FAFB",
+        fontWeight: "700",
         textAlign: "center",
-        marginBottom: 30,
+        marginBottom: 24,
+        letterSpacing: 1.5,
     },
     input: {
-        backgroundColor: "#2f2f4f",
-        padding: 12,
-        marginBottom: 15,
-        borderRadius: 6,
-        color: "#fff",
+        backgroundColor: "#1F2937",
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        marginBottom: 14,
+        borderRadius: 10,
+        color: "#F9FAFB",
+        fontSize: 14,
+        borderWidth: 1,
+        borderColor: "#111827",
     },
     rememberMeContainer: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 15,
+        marginBottom: 18,
     },
     rememberMeText: {
-        color: "#ccc",
-        marginLeft: 5,
+        color: "#9CA3AF",
+        marginLeft: 8,
+        fontSize: 13,
     },
     loginButton: {
-        backgroundColor: "#4a63f0",
+        backgroundColor: "#2563EB",
         paddingVertical: 12,
-        borderRadius: 8,
+        borderRadius: 10,
         alignItems: "center",
-        marginBottom: 15,
+        marginBottom: 12,
     },
     loginButtonText: {
-        color: "#fff",
-        fontWeight: "bold",
-        fontSize: 16,
+        color: "#F9FAFB",
+        fontWeight: "700",
+        fontSize: 15,
     },
     forgotPassword: {
-        color: "#b29eff",
+        color: "#9CA3AF",
         textAlign: "center",
         marginTop: 10,
+        fontSize: 13,
     },
 });
 
 export default LoginForm;
+

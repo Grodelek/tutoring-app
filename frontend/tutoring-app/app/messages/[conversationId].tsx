@@ -16,8 +16,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import {fetchLesson as fetchLessonFromApi, fetchLessonsFromApi} from "@/api/lessonApi";
-import {sendOffer} from "@/api/offerApi";
+import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsFromApi} from "@/api/lessonApi";
+import styles from "./styles/styles";
 
 interface Message {
   id: string;
@@ -217,7 +217,7 @@ const ChatScreen: React.FC = () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
     try {
-      const lessons = await fetchLessonsFromApi();
+      const lessons = await fetchLessonByTutor();
       setAvailableLessons(lessons);
     } catch (error: any) {
       console.error("Error fetching lessons:", error);
@@ -232,7 +232,6 @@ const ChatScreen: React.FC = () => {
       Alert.alert("Error", "Missing required data");
       return;
     }
-
     try {
       let tutorId: string;
       let studentId: string;
@@ -245,7 +244,6 @@ const ChatScreen: React.FC = () => {
         tutorId = userId;
         studentId = receiverId.toString();
       }
-
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) {
         Alert.alert("Error", "Missing token – user not logged in.");
@@ -279,6 +277,22 @@ const ChatScreen: React.FC = () => {
     } catch (error: any) {
       Alert.alert("Error", `Cannot send invitation: ${error.message}`);
     }
+  };
+
+  const handleDeleteSessionoffer = async () => {
+    const token = await AsyncStorage.getItem("jwtToken");
+    if (!token) {
+      Alert.alert("Error", "Missing token – user not logged in.");
+      return;
+    }
+    //TODO add endpoint on backend
+    const res = await fetch(`${BASE_URL}/api/messages/offer`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      }
+    });
   };
 
   if (!userId || !conversationId) {
@@ -346,7 +360,7 @@ const ChatScreen: React.FC = () => {
           ListEmptyComponent={
             !loading ? (
               <View style={{ padding: 20, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>Brak wiadomości</Text>
+                <Text style={{ color: "#888" }}>No messages</Text>
               </View>
             ) : null
           }
@@ -437,7 +451,16 @@ const ChatScreen: React.FC = () => {
                           }
                         }}
                       >
-                        <Text style={styles.declineButtonText}>Remove invitation</Text>
+                        <Text style={styles.declineButtonText} onPress={async() => {
+                          Alert.alert(
+                              "Confirm Deletion",
+                              "You sure you want to delete session?",
+                              [
+                                { text: "Cancel", style: "cancel" },
+                                { text: "Delete", style: "destructive", onPress: () => handleDeleteSessionoffer() },
+                              ]
+                          );
+                        }}>Remove invitation</Text>
                       </TouchableOpacity>
                     )}
                     <Text style={styles.timestamp}>
@@ -577,300 +600,4 @@ const ChatScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#121212",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#121212",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginTop: 30,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-    backgroundColor: "#1F1B24",
-  },
-  backButton: {
-    paddingRight: 12,
-  },
-  backText: {
-    color: "#BB86FC",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  receiverInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: "#BB86FC",
-  },
-  receiverName: {
-    color: "#E0E0E0",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  avatarPlaceholder: {
-    backgroundColor: "#555",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarPlaceholderText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  message: {
-    marginVertical: 5,
-    padding: 12,
-    borderRadius: 16,
-    maxWidth: "75%",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  myMessage: {
-    backgroundColor: "#4CAF50",
-    alignSelf: "flex-end",
-  },
-  otherMessage: {
-    backgroundColor: "#333",
-    alignSelf: "flex-start",
-  },
-  messageText: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  timestamp: {
-    fontSize: 10,
-    color: "#ccc",
-    marginTop: 6,
-    alignSelf: "flex-end",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    paddingBottom: 12,
-    borderTopColor: "#333",
-    backgroundColor: "#1F1B24",
-  },
-  input: {
-    flex: 1,
-    backgroundColor: "#2a2a2a",
-    color: "#fff",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    fontSize: 16,
-    maxHeight: 80,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    flexShrink: 1,
-    flexWrap: "wrap",
-    marginLeft: 8,
-  },
-  sendButton: {
-    backgroundColor: "#BB86FC",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  sessionStartButton: {
-    backgroundColor: "#BB86FC",
-    paddingHorizontal: 12,
-    marginLeft: 6,
-    paddingVertical: 6,
-    borderRadius: 20,
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  sendText: {
-    color: "#121212",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#1F1B24",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "80%",
-    padding: 20,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-    paddingBottom: 15,
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  closeButton: {
-    padding: 5,
-  },
-  closeButtonText: {
-    color: "#BB86FC",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  modalCenter: {
-    padding: 40,
-    alignItems: "center",
-  },
-  modalText: {
-    color: "#888",
-    fontSize: 16,
-  },
-  lessonModalItem: {
-    backgroundColor: "#333",
-    padding: 15,
-    marginVertical: 8,
-    borderRadius: 10,
-  },
-  lessonModalContent: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  lessonModalAvatar: {
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    marginRight: 15,
-    borderWidth: 1,
-    borderColor: "#BB86FC",
-  },
-  lessonModalInfo: {
-    flex: 1,
-  },
-  lessonModalSubject: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  lessonModalTutor: {
-    color: "#BB86FC",
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  lessonModalDescription: {
-    color: "#ccc",
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  lessonModalDuration: {
-    color: "#888",
-    fontSize: 12,
-  },
-  invitationCard: {
-    backgroundColor: '#E6F0FF',
-    borderColor: '#2196F3',
-    borderWidth: 2.5,
-    borderRadius: 18,
-    padding: 20,
-    marginVertical: 14,
-    marginHorizontal: 8,
-    shadowColor: '#2196F3',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-    minWidth: '70%',
-    maxWidth: '90%',
-    alignSelf: 'center',
-  },
-  invitationHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  invitationEmoji: {
-    fontSize: 28,
-    marginRight: 10,
-  },
-  invitationTitleStrong: {
-    fontWeight: 'bold',
-    fontSize: 20,
-    color: '#1565C0',
-  },
-  invitationDetailsBlock: {
-    flexDirection: 'row',
-    marginBottom: 6,
-    alignItems: 'center',
-  },
-  invitationDetailStrong: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#0D47A1',
-    marginRight: 6,
-    minWidth: 90,
-  },
-  invitationDetailValue: {
-    fontSize: 15,
-    color: '#333',
-    flexShrink: 1,
-  },
-  acceptButton: {
-    backgroundColor: '#BB86FC',
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  acceptButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-  declineButton: {
-    backgroundColor: '#FF5252',
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 10,
-    marginBottom: 6,
-  },
-  declineButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 15,
-  },
-});
-
 export default ChatScreen;

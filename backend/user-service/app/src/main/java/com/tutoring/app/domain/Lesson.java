@@ -31,13 +31,13 @@ public class Lesson {
 
   private String subject;
 
-  private LocalDateTime startTime;
-  private int durationMinutes;
+  private int durationTime;
 
   @Enumerated(EnumType.STRING)
   private LessonStatus status;
 
   private BigDecimal price;
+
   private String description;
-  private int durationTime;
+
 }

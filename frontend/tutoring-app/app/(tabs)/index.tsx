@@ -1,107 +1,224 @@
-import { Image } from "expo-image";
-import { StyleSheet } from "react-native";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import React, { useMemo } from "react";
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Pressable,
+  Image as RNImage,
+} from "react-native";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const router = useRouter();
+
+  const themeColors = useMemo(
+      () => (colorScheme === "dark" ? Colors.dark : Colors.light),
+      [colorScheme]
+  );
+
+  const handleGetStarted = () => {
+    router.push("/register");
+  };
+
   return (
-    <ParallaxScrollView
-      headerHeight={250}
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/logo.png")}
-          style={styles.fullImage}
-          contentFit="cover"
-        />
-      }
-    >
-      <ThemedView style={styles.headerContainer}>
-        <ThemedText type="title" style={styles.mainTitle}>
-          Welcome to Skill Swap!
-        </ThemedText>
-        <ThemedText style={styles.subtitle}>
-          The platform connecting learners with teachers in your community
-        </ThemedText>
-      </ThemedView>
+      <ScrollView
+          contentContainerStyle={[
+            styles.container,
+            { backgroundColor: themeColors.background },
+          ]}
+      >
+        <View style={styles.heroSection}>
+          <RNImage
+              source={require("@/assets/images/logo.png")}
+              style={styles.logo}
+          />
+          <Text style={[styles.heroTitle, { color: themeColors.text }]}>
+            Skill Swap
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>
+            Exchange knowledge with your community
+          </Text>
+        </View>
 
-      <ThemedView style={styles.featureCard}>
-        <ThemedText type="subtitle" style={styles.featureTitle}>
-          🔁 Exchange Your Skills
-        </ThemedText>
-        <ThemedText>
-          Have something to teach? Find people who can teach you what you need
-          to learn. Our skill-for-skill system makes knowledge your currency.
-        </ThemedText>
-      </ThemedView>
+        <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: themeColors.cardBackground },
+            ]}
+        >
+          <Text style={[styles.featureTitle, { color: themeColors.text }]}>
+            How it works
+          </Text>
+          <View style={styles.stepContainer}>
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Share your skills
+              </Text>
+            </View>
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Find what you want to learn
+              </Text>
+            </View>
+            <View style={styles.step}>
+              <View
+                  style={[styles.stepNumber, { backgroundColor: themeColors.tint }]}
+              >
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <Text style={[styles.stepText, { color: themeColors.text }]}>
+                Connect and learn together
+              </Text>
+            </View>
+          </View>
+        </View>
 
-      <ThemedView style={styles.featureCard}>
-        <ThemedText type="subtitle" style={styles.featureTitle}>
-          📈 Track Your Progress
-        </ThemedText>
-        <ThemedText>
-          Our system monitors your learning and teaching journey. Visualize your
-          development over time and identify areas for improvement.
-        </ThemedText>
-      </ThemedView>
+        <View
+            style={[
+              styles.sectionCard,
+              { backgroundColor: themeColors.cardBackground },
+            ]}
+        >
+          <Text style={[styles.featureTitle, { color: themeColors.text }]}>
+            Why join us?
+          </Text>
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Learn anything
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              From coding to cooking, find someone who knows what you want to learn
+            </Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Teach your passion
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              Share your expertise and help others grow
+            </Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <Text style={[styles.benefitTitle, { color: themeColors.text }]}>
+              Earn points
+            </Text>
+            <Text style={[styles.benefitText, { color: themeColors.secondaryText }]}>
+              Build your reputation and track your progress
+            </Text>
+          </View>
+        </View>
 
-      <ThemedView style={styles.featureCard}>
-        <ThemedText type="subtitle" style={styles.featureTitle}>
-          👥 Build Your Learning Network
-        </ThemedText>
-        <ThemedText>
-          Connect with passionate learners in your area. Skill sharing isnt just
-          about knowledge exchange - its about building meaningful
-          relationships.
-        </ThemedText>
-      </ThemedView>
+        <Pressable
+            style={[styles.ctaButton, { backgroundColor: themeColors.tint }]}
+            onPress={handleGetStarted}
+        >
+          <Text style={styles.ctaButtonText}>Get started</Text>
+        </Pressable>
 
-      <ThemedView style={styles.ctaContainer}>
-        <ThemedText style={styles.ctaText}>
-          Ready to begin your journey? Create your profile now and discover the
-          world of skill sharing in your community!
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View style={styles.spacer} />
+      </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    marginBottom: 24,
+  container: {
+    padding: 20,
+    flexGrow: 1,
+  },
+  heroSection: {
     alignItems: "center",
+    marginBottom: 32,
+    marginTop: 12,
   },
-  mainTitle: {
-    textAlign: "center",
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+    borderRadius: 16,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: "700",
     marginBottom: 8,
-  },
-  subtitle: {
     textAlign: "center",
-    opacity: 0.8,
   },
-  featureCard: {
-    backgroundColor: "rgba(161, 206, 220, 0.2)",
-    borderRadius: 12,
+  heroSubtitle: {
+    fontSize: 16,
+    textAlign: "center",
+  },
+  sectionCard: {
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
   featureTitle: {
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16,
   },
-  ctaContainer: {
-    marginTop: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#A1CEDC",
-    borderRadius: 12,
+  stepContainer: {
+    gap: 12,
   },
-  ctaText: {
-    textAlign: "center",
-    fontStyle: "italic",
+  step: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  fullImage: {
-    width: "100%",
-    height: "100%",
+  stepNumber: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepNumberText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  stepText: {
+    fontSize: 15,
+    flex: 1,
+  },
+  benefitItem: {
+    marginBottom: 14,
+  },
+  benefitTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  benefitText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  ctaButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  ctaButtonText: {
+    color: "#000",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  spacer: {
+    height: 40,
   },
 });

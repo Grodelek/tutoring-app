@@ -12,8 +12,8 @@ import {
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BASE_URL } from "@/config/baseUrl";
 import {fetchUserById, Lesson} from "@/api/userApi";
+import {fetchConversationHistoryFromApi} from "@/api/conversationApi";
 
 interface Conversation {
     id: string | number;
@@ -133,30 +133,13 @@ const ConversationHistoryScreen: React.FC = () => {
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
-    const fetchConversationHistory = async (uid: string, token: string) => {
+    const fetchConversationHistory = async (uid: string) => {
         try {
-            const response = await fetch(
-                `${BASE_URL}/api/conversation/${uid}`,
-                {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                },
-            );
-
-            if (response.ok) {
-                const data = await response.json();
+            const response = await fetchConversationHistoryFromApi(uid);
+            if (response) {
+                const data = await response;
                 const conversations = Array.isArray(data) ? data : [];
                 setConversations(conversations);
-            } else {
-                const errorText = await response.text();
-                console.error(`Failed to fetch conversations: ${response.status} - ${errorText}`);
-                setConversations([]);
-                if (response.status !== 404) {
-                    Alert.alert("Error", `Cannot fetch conversations: ${errorText}`);
-                }
             }
         } catch (error: any) {
             console.error("Error fetching conversations:", error);
@@ -174,7 +157,7 @@ const ConversationHistoryScreen: React.FC = () => {
 
             if (uid && token) {
                 setUserId(uid);
-                await fetchConversationHistory(uid, token);
+                await fetchConversationHistory(uid);
             }
         } catch (error: any) {
             Alert.alert("Error", `Problem loading user data: ${error.message}`);
@@ -192,7 +175,7 @@ const ConversationHistoryScreen: React.FC = () => {
         if (userId) {
             const token = await AsyncStorage.getItem("jwtToken");
             if (token) {
-                await fetchConversationHistory(userId, token);
+                await fetchConversationHistory(userId);
             }
         }
         setRefreshing(false);
