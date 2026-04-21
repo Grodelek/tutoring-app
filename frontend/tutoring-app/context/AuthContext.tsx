@@ -14,7 +14,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Załaduj token z AsyncStorage przy starcie aplikacji
     AsyncStorage.getItem('jwtToken').then(savedToken => {
       if (savedToken) {
         setToken(savedToken);

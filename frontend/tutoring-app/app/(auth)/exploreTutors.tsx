@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,6 @@ import {
   ActivityIndicator,
   Image,
   Alert,
-  Animated,
-  PanResponder,
   Dimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -17,9 +15,7 @@ import { Colors } from "@/constants/Colors";
 import { searchTutors, TutorCard } from "@/api/tutorDiscoveryApi";
 import { addFavoriteTutor } from "@/api/favoriteApi";
 import { sendMessageToTutor } from "@/api/lessonApi";
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
-
+import SwipeCards from "@components/SwipeCards";
 const ExploreTutors: React.FC = () => {
   const colorScheme = useColorScheme();
   const themeColors = useMemo(
@@ -35,20 +31,9 @@ const ExploreTutors: React.FC = () => {
     : (rawFiltersParam as string | undefined);
 
   const [cards, setCards] = useState<TutorCard[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const currentCard = cards[currentIndex];
-
-  const swipe = useRef(new Animated.ValueXY()).current;
-  const swipeThreshold = SCREEN_WIDTH * 0.25;
-
-  const resetPosition = () => {
-    Animated.spring(swipe, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: true,
-    }).start();
-  };
+  const currentCard = cards[0];
 
   useEffect(() => {
     const load = async () => {
@@ -66,8 +51,6 @@ const ExploreTutors: React.FC = () => {
         const filters = parsed ?? {};
           const results = await searchTutors(filters);
           setCards(results ?? []);
-        setCurrentIndex(0);
-        swipe.setValue({ x: 0, y: 0 });
       } catch (e: any) {
         Alert.alert("Error", e.message || "Failed to load tutors");
       } finally {
@@ -75,18 +58,14 @@ const ExploreTutors: React.FC = () => {
       }
     };
     load();
-  }, [rawFilters, swipe]);
+  }, [rawFilters]);
 
   const handleSkip = useCallback(() => {
-    setCurrentIndex((prev) => {
-      const next = prev + 1;
-      return next > cards.length ? cards.length : next;
-    });
-    resetPosition();
-  }, [cards.length]);
+    setCards((prev) => prev.slice(1));
+  }, []);
 
   const handleConnect = useCallback(async () => {
-    const card = cards[currentIndex];
+    const card = cards[0];
     if (!card) return;
 
     try {
@@ -103,42 +82,9 @@ const ExploreTutors: React.FC = () => {
     } catch (e: any) {
       Alert.alert("Error", e.message || "Failed to connect with tutor");
     } finally {
-      resetPosition();
+      setCards((prev) => prev.slice(1));
     }
-  }, [cards, currentIndex, router]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: Animated.event(
-        [null, { dx: swipe.x, dy: swipe.y }],
-        { useNativeDriver: false }
-      ),
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx > swipeThreshold) {
-          Animated.timing(swipe, {
-            toValue: { x: 400, y: gesture.dy },
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            swipe.setValue({ x: 0, y: 0 });
-            handleConnect();
-          });
-        } else if (gesture.dx < -swipeThreshold) {
-          Animated.timing(swipe, {
-            toValue: { x: -400, y: gesture.dy },
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            swipe.setValue({ x: 0, y: 0 });
-            handleSkip();
-          });
-        } else {
-          resetPosition();
-        }
-      },
-    })
-  ).current;
+  }, [cards, router]);
 
   const headerRight = (
     <Pressable
@@ -166,176 +112,143 @@ const ExploreTutors: React.FC = () => {
 
       <View style={styles.deckWrapper}>
         {loading && !currentCard ? (
-          <ActivityIndicator color={themeColors.tint} />
+            <ActivityIndicator color={themeColors.tint} />
         ) : !currentCard ? (
-          <Text style={{ color: themeColors.secondaryText }}>
-            No tutors found. Edit filters to search again.
-          </Text>
+            <Text style={{ color: themeColors.secondaryText }}>
+              No tutors found. Edit filters to search again.
+            </Text>
         ) : (
-          <Animated.View
-            style={[
-              styles.card,
-              { backgroundColor: themeColors.cardBackground },
-              {
-                transform: [
-                  { translateX: swipe.x },
-                  { translateY: swipe.y },
-                  {
-                    rotate: swipe.x.interpolate({
-                      inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-                      outputRange: ["-15deg", "0deg", "15deg"],
-                    }),
-                  },
-                ],
-              },
-            ]}
-            {...panResponder.panHandlers}
-          >
-            <Animated.Text
-              style={[
-                styles.badge,
-                styles.badgeLeft,
-                {
-                  opacity: swipe.x.interpolate({
-                    inputRange: [-150, -50],
-                    outputRange: [1, 0],
-                    extrapolate: "clamp",
-                  }),
-                  transform: [
-                    {
-                      rotate: "-15deg",
-                    },
-                  ],
-                },
-              ]}
-            >
-              Decline
-            </Animated.Text>
-            <Animated.Text
-              style={[
-                styles.badge,
-                styles.badgeRight,
-                {
-                  opacity: swipe.x.interpolate({
-                    inputRange: [50, 150],
-                    outputRange: [0, 1],
-                    extrapolate: "clamp",
-                  }),
-                  transform: [
-                    {
-                      rotate: "15deg",
-                    },
-                  ],
-                },
-              ]}
-            >
-              Accept
-            </Animated.Text>
-            {currentCard.tutorPhotoPath ? (
-              <Image
-                source={{ uri: currentCard.tutorPhotoPath }}
-                style={styles.avatar}
-                resizeMode="cover"
+            <>
+              <SwipeCards
+                  cards={cards}
+                  setCards={setCards}
+                  onSkip={handleSkip}
+                  onConnect={handleConnect}
+                  getCardId={(c) => c.tutorId}
+                  getImageUri={(c) => c.tutorPhotoPath}
+                  getPlaceholderText={(c) => c.tutorUsername}
+                  renderCard={(card) => (
+                    <View style={styles.swipeCard}>
+                      {card.tutorPhotoPath ? (
+                        <Image
+                          source={{ uri: card.tutorPhotoPath }}
+                          style={styles.swipeCardImage}
+                          resizeMode="cover"
+                          pointerEvents="none"
+                        />
+                      ) : (
+                        <View style={styles.swipeCardImagePlaceholder}>
+                          <Text style={{ color: "#fff", fontSize: 18 }}>
+                            {card.tutorUsername?.charAt(0)?.toUpperCase() || ":)"}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.swipeCardContent}>
+                        <Text style={[styles.cardName, { color: themeColors.text }]}>
+                          {card.tutorUsername}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.cardSubject,
+                            { color: themeColors.secondaryText },
+                          ]}
+                        >
+                          {card.subject}
+                        </Text>
+
+                        <View style={styles.badgeRow}>
+                          {card.tutorUserType && (
+                            <View style={styles.metaBadge}>
+                              <Text style={styles.metaBadgeText}>
+                                {card.tutorUserType === "STUDENT"
+                                  ? "Student tutor"
+                                  : "Professional tutor"}
+                              </Text>
+                            </View>
+                          )}
+                          {card.tutorTeachingStyle && (
+                            <View style={styles.metaBadge}>
+                              <Text style={styles.metaBadgeText}>
+                                {card.tutorTeachingStyle === "CASUAL"
+                                  ? "Casual style"
+                                  : card.tutorTeachingStyle === "PROFESSIONAL"
+                                    ? "Professional style"
+                                    : "Flexible style"}
+                              </Text>
+                            </View>
+                          )}
+                          {card.tutorAvailability && (
+                            <View style={styles.metaBadge}>
+                              <Text style={styles.metaBadgeText}>
+                                {card.tutorAvailability}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <Text
+                          style={[styles.cardDescription, { color: themeColors.text }]}
+                          numberOfLines={3}
+                        >
+                          {card.lessonDescription ||
+                            card.tutorDescription ||
+                            "No description yet"}
+                        </Text>
+
+                        <View style={styles.cardMetaRow}>
+                          {card.price != null && (
+                            <Text
+                              style={{
+                                color: themeColors.secondaryText,
+                                fontSize: 14,
+                              }}
+                            >
+                              Price: {card.price} PLN
+                            </Text>
+                          )}
+                          <Text
+                            style={{
+                              color: themeColors.secondaryText,
+                              fontSize: 14,
+                            }}
+                          >
+                            Duration: {card.durationTime} min
+                          </Text>
+                        </View>
+
+                        <Text
+                          style={{
+                            color: themeColors.secondaryText,
+                            fontSize: 13,
+                            marginTop: 4,
+                          }}
+                        >
+                          Match score: {card.rating.toFixed(0)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
               />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={{ color: "#fff", fontSize: 18 }}>
-                  {currentCard.tutorUsername?.charAt(0)?.toUpperCase() || ":)"}
-                </Text>
+              <View style={styles.actionsRow}>
+                <Pressable
+                    style={[styles.skipButton, { borderColor: themeColors.tint }]}
+                    onPress={handleSkip}
+                >
+                  <Text style={[styles.skipButtonText, { color: themeColors.tint }]}>
+                    Skip
+                  </Text>
+                </Pressable>
+                <Pressable
+                    style={[
+                      styles.connectButton,
+                      { backgroundColor: themeColors.tint },
+                    ]}
+                    onPress={handleConnect}
+                >
+                  <Text style={styles.connectButtonText}>Connect</Text>
+                </Pressable>
               </View>
-            )}
-
-            <Text style={[styles.cardName, { color: themeColors.text }]}>
-              {currentCard.tutorUsername}
-            </Text>
-            <Text
-              style={[styles.cardSubject, { color: themeColors.secondaryText }]}
-            >
-              {currentCard.subject}
-            </Text>
-            <View style={styles.badgeRow}>
-              {currentCard.tutorUserType && (
-                <View style={styles.metaBadge}>
-                  <Text style={styles.metaBadgeText}>
-                    {currentCard.tutorUserType === "STUDENT"
-                      ? "Student tutor"
-                      : "Professional tutor"}
-                  </Text>
-                </View>
-              )}
-              {currentCard.tutorTeachingStyle && (
-                <View style={styles.metaBadge}>
-                  <Text style={styles.metaBadgeText}>
-                    {currentCard.tutorTeachingStyle === "CASUAL"
-                      ? "Casual style"
-                      : currentCard.tutorTeachingStyle === "PROFESSIONAL"
-                      ? "Professional style"
-                      : "Flexible style"}
-                  </Text>
-                </View>
-              )}
-              {currentCard.tutorAvailability && (
-                <View style={styles.metaBadge}>
-                  <Text style={styles.metaBadgeText}>
-                    {currentCard.tutorAvailability}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <Text
-              style={[styles.cardDescription, { color: themeColors.text }]}
-              numberOfLines={3}
-            >
-              {currentCard.lessonDescription ||
-                currentCard.tutorDescription ||
-                "No description yet"}
-            </Text>
-            <View style={styles.cardMetaRow}>
-              {currentCard.price != null && (
-                <Text
-                  style={{ color: themeColors.secondaryText, fontSize: 14 }}
-                >
-                  Price: {currentCard.price} PLN
-                </Text>
-              )}
-              <Text
-                style={{ color: themeColors.secondaryText, fontSize: 14 }}
-              >
-                Duration: {currentCard.durationTime} min
-              </Text>
-            </View>
-            <Text
-              style={{
-                color: themeColors.secondaryText,
-                fontSize: 13,
-                marginTop: 4,
-              }}
-            >
-              Match score: {currentCard.rating.toFixed(0)}
-            </Text>
-
-            <View style={styles.actionsRow}>
-              <Pressable
-                style={[styles.skipButton, { borderColor: themeColors.tint }]}
-                onPress={handleSkip}
-              >
-                <Text
-                  style={[styles.skipButtonText, { color: themeColors.tint }]}
-                >
-                  Skip
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.connectButton,
-                  { backgroundColor: themeColors.tint },
-                ]}
-                onPress={handleConnect}
-              >
-                <Text style={styles.connectButtonText}>Connect</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
+            </>
         )}
       </View>
     </View>
@@ -366,22 +279,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  card: {
+  swipeCard: {
     width: "100%",
     borderRadius: 20,
-    padding: 16,
-    minHeight: SCREEN_HEIGHT * 0.45,
+    overflow: "hidden",
+    backgroundColor: "#111",
   },
-  avatar: {
+  swipeCardImage: {
     width: "100%",
-    height: 180,
-    borderRadius: 16,
-    marginBottom: 12,
+    height: 260,
   },
-  avatarPlaceholder: {
-    backgroundColor: "#444",
+  swipeCardImagePlaceholder: {
+    width: "100%",
+    height: 260,
+    backgroundColor: "#222",
     justifyContent: "center",
     alignItems: "center",
+  },
+  swipeCardContent: {
+    padding: 16,
   },
   cardName: {
     fontSize: 20,
@@ -441,25 +357,6 @@ const styles = StyleSheet.create({
   connectButtonText: {
     color: "#000",
     fontWeight: "600",
-  },
-  badge: {
-    position: "absolute",
-    top: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  badgeLeft: {
-    left: 16,
-    backgroundColor: "rgba(239, 68, 68, 0.9)",
-    color: "#fff",
-  },
-  badgeRight: {
-    right: 16,
-    backgroundColor: "rgba(16, 185, 129, 0.9)",
-    color: "#fff",
   },
   filtersButton: {
     paddingHorizontal: 12,

@@ -1,18 +1,18 @@
 package com.tutoring.app.controller;
 
-import java.util.Map;
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.tutoring.app.domain.Conversation;
+import com.tutoring.app.dto.ConversationDTO;
+import com.tutoring.app.repository.ConversationRepository;
+import com.tutoring.app.repository.ConversationRepository.ConversationLastMessageProjection;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.tutoring.app.dto.ConversationDTO;
-import com.tutoring.app.domain.Conversation;
-import com.tutoring.app.repository.ConversationRepository;
-import com.tutoring.app.repository.UserRepository;
-import com.tutoring.app.repository.ConversationRepository.ConversationLastMessageProjection;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = {"http://localhost:8081"})
@@ -21,11 +21,9 @@ import com.tutoring.app.repository.ConversationRepository.ConversationLastMessag
 public class ConversationController {
 
   private final ConversationRepository conversationRepository;
-  private final UserRepository userRepository;
 
-  public ConversationController(ConversationRepository conversationRepository, UserRepository userRepository) {
+  public ConversationController(ConversationRepository conversationRepository) {
     this.conversationRepository = conversationRepository;
-    this.userRepository = userRepository;
   }
 
   @GetMapping("/{userId}")

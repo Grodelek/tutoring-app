@@ -31,7 +31,7 @@ const MoreInfoAboutTutor: React.FC = () => {
 
     const handleSubmit = async () => {
         try {
-            if (!username || !experienceTime || !availability || !lessonType) {
+            if (!experienceTime || !availability || !lessonType) {
                 showAlert("Please select all fields.");
                 return;
             }

@@ -4,11 +4,9 @@ import {
   TextInput,
   Alert,
   Keyboard,
-  TouchableWithoutFeedback,
   StyleSheet,
   Text,
   TouchableOpacity,
-  Platform,
 } from "react-native";
 import { handleSubmitPost } from "@/api/postApi";
 
@@ -18,7 +16,6 @@ const CreatePost: React.FC = () => {
   const [durationTime, setDurationTime] = useState("");
   const [price, setPrice] = useState("");
 
-
   const handleSubmit= async () => {
     if(!subject.trim() || !description.trim() || !durationTime.trim() || !price.trim()) {
       Alert.alert("Error", "Please fill in all fields.");
@@ -27,7 +24,6 @@ const CreatePost: React.FC = () => {
     await handleSubmitPost({ subject, description, price, durationTime });
   }
 
-
   const containerContent = (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -35,7 +31,6 @@ const CreatePost: React.FC = () => {
         <Text style={styles.subtitle}>
           Share what you teach and help students reach their goals.
         </Text>
-
         <Text style={styles.label}>Subject</Text>
         <TextInput
           placeholder="e.g. Math, English, Guitar"
@@ -46,13 +41,7 @@ const CreatePost: React.FC = () => {
           autoCapitalize="none"
           autoComplete="off"
           autoCorrect={false}
-          onFocus={(e) => {
-            if (Platform.OS === "web") {
-              e.currentTarget?.focus();
-            }
-          }}
         />
-
         <Text style={styles.label}>Description</Text>
         <TextInput
           placeholder="Describe your lesson, level, and what students can expect."
@@ -65,13 +54,7 @@ const CreatePost: React.FC = () => {
           autoCorrect={false}
           multiline
           numberOfLines={3}
-          onFocus={(e) => {
-            if (Platform.OS === "web") {
-              e.currentTarget?.focus();
-            }
-          }}
         />
-
         <View style={styles.row}>
           <View style={styles.rowItem}>
             <Text style={styles.label}>Duration</Text>
@@ -87,11 +70,6 @@ const CreatePost: React.FC = () => {
               autoComplete="off"
               autoCorrect={false}
               onSubmitEditing={() => Keyboard.dismiss()}
-              onFocus={(e) => {
-                if (Platform.OS === "web") {
-                  e.currentTarget?.focus();
-                }
-              }}
             />
             <Text style={styles.helperText}>minutes</Text>
           </View>
@@ -109,16 +87,10 @@ const CreatePost: React.FC = () => {
               autoComplete="off"
               autoCorrect={false}
               onSubmitEditing={() => Keyboard.dismiss()}
-              onFocus={(e) => {
-                if (Platform.OS === "web") {
-                  e.currentTarget?.focus();
-                }
-              }}
             />
             <Text style={styles.helperText}>per lesson</Text>
           </View>
         </View>
-
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Publish offer</Text>
         </TouchableOpacity>
@@ -126,13 +98,7 @@ const CreatePost: React.FC = () => {
     </View>
   );
 
-  return Platform.OS === 'web' ? (
-    containerContent
-  ) : (
-    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-      {containerContent}
-    </TouchableWithoutFeedback>
-  );
+  return containerContent;
 };
 
 const styles = StyleSheet.create({
