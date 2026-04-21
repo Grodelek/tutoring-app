@@ -3,12 +3,10 @@ package com.tutoring.app.service;
 import com.tutoring.app.domain.*;
 import com.tutoring.app.dto.TutorSearchRequestDTO;
 import com.tutoring.app.dto.TutorSearchResultDTO;
+import com.tutoring.app.repository.FavoriteTutorRepository;
 import com.tutoring.app.repository.LessonRepository;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,17 +18,24 @@ import org.springframework.stereotype.Service;
 public class TutorDiscoveryService {
 
   private final LessonRepository lessonRepository;
+  private final UserService userService;
+  private final FavoriteTutorRepository favoriteTutorRepository;
 
-  public List<TutorSearchResultDTO> searchTutors(TutorSearchRequestDTO request) {
+  private Set<UUID> getConnectedTutorIds(UserPrincipal userDetails) {
+    User user = userService.findByUsername(userDetails.getUsername());
+    return favoriteTutorRepository.findByStudentId(user.getId())
+        .stream()
+        .map(fav -> fav.getTutor().getId())
+        .collect(Collectors.toSet());
+  }
+
+  public List<TutorSearchResultDTO> searchTutors(UserPrincipal userDetails,TutorSearchRequestDTO request) {
+    Set<UUID> connectedTutorIds = getConnectedTutorIds(userDetails);
+
     List<Lesson> lessons = lessonRepository.findAll();
-
-    if (request.getUserId() != null) {
-      log.debug("Tutor discovery for userId={} - total lessons before filter: {}",
-          request.getUserId(), lessons.size());
-    }
-
     List<Lesson> filtered = lessons.stream()
         .filter(lesson -> lesson.getTutor() != null)
+        .filter(lesson -> !connectedTutorIds.contains(lesson.getTutor().getId()))
         .filter(lesson -> {
           if (request.getUserId() == null) {
             return true;
@@ -43,7 +48,6 @@ public class TutorDiscoveryService {
             && lesson.getSubject().equalsIgnoreCase(request.getSubject()))
         .filter(lesson -> matchesPriceRange(lesson, request.getMinPrice(), request.getMaxPrice()))
         .collect(Collectors.toList());
-
     Map<UUID, Lesson> representativeLessonPerTutor = filtered.stream()
         .collect(Collectors.toMap(
             lesson -> lesson.getTutor().getId(),

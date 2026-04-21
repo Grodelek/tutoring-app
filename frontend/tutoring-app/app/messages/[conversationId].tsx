@@ -6,7 +6,6 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -14,9 +13,9 @@ import {
   Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useWebSocketMessages } from "../../hooks/useWebSocketMessages";
+import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsFromApi} from "@/api/lessonApi";
+import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId} from "@/api/lessonApi";
 import styles from "./styles/styles";
 
 interface Message {
@@ -28,12 +27,6 @@ interface Message {
   conversationId?: string | UUID;
   messageType: string;
   lessonId: string | UUID;
-}
-
-interface OfferRequest{
-  tutorId: string,
-  studentId: string,
-  lessonId: string
 }
 type UUID = string;
 
@@ -217,7 +210,11 @@ const ChatScreen: React.FC = () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
     try {
-      const lessons = await fetchLessonByTutor();
+      // A student should see lessons created by the tutor they are chatting with (receiverId).
+      // If receiverId is missing, fallback to logged-in tutor lessons.
+      const lessons = receiverId
+        ? await fetchLessonsByTutorId(receiverId.toString())
+        : await fetchLessonByTutor();
       setAvailableLessons(lessons);
     } catch (error: any) {
       console.error("Error fetching lessons:", error);
@@ -239,10 +236,9 @@ const ChatScreen: React.FC = () => {
 
       if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
         tutorId = selectedLesson.tutor.id;
-        studentId = userId === tutorId ? receiverId.toString() : userId;
+        userId === tutorId ? receiverId.toString() : userId;
       } else {
-        tutorId = userId;
-        studentId = receiverId.toString();
+        receiverId.toString();
       }
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token) {

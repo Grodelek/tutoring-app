@@ -31,7 +31,7 @@ export interface TutorCard {
    tutorAvailability?: string | null;
 }
 
-export const searchTutors = async (
+export const fetchTutors = async (
     filters: TutorSearchRequest
 ): Promise<TutorCard[]> => {
   const token = await AsyncStorage.getItem("jwtToken");
@@ -61,7 +61,6 @@ export const searchTutors = async (
       `Failed to search tutors: ${response.status} - ${errorText}`
     );
   }
-
   return response.json();
 };
 

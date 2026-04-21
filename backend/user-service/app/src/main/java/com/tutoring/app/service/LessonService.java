@@ -56,11 +56,11 @@ public class LessonService {
     return ResponseEntity.notFound().build();
   }
 
-  public List<Lesson> getLessonsByTutor(User user){
-    if(user == null) {
-      throw new IllegalArgumentException("User cannot be null");
+  public List<Lesson> getLessonsByTutorId(UUID tutorId) {
+    if (tutorId == null) {
+      throw new IllegalArgumentException("tutorId cannot be null");
     }
-      return user.getLessons();
+    return lessonRepository.getLessonByTutorId(tutorId);
   }
 
   public ResponseEntity<LessonResponseDTO> updateLesson(UUID id, LessonRequestDTO lessonRequestDTO) {
