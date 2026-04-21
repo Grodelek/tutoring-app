@@ -1,6 +1,7 @@
 import {BASE_URL} from "@/config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {User} from "@/api/lessonApi";
+
 export interface Conversation {
     id: string;
     student: User;
@@ -14,7 +15,7 @@ export interface Conversation {
     durationTime: number;
 }
 
-export const fetchConversationHistory = async (id: string): Promise<Conversation> => {
+export const fetchConversationHistoryFromApi = async (id: string): Promise<Conversation> => {
     try {
         const token = await AsyncStorage.getItem("jwtToken");
         if (!token) {
@@ -35,8 +36,7 @@ export const fetchConversationHistory = async (id: string): Promise<Conversation
             throw new Error(errorText || `HTTP ${response.status}`);
         }
 
-        const data: Conversation = await response.json();
-        return data;
+        return await response.json();
     } catch (error: any) {
         console.error("Error fetching conversation history:", error);
         throw error;

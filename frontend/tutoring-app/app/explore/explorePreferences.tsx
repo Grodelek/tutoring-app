@@ -11,7 +11,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
-import {grey50} from "react-native-paper/src/styles/themes/v2/colors";
 
 const PREFERENCES_KEY = "tutorPreferences";
 
