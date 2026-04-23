@@ -3,6 +3,7 @@ package com.tutoring.app.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -11,4 +12,5 @@ public class TutorOfferDTO {
     private UUID tutorId;
     private UUID studentId;
     private UUID lessonId;
+    private LocalDateTime sessionStartTime;
 }

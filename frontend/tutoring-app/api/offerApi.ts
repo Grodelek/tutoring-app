@@ -4,7 +4,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 interface OfferRequest{
     tutorId: string,
     studentId: string,
-    lessonId: string
+    lessonId: string,
+    sessionStartTime?: string
 }
 
 export interface User {

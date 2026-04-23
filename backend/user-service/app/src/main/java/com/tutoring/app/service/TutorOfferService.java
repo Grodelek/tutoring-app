@@ -43,7 +43,12 @@ public class TutorOfferService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         Lesson lesson = lessonRepository.findById(offerDTO.getLessonId())
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
-        TutorOffer tutorOffer = TutorOffer.builder().tutor(tutor).student(student).lesson(lesson).build();
+        TutorOffer tutorOffer = TutorOffer.builder()
+                .tutor(tutor)
+                .student(student)
+                .lesson(lesson)
+                .sessionStartTime(offerDTO.getSessionStartTime())
+                .build();
         tutorOfferRepository.save(tutorOffer);
         return tutorOffer;
     }
