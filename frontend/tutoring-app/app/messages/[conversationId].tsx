@@ -16,6 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
 import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId} from "@/api/lessonApi";
+import { sendOffer } from "@/api/offerApi";
 import styles from "./styles/styles";
 
 interface Message {
@@ -48,7 +49,7 @@ const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const { conversationId, receiverId, lessonId: lessonIdParam } = useLocalSearchParams();
+  const { conversationId, receiverId, lessonId: lessonIdParam, scheduledTime, lessonId: scheduledLessonId } = useLocalSearchParams();
   const router = useRouter();
   const [Receiver, setReceiver] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -78,6 +79,29 @@ const ChatScreen: React.FC = () => {
       fetchLesson(lessonIdParam.toString());
     }
   }, [conversationId, lessonIdParam]);
+
+  useEffect(() => {
+    const maybeSendOffer = async () => {
+      if (!scheduledTime || !scheduledLessonId) return;
+      if (!userId || !receiverId) return;
+
+      router.setParams({ scheduledTime: undefined as any, lessonId: undefined as any });
+
+      try {
+        await sendOffer({
+          tutorId: receiverId.toString(),
+          studentId: userId,
+          lessonId: scheduledLessonId.toString(),
+          sessionStartTime: scheduledTime.toString(),
+        });
+
+        Alert.alert("Offer sent", `Scheduled: ${new Date(scheduledTime.toString()).toLocaleString()}`);
+      } catch (e: any) {
+        Alert.alert("Error", e?.message || "Failed to send offer");
+      }
+    };
+    maybeSendOffer();
+  }, [scheduledTime, scheduledLessonId, userId, receiverId]);
 
   const fetchLesson = async (id: string) => {
     try {
@@ -210,8 +234,6 @@ const ChatScreen: React.FC = () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
     try {
-      // A student should see lessons created by the tutor they are chatting with (receiverId).
-      // If receiverId is missing, fallback to logged-in tutor lessons.
       const lessons = receiverId
         ? await fetchLessonsByTutorId(receiverId.toString())
         : await fetchLessonByTutor();
@@ -224,55 +246,23 @@ const ChatScreen: React.FC = () => {
     }
   };
 
-  const startSession = async (selectedLessonId: string) => {
-    if (!userId || !receiverId) {
-      Alert.alert("Error", "Missing required data");
+  const startSession = (selectedLessonId: string) => {
+    if (!conversationId || !receiverId) {
+      Alert.alert("Error", "Missing conversation/receiver");
       return;
     }
-    try {
-      let tutorId: string;
-      let studentId: string;
-      const selectedLesson = availableLessons.find(l => l.id === selectedLessonId);
-
-      if (selectedLesson && selectedLesson.tutor && selectedLesson.tutor.id) {
-        tutorId = selectedLesson.tutor.id;
-        userId === tutorId ? receiverId.toString() : userId;
-      } else {
-        receiverId.toString();
-      }
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const invitationContent = selectedLesson
-        ? `Invitation to lesson: ${selectedLesson.subject || ''} (${selectedLesson.scheduledTime || selectedLesson.startTime || ''})`
-        : "Lesson invitation";
-      const res = await fetch(`${BASE_URL}/api/messages/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          senderId: userId,
-          receiverId: receiverId,
-          content: invitationContent,
-          messageType: "INVITATION",
+    setShowLessonModal(false);
+    router.push({
+      pathname: "/session/calendar" as any,
+      params: {
+        returnTo: "/messages/[conversationId]",
+        returnParams: JSON.stringify({
+          conversationId: conversationId.toString(),
+          receiverId: receiverId.toString(),
           lessonId: selectedLessonId,
         }),
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText);
-      }
-      const message = await res.json();
-      setMessages((prev) => [...prev, message]);
-      setShowLessonModal(false);
-      Alert.alert("Success", "Invitation sent!");
-    } catch (error: any) {
-      Alert.alert("Error", `Cannot send invitation: ${error.message}`);
-    }
+      },
+    });
   };
 
   const handleDeleteSessionoffer = async () => {
