@@ -33,15 +33,15 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-  private UserService userService;
+  private final UserService userService;
 
   public UserController(UserService userService) {
     this.userService = userService;
   }
 
   @PostMapping("/login")
-  public ResponseEntity<Map<String, Object>> login(@RequestBody UserDTO userDTO) {
-    return userService.verify(userDTO);
+  public ResponseEntity<Map<String, Object>> login(@RequestBody UserLoginDTO userLoginDTO) {
+    return userService.verify(userLoginDTO);
   }
 
   @GetMapping("/all")
@@ -51,7 +51,7 @@ public class UserController {
   }
 
   @GetMapping("/{id}")
-  public User getUser(@PathVariable UUID id) {
+  public UserDTO getUser(@PathVariable UUID id) {
     return userService.getUserById(id);
   }
 
@@ -68,9 +68,9 @@ public class UserController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<UserResponseDTO> getCurrentUser(@AuthenticationPrincipal UserPrincipal userDetails) {
+  public ResponseEntity<UserDTO> getCurrentUser(@AuthenticationPrincipal UserPrincipal userDetails) {
     User user = userService.findByUsername(userDetails.getUsername());
-    return ResponseEntity.ok(new UserResponseDTO(
+    return ResponseEntity.ok(new UserDTO(
         user.getId(),
         user.getUsername(),
         user.getEmail(),
@@ -82,7 +82,7 @@ public class UserController {
 
   @PostMapping("/add")
   @ResponseStatus(HttpStatus.CREATED)
-  public User register(@Valid @RequestBody UserDTO userDTO) {
+  public User register(@Valid @RequestBody UserLoginDTO userDTO) {
     return userService.register(userDTO);
   }
 

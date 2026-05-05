@@ -4,6 +4,7 @@ import java.util.*;
 import com.tutoring.app.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.tutoring.app.domain.User;
@@ -40,7 +41,7 @@ public class UserService {
     return userRepository.findAll();
   }
 
-  public User register(UserDTO userDTO) {
+  public User register(UserLoginDTO userDTO) {
     if (userRepository.existsByEmail(userDTO.getEmail())) {
       throw new IllegalArgumentException("User already has an account.");
     }
@@ -72,7 +73,7 @@ public class UserService {
   }
 
   @Transactional
-  public ResponseEntity<Map<String, Object>> verify(UserDTO userDTO) {
+  public ResponseEntity<Map<String, Object>> verify(UserLoginDTO userDTO) {
     try {
       Optional<User> userOptional = userRepository.findByEmail(userDTO.getEmail());
       if (userOptional.isEmpty()) {
@@ -104,12 +105,23 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
   }
-
-  public User getUserById(UUID id) {
+  @Cacheable(value = "users_dto", key = "#id")
+  public UserDTO getUserById(UUID id) {
     Optional<User> userOptional = userRepository.findById(id);
-    return userOptional.get();
+    if (userOptional.isEmpty()){
+      throw new RuntimeException("User not found with this id" + id);
+    }
+    User user = userOptional.get();
+    return UserDTO.builder()
+            .username(user.getUsername())
+            .email(user.getEmail())
+            .description(user.getDescription())
+            .points(user.getPoints())
+            .photoPath(user.getPhotoPath())
+            .build();
   }
 
+  @Cacheable(value = "users", key = "#username")
   public User findByUsername(String username) {
     return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
