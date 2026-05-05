@@ -1,13 +1,7 @@
 package com.tutoring.app.User;
 
-import com.tutoring.app.domain.Availability;
-import com.tutoring.app.domain.ExperienceTime;
 import com.tutoring.app.domain.User;
-import com.tutoring.app.domain.UserType;
-import com.tutoring.app.dto.TutorInfoDTO;
-import com.tutoring.app.dto.TutorInfoResponse;
-import com.tutoring.app.dto.UpdateUserProfileRequest;
-import com.tutoring.app.dto.UserDTO;
+import com.tutoring.app.dto.*;
 import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -21,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import static com.tutoring.app.domain.Availability.WEEKDAYS_ONLY;
 import static com.tutoring.app.domain.ExperienceTime.INTERMEDIATE;
 import static com.tutoring.app.domain.LessonType.CASUAL;
-import static com.tutoring.app.domain.UserType.STUDENT;
 import static com.tutoring.app.domain.UserType.TUTOR;
 import static org.mockito.ArgumentMatchers.any;
 import java.util.Optional;
@@ -46,14 +39,14 @@ public class UserServiceTest {
         User mockUser = new User(userId, "abc@wp.pl", "Ala");
         when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
 
-        User result = userService.getUserById(userId);
-        assertEquals("Ala", result.getUsername());
+        UserDTO result = userService.getUserById(userId);
+        assertEquals("Ala", result.username());
         verify(userRepository).findById(userId);
     }
 
     @Test
     void shouldRegisterUser(){
-        UserDTO userDTO = new UserDTO();
+        UserLoginDTO userDTO = new UserLoginDTO();
         userDTO.setUsername("Username");
         userDTO.setEmail("abc@wp.pl");
         userDTO.setPassword("abc123");

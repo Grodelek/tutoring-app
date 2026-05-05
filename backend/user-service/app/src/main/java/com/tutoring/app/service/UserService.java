@@ -41,7 +41,7 @@ public class UserService {
     return userRepository.findAll();
   }
 
-  public User register(UserDTO userDTO) {
+  public User register(UserLoginDTO userDTO) {
     if (userRepository.existsByEmail(userDTO.getEmail())) {
       throw new IllegalArgumentException("User already has an account.");
     }
@@ -73,7 +73,7 @@ public class UserService {
   }
 
   @Transactional
-  public ResponseEntity<Map<String, Object>> verify(UserDTO userDTO) {
+  public ResponseEntity<Map<String, Object>> verify(UserLoginDTO userDTO) {
     try {
       Optional<User> userOptional = userRepository.findByEmail(userDTO.getEmail());
       if (userOptional.isEmpty()) {
@@ -105,14 +105,20 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
   }
-  // TODO change to return dto
-  @Cacheable(value = "users", key = "#id")
-  public User getUserById(UUID id) {
+  @Cacheable(value = "users_dto", key = "#id")
+  public UserDTO getUserById(UUID id) {
     Optional<User> userOptional = userRepository.findById(id);
-    if(userOptional.isEmpty()){
+    if (userOptional.isEmpty()){
       throw new RuntimeException("User not found with this id" + id);
     }
-    return userOptional.get();
+    User user = userOptional.get();
+    return UserDTO.builder()
+            .username(user.getUsername())
+            .email(user.getEmail())
+            .description(user.getDescription())
+            .points(user.getPoints())
+            .photoPath(user.getPhotoPath())
+            .build();
   }
 
   @Cacheable(value = "users", key = "#username")
