@@ -13,6 +13,7 @@ import {
   Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
 import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId} from "@/api/lessonApi";
@@ -391,28 +392,7 @@ const ChatScreen: React.FC = () => {
                     </View>
                     {isReceiver && (
                         <>
-                          <TouchableOpacity style={styles.acceptButton}>Decline</TouchableOpacity><TouchableOpacity
-                            style={styles.acceptButton}
-                            onPress={async () => {
-                              try {
-                                const token = await AsyncStorage.getItem("jwtToken");
-                                if (!token) throw new Error("No token");
-                                const res = await fetch(`${BASE_URL}/api/lessons/${item.lessonId}/status`, {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    Authorization: `Bearer ${token}`,
-                                  },
-                                  body: JSON.stringify({status: "STARTED"}),
-                                });
-                                if (!res.ok) throw new Error("Failed to accept invitation");
-                                Alert.alert("Success", "Invitation accepted");
-                                fetchMessages();
-                              } catch (e: any) {
-                                Alert.alert("Error", e.message);
-                              }
-                            }}
-                        >
+                          <TouchableOpacity style={styles.acceptButton}>Decline</TouchableOpacity><TouchableOpacity style={styles.acceptButton}>
                           <Text style={styles.acceptButtonText}>Accept</Text>
                         </TouchableOpacity></>
                     )}
@@ -500,9 +480,13 @@ const ChatScreen: React.FC = () => {
             <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
               <Text style={styles.sendText}>Send</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={chooseLesson} style={styles.sessionStartButton}>
-              <Text style={styles.sendText}>Start Session</Text>
-            </TouchableOpacity>
+            <Ionicons
+              name="calendar-outline"
+              size={22}
+              color="#fff"
+              onPress={chooseLesson}
+              style={{ paddingHorizontal: 10, paddingVertical: 8 }}
+            />
           </View>
         </View>
       </View>
