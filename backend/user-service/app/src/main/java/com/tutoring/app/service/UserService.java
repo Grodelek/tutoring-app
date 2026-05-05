@@ -4,6 +4,7 @@ import java.util.*;
 import com.tutoring.app.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.tutoring.app.domain.User;
@@ -104,12 +105,17 @@ public class UserService {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
   }
-
+  // TODO change to return dto
+  @Cacheable(value = "users", key = "#id")
   public User getUserById(UUID id) {
     Optional<User> userOptional = userRepository.findById(id);
+    if(userOptional.isEmpty()){
+      throw new RuntimeException("User not found with this id" + id);
+    }
     return userOptional.get();
   }
 
+  @Cacheable(value = "users", key = "#username")
   public User findByUsername(String username) {
     return userRepository.findByUsername(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));

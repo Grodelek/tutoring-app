@@ -15,7 +15,7 @@ public class PerformanceAspect {
     public Object log(ProceedingJoinPoint pjp) throws Throwable {
         long start = System.currentTimeMillis();
         Object result = pjp.proceed();
-        log.info("{} - {}ms", pjp.getSignature().getName(), System.currentTimeMillis() - start);
+        log.info("[PERFORMANCE] {} - {}ms", pjp.getSignature().getName(), System.currentTimeMillis() - start);
         return result;
     }
 }
