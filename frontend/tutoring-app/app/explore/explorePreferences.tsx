@@ -150,42 +150,6 @@ const ExplorePreferences: React.FC = () => {
             />
           </View>
         </View>
-
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Minimal rating (1-5)</Text>
-        <TextInput
-          keyboardType="numeric"
-          placeholder="4"
-          placeholderTextColor={themeColors.placeholder}
-          style={[
-            styles.input,
-            {
-              backgroundColor: themeColors.inputBackground,
-              borderColor: themeColors.inputBorder,
-              color: themeColors.text,
-            },
-          ]}
-          value={minRating}
-          onChangeText={setMinRating}
-        />
-
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Price importance (1-5)</Text>
-        <TextInput
-          keyboardType="numeric"
-          placeholder="3"
-          placeholderTextColor={themeColors.placeholder}
-          style={[
-            styles.input,
-            {
-              backgroundColor: themeColors.inputBackground,
-              borderColor: themeColors.inputBorder,
-              color: themeColors.text,
-            },
-          ]}
-          value={priceImportance}
-          onChangeText={setPriceImportance}
-        />
-
-        {/* Teaching style preference */}
         <Text style={[styles.label, { color: themeColors.secondaryText }]}>Teaching style</Text>
         <View style={styles.chipRow}>
           {[
@@ -225,7 +189,6 @@ const ExplorePreferences: React.FC = () => {
           })}
         </View>
 
-        {/* Tutor type preference */}
         <Text style={[styles.label, { color: themeColors.secondaryText }]}>Tutor type</Text>
         <View style={styles.chipRow}>
           {[
@@ -264,7 +227,6 @@ const ExplorePreferences: React.FC = () => {
           })}
         </View>
 
-        {/* Availability preference */}
         <Text style={[styles.label, { color: themeColors.secondaryText }]}>Availability</Text>
         <View style={styles.chipRow}>
           {[

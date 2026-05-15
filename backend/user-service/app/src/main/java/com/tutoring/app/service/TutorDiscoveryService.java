@@ -97,12 +97,7 @@ public class TutorDiscoveryService {
       priceScore = 10.0;
     }
 
-    Integer priceImportance = request.getPriceImportance();
-    if (priceImportance == null) {
-      priceImportance = 3;
-    }
-    double priceWeightFactor = 0.5 + 0.5 * (Math.min(5, Math.max(1, priceImportance)) / 5.0);
-    score += priceScore * priceWeightFactor;
+    score += priceScore;
 
     LessonType preferredStyle = request.getPreferredTeachingStyle();
     LessonType tutorStyle = tutor.getLessonType();
@@ -132,11 +127,7 @@ public class TutorDiscoveryService {
     int points = tutor.getPoints() != null ? tutor.getPoints() : 0;
     double baseRating = Math.min(5.0, 1.0 + points / 100.0);
 
-    if (request.getMinRating() != null && baseRating < request.getMinRating()) {
-      score -= 100;
-    } else {
-      score += baseRating * 2.0;
-    }
+    score += baseRating * 2.0;
 
     double randomFactor = 0.8 + Math.random() * 0.4;
     double finalScore = score * randomFactor;
