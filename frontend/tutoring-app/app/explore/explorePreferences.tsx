@@ -1,359 +1,412 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
+  LayoutChangeEvent,
   Pressable,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BackHeader } from "@/components/ui/BackHeader";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+import { C, T, R } from "@/constants/theme";
 
+// ─── constants ────────────────────────────────────────────────────────────────
 const PREFERENCES_KEY = "tutorPreferences";
+const PRICE_MIN = 20;
+const PRICE_MAX = 300;
+const HANDLE_W  = 24;
 
-const ExplorePreferences: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const themeColors = useMemo(
-    () => (colorScheme === "dark" ? Colors.dark : Colors.light),
-    [colorScheme]
+// ─── dual-handle slider ───────────────────────────────────────────────────────
+interface SliderProps {
+  minVal: number;
+  maxVal: number;
+  onChangeMin: (v: number) => void;
+  onChangeMax: (v: number) => void;
+}
+
+function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) {
+  const trackWRef   = useRef(0);
+  const startMinRef = useRef(0);
+  const startMaxRef = useRef(0);
+  const minPosRef   = useRef(0);
+  const maxPosRef   = useRef(0);
+  const [minPos, setMinPos] = useState(0);
+  const [maxPos, setMaxPos] = useState(0);
+
+  const pxRange = () => Math.max(1, trackWRef.current - HANDLE_W);
+
+  const valToPos = (v: number) =>
+    ((v - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * pxRange();
+
+  const posToVal = (p: number) =>
+    Math.round((p / pxRange()) * (PRICE_MAX - PRICE_MIN) + PRICE_MIN);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    trackWRef.current = w;
+    const mn = valToPos(minVal);
+    const mx = valToPos(maxVal);
+    minPosRef.current = mn;
+    maxPosRef.current = mx;
+    setMinPos(mn);
+    setMaxPos(mx);
+  };
+
+  // PanResponder for min handle
+  const { PanResponder: RNPan } = require("react-native");
+  const minPan = useRef(
+    RNPan.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => { startMinRef.current = minPosRef.current; },
+      onPanResponderMove: (_: any, g: any) => {
+        const newP = Math.max(0, Math.min(maxPosRef.current - HANDLE_W, startMinRef.current + g.dx));
+        minPosRef.current = newP;
+        setMinPos(newP);
+        onChangeMin(posToVal(newP));
+      },
+    })
+  ).current;
+
+  const maxPan = useRef(
+    RNPan.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => { startMaxRef.current = maxPosRef.current; },
+      onPanResponderMove: (_: any, g: any) => {
+        const newP = Math.max(minPosRef.current + HANDLE_W, Math.min(pxRange(), startMaxRef.current + g.dx));
+        maxPosRef.current = newP;
+        setMaxPos(newP);
+        onChangeMax(posToVal(newP));
+      },
+    })
+  ).current;
+
+  const fillLeft  = minPos + HANDLE_W / 2;
+  const fillWidth = Math.max(0, maxPos - minPos);
+
+  return (
+    <View onLayout={onLayout} style={styles.sliderWrap}>
+      {/* Track background */}
+      <View style={styles.trackBg} />
+
+      {/* Gradient fill */}
+      {trackWRef.current > 0 && (
+        <LinearGradient
+          colors={["#FFA53D", "#FF6B4A"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.trackFill, { left: fillLeft, width: fillWidth }]}
+        />
+      )}
+
+      {/* Min handle — amber */}
+      <View
+        {...minPan.panHandlers}
+        style={[styles.handle, styles.handleAmber, { left: minPos }]}
+      />
+
+      {/* Max handle — coral */}
+      <View
+        {...maxPan.panHandlers}
+        style={[styles.handle, styles.handleCoral, { left: maxPos }]}
+      />
+    </View>
   );
-  const router = useRouter();
+}
 
-  const [subject, setSubject] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minRating, setMinRating] = useState("4");
-  const [priceImportance, setPriceImportance] = useState("3");
-  const [preferredTeachingStyle, setPreferredTeachingStyle] = useState<string | null>(null);
-  const [preferredUserType, setPreferredUserType] = useState<string | null>(null);
-  const [preferredAvailability, setPreferredAvailability] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+// ─── section card ─────────────────────────────────────────────────────────────
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Card>
+      <Text style={styles.cardLabel}>{title}</Text>
+      {children}
+    </Card>
+  );
+}
+
+// ─── screen ───────────────────────────────────────────────────────────────────
+const ExplorePreferences: React.FC = () => {
+  const router  = useRouter();
+  const insets  = useSafeAreaInsets();
+
+  const [subject,     setSubject]     = useState("");
+  const [minPrice,    setMinPrice]    = useState(40);
+  const [maxPrice,    setMaxPrice]    = useState(120);
+  const [teachStyle,  setTeachStyle]  = useState<string | null>(null);
+  const [userType,    setUserType]    = useState<string | null>(null);
+  const [avail,       setAvail]       = useState<string | null>(null);
 
   useEffect(() => {
-    const loadPreferences = async () => {
+    (async () => {
       try {
         const raw = await AsyncStorage.getItem(PREFERENCES_KEY);
         if (!raw) return;
-        const saved = JSON.parse(raw);
-        if (saved.subject) setSubject(String(saved.subject));
-        if (saved.minPrice != null) setMinPrice(String(saved.minPrice));
-        if (saved.maxPrice != null) setMaxPrice(String(saved.maxPrice));
-        if (saved.minRating != null) setMinRating(String(saved.minRating));
-        if (saved.priceImportance != null) setPriceImportance(String(saved.priceImportance));
-        if (saved.preferredTeachingStyle) setPreferredTeachingStyle(saved.preferredTeachingStyle);
-        if (saved.preferredUserType) setPreferredUserType(saved.preferredUserType);
-        if (saved.preferredAvailability) setPreferredAvailability(saved.preferredAvailability);
-      } catch {
-      }
-    };
-    loadPreferences();
+        const s = JSON.parse(raw);
+        if (s.subject)               setSubject(String(s.subject));
+        if (s.minPrice != null)      setMinPrice(Number(s.minPrice));
+        if (s.maxPrice != null)      setMaxPrice(Number(s.maxPrice));
+        if (s.preferredTeachingStyle) setTeachStyle(s.preferredTeachingStyle);
+        if (s.preferredUserType)      setUserType(s.preferredUserType);
+        if (s.preferredAvailability)  setAvail(s.preferredAvailability);
+      } catch {}
+    })();
   }, []);
 
-  const redirectToExplore = () => {
+  const handleSearch = useCallback(async () => {
+    const filters = {
+      subject: subject.trim() || null,
+      minPrice,
+      maxPrice,
+      preferredTeachingStyle: teachStyle,
+      preferredUserType:       userType,
+      preferredAvailability:   avail,
+    };
+    await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(filters));
     router.push({
       pathname: "/(auth)/exploreTutors",
+      params:   { filters: JSON.stringify(filters) },
     });
-  }
-
-  const handleStartSwiping = useCallback(async () => {
-    try {
-      setLoading(true);
-       const filters = {
-        subject: subject.trim() || null,
-        minPrice: minPrice ? Number(minPrice) : null,
-        maxPrice: maxPrice ? Number(maxPrice) : null,
-        minRating: minRating ? Number(minRating) : null,
-        priceImportance: priceImportance ? Number(priceImportance) : null,
-        preferredTeachingStyle,
-        preferredUserType,
-        preferredAvailability,
-       };
-
-      await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(filters));
-
-      router.push({
-        pathname: "/(auth)/exploreTutors",
-        params: { filters: JSON.stringify(filters) },
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [subject, minPrice, maxPrice, minRating, priceImportance, preferredTeachingStyle, preferredUserType, preferredAvailability, router]);
+  }, [subject, minPrice, maxPrice, teachStyle, userType, avail, router]);
 
   return (
-    <View style={[styles.screen, { backgroundColor: themeColors.background }]}>
-      <Text style={[styles.title, { color: themeColors.text }]}>Find tutor</Text>
-      <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>
-        Set your preferences and then swipe through the best matches.
-      </Text>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <BackHeader
+        title="Znajdź korepetytora"
+        subtitle="Ustaw preferencje · zdobądź +5 XP"
+      />
 
-      <View
-        style={[
-          styles.filtersCard,
-          { backgroundColor: themeColors.cardBackground },
-        ]}
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Subject</Text>
-        <TextInput
-          placeholder="e.g. Math, English"
-          placeholderTextColor={themeColors.placeholder}
-          style={[
-            styles.input,
-            {
-              backgroundColor: themeColors.inputBackground,
-              borderColor: themeColors.inputBorder,
-              color: themeColors.text,
-            },
-          ]}
-          value={subject}
-          onChangeText={setSubject}
-        />
-
-        <View style={styles.row}>
-          <View style={styles.rowItem}>
-            <Text style={[styles.label, { color: themeColors.secondaryText }]}>Min price</Text>
+        {/* 1 — Przedmiot */}
+        <SectionCard title="Przedmiot">
+          <View style={styles.inputBar}>
+            <MaterialCommunityIcons name="magnify" size={18} color={C.amber} />
             <TextInput
-              keyboardType="numeric"
-              placeholder="0"
-              placeholderTextColor={themeColors.placeholder}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: themeColors.inputBackground,
-                  borderColor: themeColors.inputBorder,
-                  color: themeColors.text,
-                },
-              ]}
-              value={minPrice}
-              onChangeText={setMinPrice}
+              value={subject}
+              onChangeText={setSubject}
+              placeholder="np. Matematyka, Angielski…"
+              placeholderTextColor={C.textFaint}
+              style={styles.inputText}
+              returnKeyType="done"
             />
           </View>
-          <View style={styles.rowItem}>
-            <Text style={[styles.label, { color: themeColors.secondaryText }]}>Max price</Text>
-            <TextInput
-              keyboardType="numeric"
-              placeholder="100"
-              placeholderTextColor={themeColors.placeholder}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: themeColors.inputBackground,
-                  borderColor: themeColors.inputBorder,
-                  color: themeColors.text,
-                },
-              ]}
-              value={maxPrice}
-              onChangeText={setMaxPrice}
-            />
+        </SectionCard>
+
+        {/* 2 — Cena */}
+        <SectionCard title="Cena / godz.">
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Zakres</Text>
+            <Text style={styles.priceValue}>{minPrice} – {maxPrice} zł</Text>
           </View>
-        </View>
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Teaching style</Text>
-        <View style={styles.chipRow}>
-          {[
-            { label: "Casual", value: "CASUAL" },
-            { label: "Professional", value: "PROFESSIONAL" },
-            { label: "Flexible", value: "FLEXIBLE" },
-          ].map((option) => {
-            const selected = preferredTeachingStyle === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() =>
-                  setPreferredTeachingStyle(selected ? null : option.value)
-                }
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBackground,
-                    borderColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    color: selected ? "#000" : themeColors.text,
-                    fontSize: 12,
-                  }}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+          <PriceSlider
+            minVal={minPrice}
+            maxVal={maxPrice}
+            onChangeMin={setMinPrice}
+            onChangeMax={setMaxPrice}
+          />
+        </SectionCard>
 
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Tutor type</Text>
-        <View style={styles.chipRow}>
-          {[
-            { label: "Student", value: "STUDENT" },
-            { label: "Professional", value: "TUTOR" },
-          ].map((option) => {
-            const selected = preferredUserType === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() =>
-                  setPreferredUserType(selected ? null : option.value)
-                }
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBackground,
-                    borderColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    color: selected ? "#000" : themeColors.text,
-                    fontSize: 12,
-                  }}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* 3 — Styl */}
+        <SectionCard title="Styl nauczania">
+          <View style={styles.chipRow}>
+            {([ ["Luźny", "CASUAL"], ["Profesjonalny", "PROFESSIONAL"], ["Elastyczny", "FLEXIBLE"] ] as const).map(
+              ([label, val]) => (
+                <Chip
+                  key={val}
+                  label={label}
+                  color={C.amber}
+                  active={teachStyle === val}
+                  onPress={() => setTeachStyle(teachStyle === val ? null : val)}
+                />
+              )
+            )}
+          </View>
+        </SectionCard>
 
-        <Text style={[styles.label, { color: themeColors.secondaryText }]}>Availability</Text>
-        <View style={styles.chipRow}>
-          {[
-            { label: "Weekdays", value: "WEEKDAYS" },
-            { label: "Evenings", value: "EVENINGS" },
-            { label: "Weekends", value: "WEEKENDS" },
-          ].map((option) => {
-            const selected = preferredAvailability === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() =>
-                  setPreferredAvailability(selected ? null : option.value)
-                }
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBackground,
-                    borderColor: selected
-                      ? themeColors.tint
-                      : themeColors.inputBorder,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    color: selected ? "#000" : themeColors.text,
-                    fontSize: 12,
-                  }}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {/* 4 — Typ */}
+        <SectionCard title="Typ korepetytora">
+          <View style={styles.chipRow}>
+            {([ ["Student", "STUDENT"], ["Profesjonalny", "TUTOR"] ] as const).map(
+              ([label, val]) => (
+                <Chip
+                  key={val}
+                  label={label}
+                  color={C.teal}
+                  active={userType === val}
+                  onPress={() => setUserType(userType === val ? null : val)}
+                />
+              )
+            )}
+          </View>
+        </SectionCard>
 
-        <Pressable
-          style={[styles.searchButton, { backgroundColor: themeColors.tint }]}
-          onPress={handleStartSwiping}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={styles.searchButtonText}>Start swiping</Text>
-          )}
+        {/* 5 — Dostępność */}
+        <SectionCard title="Dostępność">
+          <View style={styles.chipRow}>
+            {([ ["Tydzień", "WEEKDAYS_ONLY"], ["Wieczory", "EVENING_ONLY"], ["Weekendy", "WEEKENDS_ONLY"] ] as const).map(
+              ([label, val]) => (
+                <Chip
+                  key={val}
+                  label={label}
+                  color={C.coral}
+                  active={avail === val}
+                  onPress={() => setAvail(avail === val ? null : val)}
+                />
+              )
+            )}
+          </View>
+        </SectionCard>
+
+        {/* CTA */}
+        <Pressable onPress={handleSearch} style={styles.ctaBtn}>
+          <Text style={styles.ctaText}>Pokaż 12 dopasowań ➜</Text>
         </Pressable>
-        <Pressable
-            style={[styles.searchButton, { backgroundColor: themeColors.tint}]}
-            onPress={redirectToExplore}
-            disabled={loading}
-        >
-          {loading ? (
-              <ActivityIndicator color="#000" />
-          ) : (
-              <Text style={styles.searchButtonText}>Back</Text>
-          )}
-        </Pressable>
-      </View>
+      </ScrollView>
     </View>
   );
 };
 
+// ─── styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: 20,
+    backgroundColor: C.bg,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 4,
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    gap: 14,
   },
-  subtitle: {
-    fontSize: 14,
+
+  cardLabel: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: C.textDim,
+    marginBottom: 12,
+  },
+
+  // input bar
+  inputBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: C.bgDeep,
+    borderWidth: 2,
+    borderColor: C.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  inputText: {
+    flex: 1,
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 15,
+    color: C.text,
+  },
+
+  // price row
+  priceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
-  filtersCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 8,
-  },
-  label: {
+  priceLabel: {
+    fontFamily: T.family.medium,
     fontSize: 13,
-    marginBottom: 4,
+    color: C.textDim,
   },
-  input: {
+  priceValue: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 16,
+    color: C.amber,
+  },
+
+  // slider
+  sliderWrap: {
+    height: 40,
+    justifyContent: "center",
+  },
+  trackBg: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.bgDeep,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginBottom: 10,
-    fontSize: 14,
+    borderColor: C.border,
   },
-  row: {
-    flexDirection: "row",
-    gap: 12,
+  trackFill: {
+    position: "absolute",
+    height: 6,
+    borderRadius: 3,
+    top: 17, // (40 - 6) / 2
   },
-  rowItem: {
-    flex: 1,
+  handle: {
+    position: "absolute",
+    width: HANDLE_W,
+    height: HANDLE_W,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#fff",
+    top: 8, // (40 - 24) / 2
   },
-  searchButton: {
-    marginTop: 8,
-    paddingVertical: 10,
-    borderRadius: 999,
-    alignItems: "center",
+  handleAmber: {
+    backgroundColor: C.amber,
+    shadowColor: "#C97A1A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
+  handleCoral: {
+    backgroundColor: C.coral,
+    shadowColor: "#C84A2E",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+
+  // chips
   chipRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 8,
   },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
+
+  // CTA
+  ctaBtn: {
+    backgroundColor: C.amber,
+    borderRadius: R.full,
+    paddingVertical: 16,
+    alignItems: "center",
+    borderBottomWidth: 4,
+    borderBottomColor: C.amberDark,
   },
-  searchButtonText: {
-    color: "#000",
-    fontWeight: "600",
+  ctaText: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
+    fontSize: 16,
+    color: "#241608",
   },
 });
 
 export default ExplorePreferences;
-

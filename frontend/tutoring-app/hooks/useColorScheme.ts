@@ -1,1 +1,4 @@
-export { useColorScheme } from 'react-native';
+// Quest theme is always dark — ignore device preference
+export function useColorScheme(): 'dark' {
+  return 'dark';
+}

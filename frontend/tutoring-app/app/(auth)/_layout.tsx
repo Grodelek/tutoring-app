@@ -1,81 +1,24 @@
-import { Tabs, useRouter } from "expo-router";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { Ionicons } from "@expo/vector-icons";
-import { Pressable } from "react-native";
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { QuestTabBar } from '@/components/ui/QuestTabBar';
 
 export default function AuthenticatedTabsLayout() {
-    const router = useRouter();
+  return (
+    <Tabs
+      tabBar={(props) => <QuestTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      {/* hidden — only used for programmatic navigation */}
+      <Tabs.Screen name="index"             options={{ href: null }} />
+      <Tabs.Screen name="logout"            options={{ href: null }} />
+      <Tabs.Screen name="matchCelebration"  options={{ href: null }} />
 
-    return (
-        <Tabs>
-            <Tabs.Screen
-                name="index"
-                options={{
-                    href: null,
-                }}
-            />
-
-            <Tabs.Screen
-                name="exploreTutors"
-                options={{
-                    title: "Explore",
-                    tabBarIcon: ({ color }) => (
-                        <IconSymbol name="magnifyingglass" color={color} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="createPost"
-                options={{
-                    title: "Add Post",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="create-outline" size={size} color={color} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="myAccount"
-                options={{
-                    title: "My Account",
-                    tabBarIcon: ({ color }) => (
-                        <IconSymbol name="gear" color={color} />
-                    ),
-                    headerRight: () => (
-                        <Pressable
-                            style={{ marginRight: 16 }}
-                            onPress={() => router.push("/settings/userSettings")}
-                        >
-                            <IconSymbol name="gear" color="white" size={24} />
-                        </Pressable>
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="logout"
-                options={{
-                    title: "Logout",
-                    tabBarIcon: ({ color }) => (
-                        <IconSymbol name="arrow.right.circle" color={color} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="conversations"
-                options={{
-                    title: "Conversations",
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons
-                            name="chatbubble-ellipses-outline"
-                            size={size}
-                            color={color}
-                        />
-                    ),
-                }}
-            />
-        </Tabs>
-    );
+      {/* visible tabs — icons/labels controlled by QuestTabBar */}
+      <Tabs.Screen name="home" />
+      <Tabs.Screen name="exploreTutors" />
+      <Tabs.Screen name="conversations" />
+      <Tabs.Screen name="myAccount" />
+      <Tabs.Screen name="createPost" />
+    </Tabs>
+  );
 }
