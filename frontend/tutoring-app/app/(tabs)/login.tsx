@@ -54,10 +54,10 @@ const LoginForm: React.FC = () => {
             if (userType === "TUTOR" && isTutorProfileCompleted !== "true") {
                 router.push("/registerForm/moreInfoAboutTutor");
             } else {
-                router.replace("/(auth)");
+                router.replace("/(auth)/exploreTutors");
             }
         } catch (e) {
-            router.replace("/(auth)");
+            router.replace("/(auth)/exploreTutors");
         }
     };
 

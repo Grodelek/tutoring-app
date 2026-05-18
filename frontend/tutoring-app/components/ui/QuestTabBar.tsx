@@ -8,10 +8,9 @@ import { C, T } from '@/constants/theme';
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 const TABS: { route: string; label: string; icon: IconName; color: string }[] = [
-  { route: 'home',          label: 'START',  icon: 'home',         color: C.amber  },
   { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass',      color: C.coral  },
-  { route: 'conversations', label: 'CHAT',   icon: 'message-text', color: C.teal   },
   { route: 'myAccount',     label: 'PROFIL', icon: 'account',      color: C.purple },
+  { route: 'conversations', label: 'CHAT',   icon: 'message-text', color: C.teal   },
 ];
 
 function hexAlpha(hex: string, a: number) {

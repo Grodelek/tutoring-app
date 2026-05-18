@@ -45,7 +45,6 @@ function availLabel(a?: string | null) {
   return null;
 }
 
-// ─── card inner components ────────────────────────────────────────────────────
 
 function HeaderPill({
   style: pillStyle,
@@ -264,20 +263,11 @@ const ExploreTutors: React.FC = () => {
           />
         )}
       </View>
-
-      {/* ── 3. Action row ── */}
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        {/* Skip */}
         <Pressable onPress={handleSkip} style={styles.actionClose}>
           <MaterialCommunityIcons name="close" size={26} color={C.textDim} />
         </Pressable>
 
-        {/* Star / save */}
-        <Pressable style={[styles.actionStar, { borderColor: hexAlpha(C.gold, 0.33) }]}>
-          <MaterialCommunityIcons name="star" size={26} color={C.gold} />
-        </Pressable>
-
-        {/* Connect — stretch */}
         <Pressable onPress={handleConnect} style={styles.connectBtn}>
           <MaterialCommunityIcons name="heart" size={18} color="#fff" />
           <Text style={styles.connectText}>Połącz</Text>
@@ -287,7 +277,6 @@ const ExploreTutors: React.FC = () => {
   );
 };
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   screen: {
@@ -295,7 +284,6 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
   },
 
-  // ── header ──
   header: {
     flexDirection: "row",
     alignItems: "center",

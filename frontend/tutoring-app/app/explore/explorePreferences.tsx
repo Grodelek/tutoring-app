@@ -5,6 +5,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Button,
   LayoutChangeEvent,
   Pressable,
   ScrollView,
@@ -18,12 +19,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BackHeader } from "@/components/ui/BackHeader";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { C, T, R } from "@/constants/theme";
 
-// ─── constants ────────────────────────────────────────────────────────────────
 const PREFERENCES_KEY = "tutorPreferences";
 const PRICE_MIN = 20;
 const PRICE_MAX = 300;
@@ -45,7 +44,7 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
   const maxPosRef   = useRef(0);
   const [minPos, setMinPos] = useState(0);
   const [maxPos, setMaxPos] = useState(0);
-
+  const subjects = ["Polski", "Matematyka", "J.Angielski", "J.rosyjski"]
   const pxRange = () => Math.max(1, trackWRef.current - HANDLE_W);
 
   const valToPos = (v: number) =>
@@ -136,7 +135,6 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-// ─── screen ───────────────────────────────────────────────────────────────────
 const ExplorePreferences: React.FC = () => {
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
@@ -182,7 +180,7 @@ const ExplorePreferences: React.FC = () => {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <BackHeader
+      <Button
         title="Znajdź korepetytora"
         subtitle="Ustaw preferencje · zdobądź +5 XP"
       />
@@ -257,7 +255,7 @@ const ExplorePreferences: React.FC = () => {
         {/* 5 — Dostępność */}
         <SectionCard title="Dostępność">
           <View style={styles.chipRow}>
-            {([ ["Tydzień", "WEEKDAYS_ONLY"], ["Wieczory", "EVENING_ONLY"], ["Weekendy", "WEEKENDS_ONLY"] ] as const).map(
+            {([ ["Dni robocze", "WEEKDAYS_ONLY"], ["Wieczory", "EVENING_ONLY"], ["Weekendy", "WEEKENDS_ONLY"], ["Elastyczny", "FLEXIBLE"] ] as const).map(
               ([label, val]) => (
                 <Chip
                   key={val}

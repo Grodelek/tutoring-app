@@ -350,7 +350,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  // ── row text ──
   rowBody: {
     flex: 1,
     gap: 3,
