@@ -5,17 +5,19 @@ import {
     Pressable,
     StyleSheet,
     Text,
-    SafeAreaView,
     ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { C, T, R } from "@/constants/theme";
 
 const UserSettings = () => {
     const router = useRouter();
-    const { token, setToken } = useAuth();
+    const insets = useSafeAreaInsets();
+    const { setToken } = useAuth();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const handleLogout = async () => {
@@ -23,42 +25,61 @@ const UserSettings = () => {
         try {
             await AsyncStorage.removeItem("jwtToken");
             setToken(null);
-            setTimeout(() => {
-                router.replace("/login");
-            }, 500);
-        } catch (error) {
-            console.error("Logout error:", error);
+            setTimeout(() => router.replace("/login"), 400);
+        } catch {
             router.replace("/login");
         }
     };
 
-    const backToMyAccount = () => {
-        router.push("/(auth)/myAccount");
-    };
-
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Settings</Text>
-                </View>
-                <View style={styles.section}>
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.backButton,
-                            pressed && styles.backButtonPressed,
-                        ]}
-                        onPress={backToMyAccount}
-                    >
-                        <Ionicons name="arrow-back" size={20} color="#fff" />
-                        <Text style={styles.backButtonText}>Back to Account</Text>
-                    </Pressable>
+        <View style={[styles.screen, { paddingTop: insets.top }]}>
+            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                <MaterialCommunityIcons name="arrow-left" size={24} color={C.text} />
+            </Pressable>
 
+            <ScrollView
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+                showsVerticalScrollIndicator={false}
+            >
+                <Text style={styles.heading}>Ustawienia</Text>
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionLabel}>Konto</Text>
+                    <View style={styles.card}>
+                        <Pressable style={styles.menuRow}>
+                            <View style={[styles.menuIcon, { backgroundColor: C.amber + "22" }]}>
+                                <MaterialCommunityIcons name="account-edit-outline" size={20} color={C.amber} />
+                            </View>
+                            <Text style={styles.menuText}>Edytuj profil</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
+                        </Pressable>
+
+                        <View style={styles.divider} />
+
+                        <Pressable style={styles.menuRow}>
+                            <View style={[styles.menuIcon, { backgroundColor: C.teal + "22" }]}>
+                                <MaterialCommunityIcons name="bell-outline" size={20} color={C.teal} />
+                            </View>
+                            <Text style={styles.menuText}>Powiadomienia</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
+                        </Pressable>
+
+                        <View style={styles.divider} />
+
+                        <Pressable style={styles.menuRow}>
+                            <View style={[styles.menuIcon, { backgroundColor: C.purple + "22" }]}>
+                                <MaterialCommunityIcons name="shield-lock-outline" size={20} color={C.purple} />
+                            </View>
+                            <Text style={styles.menuText}>Prywatność</Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
+                        </Pressable>
+                    </View>
+                </View>
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionLabel}>Sesja</Text>
                     <Pressable
-                        style={({ pressed }) => [
-                            styles.logoutButton,
-                            pressed && styles.logoutButtonPressed,
-                        ]}
+                        style={[styles.logoutBtn, isLoggingOut && { opacity: 0.6 }]}
                         onPress={handleLogout}
                         disabled={isLoggingOut}
                     >
@@ -66,92 +87,98 @@ const UserSettings = () => {
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
                             <>
-                                <Ionicons name="log-out-outline" size={20} color="#fff" />
-                                <Text style={styles.logoutButtonText}>Logout</Text>
+                                <MaterialCommunityIcons name="logout" size={20} color="#fff" />
+                                <Text style={styles.logoutText}>Wyloguj się</Text>
                             </>
                         )}
                     </Pressable>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    safeArea: {
+    screen: {
         flex: 1,
-        backgroundColor: "#1a1a1a",
+        backgroundColor: C.bg,
     },
-    container: {
-        flex: 1,
-        backgroundColor: "#1a1a1a",
+    backBtn: {
+        padding: 16,
     },
     content: {
-        paddingBottom: 40,
-    },
-    header: {
-        paddingVertical: 20,
         paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "#333",
+        paddingTop: 4,
+        gap: 20,
     },
-    headerTitle: {
+    heading: {
+        fontFamily: T.family.black,
+        fontWeight: T.weight.black,
         fontSize: 28,
-        fontWeight: "bold",
-        color: "#fff",
+        color: C.text,
+        letterSpacing: -0.7,
+        marginBottom: 4,
     },
     section: {
+        gap: 10,
+    },
+    sectionLabel: {
+        fontFamily: T.family.black,
+        fontWeight: T.weight.black,
+        fontSize: 11,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+        color: C.textDim,
+        paddingHorizontal: 4,
+    },
+    card: {
+        backgroundColor: C.surface,
+        borderRadius: R.md,
+        borderWidth: 1,
+        borderColor: C.border,
+        overflow: "hidden",
+    },
+    menuRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 14,
         paddingHorizontal: 16,
-        paddingVertical: 20,
-        gap: 12,
-    },
-    backButton: {
-        backgroundColor: "#404040",
         paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 12,
+    },
+    menuIcon: {
+        width: 36,
+        height: 36,
+        borderRadius: R.xs,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    menuText: {
+        flex: 1,
+        fontFamily: T.family.medium,
+        fontSize: 15,
+        color: C.text,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: C.border,
+        marginLeft: 66,
+    },
+    logoutBtn: {
+        backgroundColor: "#C0392B",
+        borderRadius: R.md,
+        paddingVertical: 15,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
         gap: 10,
-        elevation: 2,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
+        borderBottomWidth: 3,
+        borderBottomColor: "#922B21",
     },
-    backButtonPressed: {
-        backgroundColor: "#525252",
-        opacity: 0.85,
-    },
-    backButtonText: {
+    logoutText: {
+        fontFamily: T.family.extraBold,
+        fontWeight: T.weight.extraBold,
+        fontSize: 15,
         color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    logoutButton: {
-        backgroundColor: "#dc2626",
-        paddingVertical: 14,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 10,
-        elevation: 3,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-    },
-    logoutButtonPressed: {
-        backgroundColor: "#b91c1c",
-        opacity: 0.9,
-    },
-    logoutButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "600",
     },
 });
 

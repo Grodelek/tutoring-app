@@ -19,6 +19,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
 import UploadPhoto from "@components/UploadPhoto";
 import { Colors } from "@/constants/Colors";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import {router} from "expo-router";
 
 const MyAccount: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -114,6 +116,11 @@ const MyAccount: React.FC = () => {
     >
       {user ? (
         <View style={styles.contentWrapper}>
+          <Pressable
+              onPress={() => router.push("/settings/userSettings")}
+              style={{ alignSelf: "flex-end", marginBottom: 8, padding: 6 }}>
+            <MaterialCommunityIcons name="cog-outline" size={24} color={themeColors.text} />
+          </Pressable>
           <View
             style={[
               styles.headerCard,

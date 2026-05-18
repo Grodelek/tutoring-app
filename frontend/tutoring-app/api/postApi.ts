@@ -1,4 +1,3 @@
-// frontend/tutoring-app/api/postApi.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { BASE_URL } from "@/config/baseUrl";

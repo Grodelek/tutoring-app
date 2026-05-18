@@ -7,8 +7,6 @@ export interface TutorSearchRequest {
   level?: string | null;
   minPrice?: number | null;
   maxPrice?: number | null;
-  minRating?: number | null;
-  priceImportance?: number | null;
   preferredTeachingStyle?: "CASUAL" | "PROFESSIONAL" | "FLEXIBLE" | null;
   preferredUserType?: "STUDENT" | "TUTOR" | null;
   preferredAvailability?: string | null;

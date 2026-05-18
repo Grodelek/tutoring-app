@@ -17,9 +17,6 @@ public class TutorSearchRequestDTO {
   private String level;
   private BigDecimal minPrice;
   private BigDecimal maxPrice;
-  private Double minRating;
-
-  private Integer priceImportance;
   private LessonType preferredTeachingStyle;
   private UserType preferredUserType;
   private Availability preferredAvailability;
