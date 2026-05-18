@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     View,
     Alert,
@@ -10,16 +10,13 @@ import {
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addMoreInfo, Availability, ExperienceTime, LessonType } from "@/api/userApi";
+import { useAuth } from "@/context/AuthContext";
 
 const MoreInfoAboutTutor: React.FC = () => {
     const [experienceTime, setExperienceTime] = useState<ExperienceTime | null>(null);
     const [availability, setAvailability] = useState<Availability | null>(null);
     const [lessonType, setLessonType] = useState<LessonType | null>(null);
-    const [username, setUsername] = useState<string | null>(null);
-
-    useEffect(() => {
-        AsyncStorage.getItem("username").then(setUsername);
-    }, []);
+    const { setToken } = useAuth();
 
     const showAlert = (message: string) => {
         if (Platform.OS === "web") {
@@ -40,9 +37,10 @@ const MoreInfoAboutTutor: React.FC = () => {
                 availability,
                 lessonType,
             });
-            AsyncStorage.setItem("hasCompletedTutorProfile", "true");
-            showAlert("Success! Profile completed!");
-            router.push("/login");
+            await AsyncStorage.setItem("hasCompletedTutorProfile", "true");
+            const savedToken = await AsyncStorage.getItem("jwtToken");
+            setToken(savedToken);
+            router.replace("/(auth)/exploreTutors");
         } catch (error) {
             console.log("Error while saving tutor info", error);
             showAlert("Error while saving tutor info");

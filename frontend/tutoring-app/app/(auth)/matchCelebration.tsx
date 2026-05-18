@@ -26,7 +26,6 @@ import { C, T, R } from "@/constants/theme";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
-// ─── animated ray background ─────────────────────────────────────────────────
 const RAY_ANGLES = Array.from({ length: 12 }, (_, i) => i * 30);
 
 function RayBurst() {
@@ -66,7 +65,6 @@ function RayBurst() {
   );
 }
 
-// ─── confetti dot ─────────────────────────────────────────────────────────────
 interface ConfettiProps {
   color: string;
   size: number;
@@ -96,7 +94,6 @@ function ConfettiDot({ color, size, top, bottom, left, right, rotate, delay, tra
     transform: [{ translateY: bounce.value }, { rotate: `${rotate}deg` }],
   }));
 
-  // Use regular View for percentage-string positioning (Reanimated types are strict)
   return (
     <View
       style={{ position: "absolute", top, bottom, left, right }}
@@ -112,7 +109,6 @@ function ConfettiDot({ color, size, top, bottom, left, right, rotate, delay, tra
   );
 }
 
-// ─── avatar bubble ───────────────────────────────────────────────────────────
 function AvatarBubble({
   letter,
   color,
@@ -143,7 +139,6 @@ function AvatarBubble({
   );
 }
 
-// ─── reward pill ──────────────────────────────────────────────────────────────
 function RewardPill({
   icon,
   label,
@@ -175,8 +170,7 @@ function RewardPill({
   );
 }
 
-// ─── screen ───────────────────────────────────────────────────────────────────
-export default function MatchCelebration() {
+function MatchCelebration(){
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -193,11 +187,8 @@ export default function MatchCelebration() {
   const price          = params.price         ?? "105";
   const conversationId = params.conversationId ?? "";
 
-  // avatar bounce — opposite phases
   const bounceA = useSharedValue(0);
   const bounceB = useSharedValue(0);
-
-  // heart wiggle
   const wiggle = useSharedValue(0);
 
   useEffect(() => {
@@ -219,7 +210,6 @@ export default function MatchCelebration() {
   }, []);
 
   const heartStyle = useAnimatedStyle(() => ({
-    // -8deg base + wiggle
     transform: [{ rotate: `${-8 + wiggle.value}deg` }],
   }));
 
@@ -233,7 +223,6 @@ export default function MatchCelebration() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom + 16 }]}>
-      {/* Background radial gradient */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
         <Svg width={SW} height={SH}>
           <Defs>
@@ -252,10 +241,8 @@ export default function MatchCelebration() {
         </Svg>
       </View>
 
-      {/* Animated rays */}
       <RayBurst />
 
-      {/* Confetti dots */}
       <ConfettiDot color={C.coral}  size={12} top="14%" left="8%"   rotate={15}  delay={0}   translateDir="down" />
       <ConfettiDot color={C.gold}   size={10} top="10%" right="14%" rotate={-20} delay={120} translateDir="up" />
       <ConfettiDot color={C.purple} size={14} top="28%" right="6%"  rotate={30}  delay={240} translateDir="down" />
@@ -263,10 +250,7 @@ export default function MatchCelebration() {
       <ConfettiDot color={C.green}  size={10} bottom="30%" right="8%" rotate={25}  delay={180} translateDir="down" />
       <ConfettiDot color={C.amber}  size={13} top="22%" left="30%"  rotate={-5}  delay={60}  translateDir="up" />
 
-      {/* Main content */}
       <View style={styles.content}>
-
-        {/* Avatar row */}
         <View style={styles.avatarRow}>
           <AvatarBubble
             letter="M"
@@ -275,7 +259,6 @@ export default function MatchCelebration() {
             translateY={bounceA}
           />
 
-          {/* Heart */}
           <Animated.View style={heartStyle}>
             <View style={styles.heartShadow}>
               <LinearGradient
@@ -297,26 +280,21 @@ export default function MatchCelebration() {
           />
         </View>
 
-        {/* Match label */}
         <Text style={styles.matchLabel}>✦ MATCH ✦</Text>
 
-        {/* Headline */}
         <Text style={styles.headline}>To dopasowanie!</Text>
 
-        {/* Sub-copy */}
         <Text style={styles.subcopy}>
           Ty i {tutorName} macie wspólne plany.{"\n"}
           {subject} · {availability} · {price} zł / godz.
         </Text>
 
-        {/* Reward pills */}
         <View style={styles.rewardRow}>
           <RewardPill icon="star-four-points" label="+50 XP"  color={C.gold}   delay={0} />
           <RewardPill icon="fire"             label="Streak +1" color={C.coral}  delay={150} />
           <RewardPill icon="trophy"           label="Odznaka" color={C.purple} delay={300} />
         </View>
 
-        {/* CTA buttons */}
         <View style={styles.ctaRow}>
           <Pressable onPress={handleMessage} style={styles.ctaCoral}>
             <MaterialCommunityIcons name="chat" size={18} color="#fff" />
@@ -332,7 +310,6 @@ export default function MatchCelebration() {
   );
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -347,7 +324,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  // avatars
   avatarRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -376,7 +352,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  // heart
   heartShadow: {
     borderRadius: 18,
     shadowColor: C.coralDark,
@@ -393,7 +368,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // text
   matchLabel: {
     fontFamily: T.family.black,
     fontWeight: "900",
@@ -419,7 +393,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // rewards
   rewardRow: {
     flexDirection: "row",
     gap: 8,
@@ -442,7 +415,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
-  // CTA
   ctaRow: {
     width: "100%",
     gap: 10,
@@ -480,3 +452,5 @@ const styles = StyleSheet.create({
     color: C.textDim,
   },
 });
+
+export default MatchCelebration;

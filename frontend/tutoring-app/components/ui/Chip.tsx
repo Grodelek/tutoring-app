@@ -1,11 +1,8 @@
 import React from 'react';
 import { Text, Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { C, R, T } from '@/constants/theme';
-
-// Colors that need dark text for contrast on solid background
 const DARK_TEXT_ON: Set<string> = new Set([C.amber, C.gold]);
 
-// Hard bottom "shadow" — darker variant per accent color
 const DARKER: Record<string, string> = {
   [C.amber]:  C.amberDark,
   [C.coral]:  C.coralDark,
@@ -38,7 +35,6 @@ export function Chip({ label, color, active = false, onPress, style }: ChipProps
             borderTopColor:   color,
             borderLeftColor:  color,
             borderRightColor: color,
-            // bottom border doubles as the hard 3px shadow
             borderBottomColor: shadowColor,
             borderTopWidth:    2,
             borderLeftWidth:   2,

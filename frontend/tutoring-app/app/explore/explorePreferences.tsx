@@ -5,7 +5,7 @@ import React, {
   useState,
 } from "react";
 import {
-  Button,
+  Animated,
   LayoutChangeEvent,
   Pressable,
   ScrollView,
@@ -27,8 +27,31 @@ const PREFERENCES_KEY = "tutorPreferences";
 const PRICE_MIN = 20;
 const PRICE_MAX = 300;
 const HANDLE_W  = 24;
+const SUBJECTS = [
+  "Polski",
+  "Matematyka",
+  "J.Angielski",
+  "J.Rosyjski",
+  "J.Niemiecki",
+  "J.Hiszpański",
+  "Biologia",
+  "Chemia",
+  "Fizyka",
+  "Geografia",
+  "Historia",
+  "WOS",
+  "Informatyka",
+  "Przyroda",
+  "Filozofia",
+  "Muzyka",
+  "Plastyka",
+  "Technika",
+  "WF",
+  "Egzamin 8-klasisty",
+  "Matura podstawowa",
+  "Matura rozszerzona",
+];
 
-// ─── dual-handle slider ───────────────────────────────────────────────────────
 interface SliderProps {
   minVal: number;
   maxVal: number;
@@ -44,7 +67,6 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
   const maxPosRef   = useRef(0);
   const [minPos, setMinPos] = useState(0);
   const [maxPos, setMaxPos] = useState(0);
-  const subjects = ["Polski", "Matematyka", "J.Angielski", "J.rosyjski"]
   const pxRange = () => Math.max(1, trackWRef.current - HANDLE_W);
 
   const valToPos = (v: number) =>
@@ -64,7 +86,6 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
     setMaxPos(mx);
   };
 
-  // PanResponder for min handle
   const { PanResponder: RNPan } = require("react-native");
   const minPan = useRef(
     RNPan.create({
@@ -97,10 +118,7 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
 
   return (
     <View onLayout={onLayout} style={styles.sliderWrap}>
-      {/* Track background */}
       <View style={styles.trackBg} />
-
-      {/* Gradient fill */}
       {trackWRef.current > 0 && (
         <LinearGradient
           colors={["#FFA53D", "#FF6B4A"]}
@@ -109,14 +127,10 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
           style={[styles.trackFill, { left: fillLeft, width: fillWidth }]}
         />
       )}
-
-      {/* Min handle — amber */}
       <View
         {...minPan.panHandlers}
         style={[styles.handle, styles.handleAmber, { left: minPos }]}
       />
-
-      {/* Max handle — coral */}
       <View
         {...maxPan.panHandlers}
         style={[styles.handle, styles.handleCoral, { left: maxPos }]}
@@ -125,7 +139,6 @@ function PriceSlider({ minVal, maxVal, onChangeMin, onChangeMax }: SliderProps) 
   );
 }
 
-// ─── section card ─────────────────────────────────────────────────────────────
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Card>
@@ -139,7 +152,10 @@ const ExplorePreferences: React.FC = () => {
   const router  = useRouter();
   const insets  = useSafeAreaInsets();
 
-  const [subject,     setSubject]     = useState("");
+  const [subject,         setSubject]         = useState<string | null>(null);
+  const [inputText,       setInputText]       = useState("");
+  const [dropdownMounted, setDropdownMounted] = useState(false);
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
   const [minPrice,    setMinPrice]    = useState(40);
   const [maxPrice,    setMaxPrice]    = useState(120);
   const [teachStyle,  setTeachStyle]  = useState<string | null>(null);
@@ -152,7 +168,7 @@ const ExplorePreferences: React.FC = () => {
         const raw = await AsyncStorage.getItem(PREFERENCES_KEY);
         if (!raw) return;
         const s = JSON.parse(raw);
-        if (s.subject)               setSubject(String(s.subject));
+        if (s.subject) { setSubject(s.subject); setInputText(s.subject); }
         if (s.minPrice != null)      setMinPrice(Number(s.minPrice));
         if (s.maxPrice != null)      setMaxPrice(Number(s.maxPrice));
         if (s.preferredTeachingStyle) setTeachStyle(s.preferredTeachingStyle);
@@ -162,9 +178,43 @@ const ExplorePreferences: React.FC = () => {
     })();
   }, []);
 
+  const filteredSubjects = SUBJECTS.filter((s) =>
+    s.toLowerCase().includes(inputText.toLowerCase())
+  );
+
+  const openDropdown = () => {
+    setDropdownMounted(true);
+    Animated.spring(dropdownAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 280,
+      friction: 22,
+    }).start();
+  };
+
+  const closeDropdown = () => {
+    Animated.timing(dropdownAnim, {
+      toValue: 0,
+      duration: 160,
+      useNativeDriver: true,
+    }).start(() => setDropdownMounted(false));
+  };
+
+  const selectSubject = (s: string) => {
+    setSubject(s);
+    setInputText(s);
+    closeDropdown();
+  };
+
+  const clearSubject = () => {
+    setSubject(null);
+    setInputText("");
+    openDropdown();
+  };
+
   const handleSearch = useCallback(async () => {
     const filters = {
-      subject: subject.trim() || null,
+      subject: subject || null,
       minPrice,
       maxPrice,
       preferredTeachingStyle: teachStyle,
@@ -180,31 +230,90 @@ const ExplorePreferences: React.FC = () => {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <Button
-        title="Znajdź korepetytora"
-        subtitle="Ustaw preferencje · zdobądź +5 XP"
-      />
+      <Pressable onPress={() => router.back()} style={{ padding: 16, width: 10}}>
+        <MaterialCommunityIcons name="arrow-left" size={24} color={C.text} />
+      </Pressable>
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* 1 — Przedmiot */}
         <SectionCard title="Przedmiot">
-          <View style={styles.inputBar}>
-            <MaterialCommunityIcons name="magnify" size={18} color={C.amber} />
+          <View style={[styles.inputBar, subject ? styles.inputBarConfirmed : null]}>
+            <MaterialCommunityIcons
+              name={subject ? "check-circle" : "magnify"}
+              size={18}
+              color={subject ? C.amber : C.textDim}
+            />
             <TextInput
-              value={subject}
-              onChangeText={setSubject}
-              placeholder="np. Matematyka, Angielski…"
+              value={inputText}
+              onChangeText={(text: string) => {
+                setInputText(text);
+                setSubject(null);
+                openDropdown();
+              }}
+              onFocus={openDropdown}
+              onBlur={() => setTimeout(closeDropdown, 150)}
+              placeholder="Wpisz lub wybierz przedmiot…"
               placeholderTextColor={C.textFaint}
               style={styles.inputText}
               returnKeyType="done"
             />
+            {(inputText.length > 0) && (
+              <Pressable onPress={clearSubject} hitSlop={8}>
+                <MaterialCommunityIcons name="close-circle" size={18} color={C.textDim} />
+              </Pressable>
+            )}
           </View>
+
+          {dropdownMounted && (
+            <Animated.View
+              style={[
+                styles.dropdown,
+                {
+                  opacity: dropdownAnim,
+                  transform: [{
+                    translateY: dropdownAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-8, 0],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              {filteredSubjects.length > 0 ? (
+                <ScrollView
+                  keyboardShouldPersistTaps="always"
+                  nestedScrollEnabled
+                  style={{ maxHeight: 172 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {filteredSubjects.map((s) => (
+                    <Pressable
+                      key={s}
+                      onPress={() => selectSubject(s)}
+                      style={[
+                        styles.dropdownItem,
+                        subject === s && styles.dropdownItemActive,
+                      ]}
+                    >
+                      <Text style={[styles.dropdownText, subject === s && styles.dropdownTextActive]}>
+                        {s}
+                      </Text>
+                      {subject === s && (
+                        <MaterialCommunityIcons name="check" size={16} color={C.amber} />
+                      )}
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              ) : (
+                <Text style={styles.dropdownEmpty}>Brak wyników</Text>
+              )}
+            </Animated.View>
+          )}
         </SectionCard>
 
-        {/* 2 — Cena */}
         <SectionCard title="Cena / godz.">
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Zakres</Text>
@@ -218,7 +327,6 @@ const ExplorePreferences: React.FC = () => {
           />
         </SectionCard>
 
-        {/* 3 — Styl */}
         <SectionCard title="Styl nauczania">
           <View style={styles.chipRow}>
             {([ ["Luźny", "CASUAL"], ["Profesjonalny", "PROFESSIONAL"], ["Elastyczny", "FLEXIBLE"] ] as const).map(
@@ -235,7 +343,6 @@ const ExplorePreferences: React.FC = () => {
           </View>
         </SectionCard>
 
-        {/* 4 — Typ */}
         <SectionCard title="Typ korepetytora">
           <View style={styles.chipRow}>
             {([ ["Student", "STUDENT"], ["Profesjonalny", "TUTOR"] ] as const).map(
@@ -252,7 +359,6 @@ const ExplorePreferences: React.FC = () => {
           </View>
         </SectionCard>
 
-        {/* 5 — Dostępność */}
         <SectionCard title="Dostępność">
           <View style={styles.chipRow}>
             {([ ["Dni robocze", "WEEKDAYS_ONLY"], ["Wieczory", "EVENING_ONLY"], ["Weekendy", "WEEKENDS_ONLY"], ["Elastyczny", "FLEXIBLE"] ] as const).map(
@@ -269,7 +375,6 @@ const ExplorePreferences: React.FC = () => {
           </View>
         </SectionCard>
 
-        {/* CTA */}
         <Pressable onPress={handleSearch} style={styles.ctaBtn}>
           <Text style={styles.ctaText}>Pokaż 12 dopasowań ➜</Text>
         </Pressable>
@@ -278,7 +383,6 @@ const ExplorePreferences: React.FC = () => {
   );
 };
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -300,7 +404,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // input bar
+  // subject input
   inputBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -312,12 +416,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  inputBarConfirmed: {
+    borderColor: C.amber,
+  },
   inputText: {
     flex: 1,
     fontFamily: T.family.bold,
     fontWeight: T.weight.bold,
     fontSize: 15,
     color: C.text,
+  },
+  dropdown: {
+    marginTop: 6,
+    backgroundColor: C.bgDeep,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  dropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  dropdownItemActive: {
+    backgroundColor: C.amber + "18",
+  },
+  dropdownText: {
+    fontFamily: T.family.medium,
+    fontSize: 15,
+    color: C.text,
+  },
+  dropdownTextActive: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    color: C.amber,
+  },
+  dropdownEmpty: {
+    fontFamily: T.family.medium,
+    fontSize: 14,
+    color: C.textDim,
+    textAlign: "center",
+    paddingVertical: 14,
   },
 
   // price row

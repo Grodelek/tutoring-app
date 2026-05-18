@@ -1,17 +1,14 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { C, T } from '@/constants/theme';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-const TABS: { route: string; label: string; icon: IconName; color: string }[] = [
-  { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass',      color: C.coral  },
-  { route: 'myAccount',     label: 'PROFIL', icon: 'account',      color: C.purple },
-  { route: 'conversations', label: 'CHAT',   icon: 'message-text', color: C.teal   },
-];
+type TabDef = { route: string; label: string; icon: IconName; color: string };
 
 function hexAlpha(hex: string, a: number) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -22,11 +19,44 @@ function hexAlpha(hex: string, a: number) {
 
 export function QuestTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const [userType, setUserType] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await AsyncStorage.getItem('userType');
+        if (!cancelled) setUserType(t);
+      } catch {
+        if (!cancelled) setUserType(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const tabs: TabDef[] = useMemo(() => {
+    const base: TabDef[] = [
+      { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass', color: C.coral },
+    ];
+
+    if (userType === 'TUTOR') {
+      base.push({ route: 'createPost', label: 'POST', icon: 'plus-box', color: C.amber });
+    }
+
+    base.push(
+      { route: 'myAccount', label: 'PROFIL', icon: 'account', color: C.purple },
+      { route: 'conversations', label: 'CHAT', icon: 'message-text', color: C.teal },
+    );
+
+    return base;
+  }, [userType]);
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
-      {TABS.map(({ route, label, icon, color }) => {
-        const routeIndex = state.routes.findIndex((r) => r.name === route);
+      {tabs.map(({ route, label, icon, color }) => {
+        const routeIndex = state.routes.findIndex((r: { name: string }) => r.name === route);
         const isActive = routeIndex !== -1 && state.index === routeIndex;
 
         const onPress = () => {

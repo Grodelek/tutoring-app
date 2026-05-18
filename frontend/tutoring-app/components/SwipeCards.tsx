@@ -30,14 +30,12 @@ const SwipeCards = <TCard,>({
   const swipe = useRef(new Animated.ValueXY()).current;
   const swipeThreshold = SCREEN_WIDTH * 0.25;
 
-  // Front card: base rotation -1deg, ±11deg during swipe
   const rotate = swipe.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
     outputRange: ["-13deg", "-1deg", "11deg"],
     extrapolate: "clamp",
   });
 
-  // 2nd card: 0.97 at rest → 1.0 when front is swiped
   const secondScale = swipe.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
     outputRange: [1, 0.97, 1],
@@ -49,7 +47,6 @@ const SwipeCards = <TCard,>({
     extrapolate: "clamp",
   });
 
-  // 3rd card: 0.94 at rest → 0.97 when front is swiped
   const thirdScale = swipe.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
     outputRange: [0.97, 0.94, 0.97],
