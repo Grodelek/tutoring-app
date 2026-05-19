@@ -10,7 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@context/AuthContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { C, T, R } from "@/constants/theme";
 

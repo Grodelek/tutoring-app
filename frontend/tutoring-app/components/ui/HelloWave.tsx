@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@components/ui/ThemedText';
 
 export function HelloWave() {
   const rotationAnimation = useRef(new Animated.Value(0)).current;

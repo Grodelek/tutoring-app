@@ -10,7 +10,7 @@ import {
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addMoreInfo, Availability, ExperienceTime, LessonType } from "@/api/userApi";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@context/AuthContext";
 
 const MoreInfoAboutTutor: React.FC = () => {
     const [experienceTime, setExperienceTime] = useState<ExperienceTime | null>(null);

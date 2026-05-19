@@ -1,4 +1,4 @@
-package com.tutoring.app.dto;
+package com.tutoring.app.dto.conversation;
 
 import java.util.UUID;
 import lombok.Data;

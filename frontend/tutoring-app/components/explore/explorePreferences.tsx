@@ -19,8 +19,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
+import { Card } from "@components/ui/Card";
+import { Chip } from "@components/ui/Chip";
 import { C, T, R } from "@/constants/theme";
 
 const PREFERENCES_KEY = "tutorPreferences";

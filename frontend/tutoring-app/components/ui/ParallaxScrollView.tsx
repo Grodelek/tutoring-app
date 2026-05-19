@@ -1,8 +1,8 @@
 import React, { PropsWithChildren, ReactElement, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 
-import { ThemedView } from "@/components/ThemedView";
-import { useBottomTabOverflow } from "@/components/ui/TabBarBackground";
+import { ThemedView } from "@components/ui/ThemedView";
+import { useBottomTabOverflow } from "@components/ui/TabBarBackground";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 type Props = PropsWithChildren<{

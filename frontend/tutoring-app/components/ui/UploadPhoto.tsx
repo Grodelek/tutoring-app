@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Button, Image, ActivityIndicator } from "react-native";
 import { uploadImageToCloudinary } from "./UploadImageToCloudinary";
-import { saveToBackend } from "../api/userApi";
+import { saveToBackend } from "../../api/userApi";
 
 interface UploadPhotoProps {
     onUploaded?: (url: string) => void;
