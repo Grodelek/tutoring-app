@@ -17,7 +17,7 @@ import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
 import { getMyAccount, saveToBackend } from "@/api/userApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
-import UploadPhoto from "@components/UploadPhoto";
+import UploadPhoto from "@components/ui/UploadPhoto";
 import { Colors } from "@/constants/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {router} from "expo-router";

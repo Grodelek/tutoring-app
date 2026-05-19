@@ -1,36 +1,25 @@
 
 import { Tabs } from 'expo-router';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { QuestTabBar, TabDef } from '@/components/ui/QuestTabBar';
+import { C } from '@/constants/theme';
+
+const GUEST_TABS: TabDef[] = [
+  { route: 'index',    label: 'HOME',     icon: 'home',         color: C.coral  },
+  { route: 'explore',  label: 'EXPLORE',  icon: 'compass',      color: C.teal   },
+  { route: 'login',    label: 'LOGIN',    icon: 'login',        color: C.amber  },
+  { route: 'register', label: 'REGISTER', icon: 'account-plus', color: C.purple },
+];
 
 export default function GuestTabsLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-      name="index"
-      options={{ 
-      title: 'Home',
-      tabBarIcon: ({ color }) => <IconSymbol name="house.fill" color={color} />,
-    }}
-  />
-  <Tabs.Screen
-    name="explore"
-    options={{ title: 'Explore'}}
-  />
-      <Tabs.Screen
-        name="login"
-        options={{
-          title: 'Login',
-          tabBarIcon: ({ color }) => <IconSymbol name="person.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="register"
-        options={{
-          title: 'Register',
-          tabBarIcon: ({ color }) => <IconSymbol name="person.badge.plus.fill" color={color} />,
-        }}
-      />
+    <Tabs
+      tabBar={(props) => <QuestTabBar {...props} staticTabs={GUEST_TABS} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="index"    />
+      <Tabs.Screen name="explore"  />
+      <Tabs.Screen name="login"    />
+      <Tabs.Screen name="register" />
     </Tabs>
   );
 }
-

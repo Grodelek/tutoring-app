@@ -1,7 +1,7 @@
 package com.tutoring.app.controller;
 
 import com.tutoring.app.domain.Conversation;
-import com.tutoring.app.dto.ConversationDTO;
+import com.tutoring.app.dto.conversation.ConversationDTO;
 import com.tutoring.app.repository.ConversationRepository;
 import com.tutoring.app.repository.ConversationRepository.ConversationLastMessageProjection;
 import org.springframework.http.ResponseEntity;

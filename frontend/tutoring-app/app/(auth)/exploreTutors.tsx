@@ -15,7 +15,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { fetchTutors, TutorCard } from "@/api/tutorDiscoveryApi";
 import { addFavoriteTutor } from "@/api/favoriteApi";
 import { sendMessageToTutor } from "@/api/lessonApi";
-import SwipeCards from "@components/SwipeCards";
+import SwipeCards from "@components/ui/SwipeCards";
 import { Chip } from "@/components/ui/Chip";
 import { C, T, R } from "@/constants/theme";
 
@@ -68,7 +68,6 @@ function CardHeader({ initial, match, rating }: { initial: string; match: number
       end={{ x: 1, y: 1 }}
       style={styles.cardHeader}
     >
-      {/* Radial glare — top-left shine */}
       <Svg style={StyleSheet.absoluteFillObject}>
         <Defs>
           <RadialGradient id="glare" cx="30%" cy="30%" r="60%">
@@ -79,25 +78,18 @@ function CardHeader({ initial, match, rating }: { initial: string; match: number
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#glare)" />
       </Svg>
 
-      {/* Initial */}
       <Text style={styles.initial}>{initial}</Text>
 
-      {/* Match pill — top left */}
       <HeaderPill style={styles.pillTL}>
         <MaterialCommunityIcons name="star-four-points" size={11} color={C.gold} />
         <Text style={styles.matchText}>{match}% MATCH</Text>
       </HeaderPill>
 
-      {/* Rating pill — top right */}
       <HeaderPill style={styles.pillTR}>
         <MaterialCommunityIcons name="star" size={11} color={C.gold} />
         <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
       </HeaderPill>
 
-      {/* Level pill — bottom left */}
-      <HeaderPill style={styles.pillBL}>
-        <Text style={styles.levelText}>LV. 12 MENTOR</Text>
-      </HeaderPill>
     </LinearGradient>
   );
 }

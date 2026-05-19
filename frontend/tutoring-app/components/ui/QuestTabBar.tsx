@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-type TabDef = { route: string; label: string; icon: IconName; color: string };
+export type TabDef = { route: string; label: string; icon: IconName; color: string };
 
 function hexAlpha(hex: string, a: number) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -17,11 +17,14 @@ function hexAlpha(hex: string, a: number) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-export function QuestTabBar({ state, navigation }: BottomTabBarProps) {
+type Props = BottomTabBarProps & { staticTabs?: TabDef[] };
+
+export function QuestTabBar({ state, navigation, staticTabs }: Props) {
   const insets = useSafeAreaInsets();
   const [userType, setUserType] = useState<string | null>(null);
 
   useEffect(() => {
+    if (staticTabs) return;
     let cancelled = false;
     (async () => {
       try {
@@ -34,9 +37,11 @@ export function QuestTabBar({ state, navigation }: BottomTabBarProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [staticTabs]);
 
-  const tabs: TabDef[] = useMemo(() => {
+  const authTabs: TabDef[] = useMemo(() => {
+    if (staticTabs) return staticTabs;
+
     const base: TabDef[] = [
       { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass', color: C.coral },
     ];
@@ -51,7 +56,9 @@ export function QuestTabBar({ state, navigation }: BottomTabBarProps) {
     );
 
     return base;
-  }, [userType]);
+  }, [staticTabs, userType]);
+
+  const tabs = authTabs;
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 4) }]}>

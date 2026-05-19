@@ -9,11 +9,13 @@ type Status = "checking" | "ok" | "needs-onboarding";
 
 export default function AuthenticatedTabsLayout() {
   const [status, setStatus] = useState<Status>("checking");
+  const [userType, setUserType] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const userType = await AsyncStorage.getItem("userType");
       const completed = await AsyncStorage.getItem("hasCompletedTutorProfile");
+      setUserType(userType);
       if (userType === "TUTOR" && completed !== "true") {
         setStatus("needs-onboarding");
       } else {
@@ -27,8 +29,10 @@ export default function AuthenticatedTabsLayout() {
   }
 
   if (status === "needs-onboarding") {
-    return <Redirect href="/registerForm/moreInfoAboutTutor" />;
+    return <Redirect href="/AfterLoginPopUp/moreInfoAboutTutor" />;
   }
+
+  const isStudent = userType === "STUDENT";
 
   return (
     <Tabs
@@ -40,7 +44,10 @@ export default function AuthenticatedTabsLayout() {
       <Tabs.Screen name="matchCelebration"  options={{ href: null }} />
 
       <Tabs.Screen name="home" />
-      <Tabs.Screen name="exploreTutors" />
+      <Tabs.Screen
+          name="exploreTutors"
+          options={{ href: isStudent ? undefined: null }}
+      />
       <Tabs.Screen name="myAccount" />
       <Tabs.Screen name="conversations" />
       <Tabs.Screen name="createPost" />

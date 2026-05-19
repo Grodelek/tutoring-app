@@ -3,7 +3,7 @@ package com.tutoring.app.controller;
 import java.util.List;
 import java.util.UUID;
 
-import com.tutoring.app.dto.ConversationDTO;
+import com.tutoring.app.dto.conversation.ConversationDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
