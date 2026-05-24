@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,15 +21,9 @@ import { C, T, R } from "@/constants/theme";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
+const BATCH_THRESHOLD = 2;
 const HEADER_H = 220;
-const CARD_H = 430; // total card height including content
-
-function hexAlpha(hex: string, a: number) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${a})`;
-}
+const CARD_H = 430;
 
 function styleLabel(s?: string | null) {
   if (s === "PROFESSIONAL") return "Pro";
@@ -101,9 +95,7 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
   const chipStyle = styleLabel(card.tutorTeachingStyle);
 
   return (
-    // outer: carries diffuse shadow (no overflow so shadow bleeds)
     <View style={styles.cardOuter}>
-      {/* inner: clips gradient + content to rounded corners */}
       <View style={styles.cardInner}>
         <CardHeader initial={initial} match={match} rating={card.rating} />
 
@@ -134,7 +126,6 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
             <Chip label="5+ lat" color={C.teal} />
           </View>
 
-          {/* Description */}
           {!!(card.tutorDescription || card.lessonDescription) && (
             <Text style={styles.description} numberOfLines={3}>
               {card.tutorDescription || card.lessonDescription}
@@ -146,7 +137,6 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
   );
 }
 
-// ─── screen ───────────────────────────────────────────────────────────────────
 
 const ExploreTutors: React.FC = () => {
   const router = useRouter();
@@ -155,33 +145,67 @@ const ExploreTutors: React.FC = () => {
 
   const rawFilters = useMemo(() => {
     const raw = Array.isArray(params.filters) ? params.filters[0] : params.filters as string | undefined;
-    if (!raw) return {};
-    try { return JSON.parse(raw); } catch { return {}; }
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch { return null; }
   }, [params.filters]);
 
-  const [cards, setCards]     = useState<TutorCard[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [seen, setSeen]       = useState(0);
-  const currentCard = cards[0];
+  const hasFilters = rawFilters !== null;
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        const results = await fetchTutors(rawFilters);
-        setCards(results ?? []);
-      } catch (e: any) {
-        Alert.alert("Błąd", e.message || "Nie udało się załadować tutorów");
-      } finally {
-        setLoading(false);
+  const [cards, setCards]           = useState<TutorCard[]>([]);
+  const [loading, setLoading]       = useState(false);
+  const [seen, setSeen]             = useState(0);
+  const [allExhausted, setAllExhausted] = useState(false);
+
+  const shownIdsRef  = useRef(new Set<string>());
+  const fetchingRef  = useRef(false);
+  const currentCard  = cards[0];
+
+  const fetchBatch = useCallback(async (isInitial: boolean) => {
+    if (fetchingRef.current || !rawFilters) return;
+    fetchingRef.current = true;
+    if (isInitial) setLoading(true);
+    try {
+      const results = await fetchTutors(rawFilters);
+      const fresh = (results ?? []).filter(c => !shownIdsRef.current.has(c.tutorId));
+      if (fresh.length === 0) {
+        if (!isInitial) setAllExhausted(true);
+      } else {
+        fresh.forEach(c => shownIdsRef.current.add(c.tutorId));
+        if (isInitial) {
+          setCards(fresh);
+        } else {
+          setCards(prev => [...prev, ...fresh]);
+        }
       }
-    })();
+    } catch (e: any) {
+      Alert.alert("Błąd", e.message || "Nie udało się załadować tutorów");
+    } finally {
+      fetchingRef.current = false;
+      if (isInitial) setLoading(false);
+    }
   }, [rawFilters]);
 
+  useEffect(() => {
+    if (!hasFilters) return;
+    shownIdsRef.current.clear();
+    setAllExhausted(false);
+    setSeen(0);
+    setCards([]);
+    fetchBatch(true);
+  }, [hasFilters, fetchBatch]);
+
+  useEffect(() => {
+    if (!hasFilters || loading || allExhausted || fetchingRef.current) return;
+    if (cards.length <= BATCH_THRESHOLD) {
+      fetchBatch(false);
+    }
+  }, [cards.length, hasFilters, loading, allExhausted, fetchBatch]);
+
   const handleSkip = useCallback(() => {
-    setCards((p) => p.slice(1));
-    setSeen((n) => n + 1);
-  }, []);
+    if (!currentCard) return;
+    setCards(p => p.slice(1));
+    setSeen(n => n + 1);
+  }, [currentCard]);
 
   const handleConnect = useCallback(async () => {
     const card = currentCard;
@@ -189,31 +213,44 @@ const ExploreTutors: React.FC = () => {
     try {
       await addFavoriteTutor(card.tutorId);
       const conv = await sendMessageToTutor(card.tutorId);
-      const fresh = await fetchTutors(rawFilters);
-      setCards((fresh ?? []).filter((c) => c.tutorId !== card.tutorId));
-      setSeen((n) => n + 1);
-      router.push({
-        pathname: "/(auth)/matchCelebration",
-        params: {
-          tutorName:      card.tutorUsername,
-          subject:        card.subject ?? "",
-          availability:   availLabel(card.tutorAvailability),
-          price:          card.price != null ? String(card.price) : "",
-          conversationId: String(conv.id),
-        },
-      });
+      setCards(p => p.slice(1));
+      setSeen(n => n + 1);
     } catch (e: any) {
       Alert.alert("Błąd", e.message || "Nie udało się połączyć");
-      setCards((p) => p.slice(1));
+      setCards(p => p.slice(1));
     }
-  }, [currentCard, router, rawFilters]);
+  }, [currentCard, router]);
 
   const total   = cards.length + seen;
   const current = seen + 1;
 
+  if (!hasFilters) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Misje</Text>
+        </View>
+        <View style={styles.emptyFullScreen}>
+          <MaterialCommunityIcons name="filter-variant-remove" size={72} color={C.border} />
+          <Text style={styles.emptyTitle}>Brak aktywnych filtrów</Text>
+          <Text style={styles.emptySub}>
+            Ustaw preferencje, aby znaleźć idealnego korepetytora
+          </Text>
+          <Pressable
+            onPress={() => router.push("/(auth)/explorePreferences" as any)}
+            style={styles.emptyBtn}
+          >
+            <MaterialCommunityIcons name="tune-variant" size={16} color="#241608" />
+            <Text style={styles.emptyBtnText}>Ustaw filtry</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Normal state ──
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* ── 1. Header ── */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Misje</Text>
@@ -224,9 +261,9 @@ const ExploreTutors: React.FC = () => {
         <Pressable
           onPress={() =>
             router.push({
-              pathname: "/explore/explorePreferences",
+              pathname: "/explorePreferences",
               params: params.filters ? { filters: params.filters } : {},
-            })
+            } as any)
           }
           style={styles.filtersBtn}
         >
@@ -235,13 +272,29 @@ const ExploreTutors: React.FC = () => {
         </Pressable>
       </View>
 
-      {/* ── 2. Card stack ── */}
       <View style={styles.deckArea}>
-        {loading && cards.length === 0 ? (
+        {loading ? (
           <ActivityIndicator color={C.amber} size="large" />
+        ) : allExhausted && cards.length === 0 ? (
+          <View style={styles.empty}>
+            <MaterialCommunityIcons name="account-check" size={56} color={C.border} />
+            <Text style={styles.emptyTitle}>Widziałeś wszystkich!</Text>
+            <Text style={styles.emptySub}>Zmień filtry, aby zobaczyć nowych tutorów</Text>
+            <Pressable
+              onPress={() => router.push({
+                pathname: "/(auth)/explorePreferences",
+                params: params.filters ? { filters: params.filters } : {},
+              } as any)}
+              style={styles.emptyBtn}
+            >
+              <Text style={styles.emptyBtnText}>Zmień filtry</Text>
+            </Pressable>
+          </View>
         ) : cards.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>Brak tutorów. Zmień filtry!</Text>
+            <MaterialCommunityIcons name="account-remove" size={56} color={C.border} />
+            <Text style={styles.emptyTitle}>Brak tutorów</Text>
+            <Text style={styles.emptySub}>Spróbuj zmienić filtry</Text>
           </View>
         ) : (
           <SwipeCards
@@ -255,16 +308,18 @@ const ExploreTutors: React.FC = () => {
           />
         )}
       </View>
-      <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Pressable onPress={handleSkip} style={styles.actionClose}>
-          <MaterialCommunityIcons name="close" size={26} color={C.textDim} />
-        </Pressable>
 
-        <Pressable onPress={handleConnect} style={styles.connectBtn}>
-          <MaterialCommunityIcons name="heart" size={18} color="#fff" />
-          <Text style={styles.connectText}>Połącz</Text>
-        </Pressable>
-      </View>
+      {cards.length > 0 && (
+        <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <Pressable onPress={handleSkip} style={styles.actionClose}>
+            <MaterialCommunityIcons name="close" size={26} color={C.textDim} />
+          </Pressable>
+          <Pressable onPress={handleConnect} style={styles.connectBtn}>
+            <MaterialCommunityIcons name="heart" size={18} color="#fff" />
+            <Text style={styles.connectText}>Połącz</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 };
@@ -322,34 +377,68 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  // full-screen no-filters state
+  emptyFullScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 36,
+    gap: 12,
+  },
+
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-  },
-  emptyText: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 15,
-    color: C.textDim,
+    gap: 10,
+    paddingHorizontal: 24,
   },
 
-  // ── tutor card outer (shadow carrier, NO overflow: hidden) ──
+  emptyTitle: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
+    fontSize: 20,
+    color: C.text,
+    textAlign: "center",
+  },
+  emptySub: {
+    fontFamily: T.family.medium,
+    fontSize: 14,
+    color: C.textDim,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  emptyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: R.full,
+    backgroundColor: C.amber,
+    borderBottomWidth: 4,
+    borderBottomColor: C.amberDark,
+  },
+  emptyBtnText: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
+    fontSize: 15,
+    color: "#241608",
+  },
+
   cardOuter: {
     borderRadius: 24,
-    // diffuse black shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
     elevation: 14,
   },
-  // inner clips gradient + content
   cardInner: {
     borderRadius: 24,
     overflow: "hidden",
     backgroundColor: C.surface,
-    // amber border + hard bottom shadow
     borderTopWidth: 2,
     borderLeftWidth: 2,
     borderRightWidth: 2,
@@ -376,7 +465,6 @@ const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
 
-  // overlay pills
   pill: {
     position: "absolute",
     flexDirection: "row",
@@ -411,7 +499,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  // card body
   cardBody: {
     padding: 14,
     paddingHorizontal: 18,
@@ -459,7 +546,6 @@ const styles = StyleSheet.create({
     color: C.textDim,
   },
 
-  // ── action row ──
   actions: {
     flexDirection: "row",
     alignItems: "center",
@@ -494,7 +580,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderRightWidth: 2,
     borderBottomWidth: 5,
-    borderTopColor: "rgba(255,209,92,0.33)",    // gold@33%
+    borderTopColor: "rgba(255,209,92,0.33)",
     borderLeftColor: "rgba(255,209,92,0.33)",
     borderRightColor: "rgba(255,209,92,0.33)",
     borderBottomColor: C.bgDeep,

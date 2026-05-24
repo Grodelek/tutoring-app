@@ -7,7 +7,7 @@ type CardId = string | number;
 
 type SwipeCardsProps<TCard> = {
   cards: TCard[];
-  setCards: React.Dispatch<React.SetStateAction<TCard[]>>;
+  setCards?: React.Dispatch<React.SetStateAction<TCard[]>>;
   onSkip?: (cardId: CardId) => void;
   onConnect?: (cardId: CardId) => void;
   getCardId?: (card: TCard) => CardId;
@@ -20,7 +20,6 @@ type SwipeCardsProps<TCard> = {
 
 const SwipeCards = <TCard,>({
   cards,
-  setCards,
   onSkip,
   onConnect,
   getCardId,
@@ -65,10 +64,9 @@ const SwipeCards = <TCard,>({
       duration: 220,
       useNativeDriver: true,
     }).start(() => {
-      swipe.setValue({ x: 0, y: 0 });
-      setCards((prev) => prev.slice(1));
       if (direction === "right") onConnect?.(cardId);
       else onSkip?.(cardId);
+      swipe.setValue({ x: 0, y: 0 });
     });
   };
 

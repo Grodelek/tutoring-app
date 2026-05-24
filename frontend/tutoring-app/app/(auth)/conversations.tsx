@@ -174,7 +174,7 @@ const ConversationHistoryScreen: React.FC = () => {
         ? String(item.user2Id)
         : String(item.user1Id);
     router.push({
-      pathname: "/messages/[conversationId]",
+      pathname: "./messages/[conversationId]",
       params: { conversationId, receiverId },
     });
   };

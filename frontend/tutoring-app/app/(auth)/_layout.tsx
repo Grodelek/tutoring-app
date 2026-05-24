@@ -29,7 +29,7 @@ export default function AuthenticatedTabsLayout() {
   }
 
   if (status === "needs-onboarding") {
-    return <Redirect href="/AfterLoginPopUp/moreInfoAboutTutor" />;
+    return <Redirect href={"/AfterLoginPopUp/moreInfoAboutTutor" as any} />;
   }
 
   const isStudent = userType === "STUDENT";
@@ -43,13 +43,20 @@ export default function AuthenticatedTabsLayout() {
       <Tabs.Screen name="logout"            options={{ href: null }} />
       <Tabs.Screen name="matchCelebration"  options={{ href: null }} />
 
-      <Tabs.Screen name="home" />
+      <Tabs.Screen name="home" options={{ href: null }} />
       <Tabs.Screen
-          name="exploreTutors"
-          options={{ href: isStudent ? undefined: null }}
+        name="tutorDashboard"
+        options={{ href: isStudent ? null : undefined }}
       />
+      <Tabs.Screen
+        name="exploreTutors"
+        options={{ href: isStudent ? undefined : null }}
+      />
+      <Tabs.Screen name="explorePreferences" options={{ href: null }} />
       <Tabs.Screen name="myAccount" />
+      <Tabs.Screen name="userSettings" options={{ href: null }} />
       <Tabs.Screen name="conversations" />
+      <Tabs.Screen name="messages/[conversationId]" options={{ href: null }} />
       <Tabs.Screen name="createPost" />
     </Tabs>
   );

@@ -117,7 +117,7 @@ const MyAccount: React.FC = () => {
       {user ? (
         <View style={styles.contentWrapper}>
           <Pressable
-              onPress={() => router.push("/settings/userSettings")}
+              onPress={() => router.push("./userSettings")}
               style={{ alignSelf: "flex-end", marginBottom: 8, padding: 6 }}>
             <MaterialCommunityIcons name="cog-outline" size={24} color={themeColors.text} />
           </Pressable>
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   contentWrapper: {
-    gap: 16,
+    gap: 10,
   },
   headerCard: {
     padding: 20,

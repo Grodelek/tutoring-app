@@ -65,7 +65,7 @@ const RegisterForm: React.FC = () => {
                     <View style={styles.logoCircle}>
                         <MaterialCommunityIcons name="school" size={36} color={C.amber} />
                     </View>
-                    <Text style={styles.appName}>TutoringApp</Text>
+                    <Text style={styles.appName}>Skill Swap</Text>
                     <Text style={styles.appSub}>Stwórz nowe konto</Text>
                 </View>
 

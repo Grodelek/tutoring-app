@@ -73,10 +73,11 @@ const LoginForm: React.FC = () => {
             const completed = await AsyncStorage.getItem("hasCompletedTutorProfile");
 
             if (userType === "TUTOR" && completed !== "true") {
-                router.replace("/registerForm/moreInfoAboutTutor");
+                router.replace("/components/AfterLoginPopUp/moreInfoAboutTutor");
+
             } else {
                 setToken(token);
-                router.replace("/(auth)/exploreTutors");
+                router.replace("/(auth)/myAccount");
             }
         } catch (error: any) {
             Alert.alert("Błąd", `Problem z połączeniem: ${error?.message ?? "Nieznany błąd"}`);
@@ -94,7 +95,7 @@ const LoginForm: React.FC = () => {
                     <View style={styles.logoCircle}>
                         <MaterialCommunityIcons name="school" size={36} color={C.amber} />
                     </View>
-                    <Text style={styles.appName}>TutoringApp</Text>
+                    <Text style={styles.appName}>Skill Swap</Text>
                     <Text style={styles.appSub}>Znajdź swojego korepetytora</Text>
                 </View>
 

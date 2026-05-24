@@ -33,7 +33,12 @@ const UserSettings = () => {
 
     return (
         <View style={[styles.screen, { paddingTop: insets.top }]}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Pressable
+                onPress={() => {
+                    router.replace("./myAccount");
+                }}
+                style={styles.backBtn}
+            >
                 <MaterialCommunityIcons name="arrow-left" size={24} color={C.text} />
             </Pressable>
 
