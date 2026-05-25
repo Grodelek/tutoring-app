@@ -5,6 +5,8 @@ import { Alert } from "react-native";
 export interface LoginResponse {
   token: string;
   userId: string;
+  userType?: string;
+  tutorProfileComplete?: boolean;
 }
 export interface Lesson {
   id: string;

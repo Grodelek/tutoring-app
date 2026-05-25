@@ -1,4 +1,3 @@
-
 import { Tabs } from 'expo-router';
 import { QuestTabBar, TabDef } from '@/components/ui/QuestTabBar';
 import { C } from '@/constants/theme';
@@ -12,6 +11,7 @@ const GUEST_TABS: TabDef[] = [
 export default function GuestTabsLayout() {
   return (
     <Tabs
+      initialRouteName="explore"
       tabBar={(props) => <QuestTabBar {...props} staticTabs={GUEST_TABS} />}
       screenOptions={{ headerShown: false }}
     >

@@ -12,31 +12,26 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
-import { getMyAccount, saveToBackend } from "@/api/userApi";
+import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
 import UploadPhoto from "@components/ui/UploadPhoto";
-import { Colors } from "@/constants/Colors";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {router} from "expo-router";
+import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
+import { getMyAccount, saveToBackend } from "@/api/userApi";
+import { C, T, R } from "@/constants/theme";
 
 const MyAccount: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
-  const [username, setUsername] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [password, setPassword] = useState("");
+  const insets = useSafeAreaInsets();
+  const [user, setUser]               = useState<any>(null);
+  const [username, setUsername]       = useState("");
+  const [isEditing, setIsEditing]     = useState(false);
+  const [password]                    = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState("");
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [refreshing, setRefreshing]   = useState(false);
   const { setToken } = useAuth();
-  const colorScheme = useColorScheme();
-
-  const themeColors = useMemo(
-    () => (colorScheme === "dark" ? Colors.dark : Colors.light),
-    [colorScheme]
-  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -54,9 +49,7 @@ const MyAccount: React.FC = () => {
       if (error?.status === 401) {
         await AsyncStorage.removeItem("jwtToken");
         setToken(null);
-        Alert.alert("Session expired", "Please sign in again.");
-      } else {
-        Alert.alert("Error", `Connection error: ${error.message}`);
+        Alert.alert("Sesja wygasła", "Zaloguj się ponownie.");
       }
     }
   };
@@ -70,127 +63,114 @@ const MyAccount: React.FC = () => {
     fetchUser,
   });
 
-   const savePhotoToBackend = async (imageUrl: string) => {
-     try {
-       const response = await saveToBackend(imageUrl);
-       if (!response.ok) {
-         const errorText = await response.text();
-         Alert.alert("Error", `Failed to save photo: ${errorText}`);
-         return;
-       }
-       await fetchUser();
-       Alert.alert("Success", "Profile photo updated!");
-     } catch (e: any) {
-       console.log(e);
-       Alert.alert(
-         "Error",
-         `Failed to save photo: ${e.message || "Unknown error"}`
-       );
-     }
-   };
+  const savePhotoToBackend = async (imageUrl: string) => {
+    try {
+      const response = await saveToBackend(imageUrl);
+      if (!response.ok) {
+        const errorText = await response.text();
+        Alert.alert("Błąd", `Nie udało się zapisać zdjęcia: ${errorText}`);
+        return;
+      }
+      await fetchUser();
+    } catch (e: any) {
+      Alert.alert("Błąd", e.message || "Nieznany błąd");
+    }
+  };
 
-    useEffect(() => {
-    fetchUser();
-  }, []);
+  useEffect(() => { fetchUser(); }, []);
 
-   const weeklyProgress = useMemo(
-    () => {
-      const total = user?.points ?? 0;
-      const base = Math.max(5, Math.floor((total || 0) / 10));
-      return [base + 5, base + 2, base + 8, base + 4, base + 6, base + 3, base + 1];
-    },
-    [user?.points]
-  );
+  const weeklyProgress = useMemo(() => {
+    const total = user?.points ?? 0;
+    const base = Math.max(5, Math.floor(total / 10));
+    return [base + 5, base + 2, base + 8, base + 4, base + 6, base + 3, base + 1];
+  }, [user?.points]);
 
   const maxProgress = Math.max(...weeklyProgress, 1);
+  const initial = user?.username?.charAt(0)?.toUpperCase() || "?";
 
   return (
     <ScrollView
+      style={styles.screen}
       contentContainerStyle={[
-        styles.container,
-        { backgroundColor: themeColors.background },
+        styles.content,
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 32 },
       ]}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.amber} />}
     >
+      {/* ── Top bar ── */}
+      <View style={styles.topBar}>
+        <Text style={styles.pageTitle}>Profil</Text>
+        <Pressable onPress={() => router.push("./userSettings")} style={styles.settingsBtn}>
+          <MaterialCommunityIcons name="cog-outline" size={22} color={C.textDim} />
+        </Pressable>
+      </View>
+
+      {/* ── Avatar hero ── */}
       {user ? (
-        <View style={styles.contentWrapper}>
-          <Pressable
-              onPress={() => router.push("./userSettings")}
-              style={{ alignSelf: "flex-end", marginBottom: 8, padding: 6 }}>
-            <MaterialCommunityIcons name="cog-outline" size={24} color={themeColors.text} />
-          </Pressable>
-          <View
-            style={[
-              styles.headerCard,
-              { backgroundColor: themeColors.cardBackground },
-            ]}
-          >
-            <Pressable onPress={() => setModalVisible(true)}>
+        <>
+          <View style={styles.avatarSection}>
+            <Pressable onPress={() => setModalVisible(true)} style={styles.avatarWrap}>
               {user.photoPath ? (
                 <Image source={{ uri: user.photoPath }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarInitial}>
-                    {user.username?.charAt(0)?.toUpperCase() || "?"}
-                  </Text>
+                  <Text style={styles.avatarInitial}>{initial}</Text>
                 </View>
               )}
+              <View style={styles.cameraBtn}>
+                <MaterialCommunityIcons name="camera" size={14} color={C.bg} />
+              </View>
             </Pressable>
-            <Text style={[styles.userName, { color: themeColors.text }]}>
-              {user.username}
-            </Text>
-            <Text style={[styles.userSub, { color: themeColors.secondaryText }]}>
-              Joined user
-            </Text>
 
-            <View style={styles.headerXpPill}>
-              <Text style={styles.headerXpText}>{user.points ?? 0} XP</Text>
+            <Text style={styles.username}>{user.username}</Text>
+            <View style={styles.xpBadge}>
+              <MaterialCommunityIcons name="star-four-points" size={12} color={C.gold} />
+              <Text style={styles.xpBadgeText}>{user.points ?? 0} XP</Text>
             </View>
           </View>
 
-          <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Stats
-            </Text>
-            <View style={styles.statsRow}>
-              <View style={[styles.statChip, { backgroundColor: themeColors.chipBackground }]}>
-                <Text style={styles.statLabel}>XP</Text>
-                <Text style={styles.statValue}>{user.points ?? 0}</Text>
-              </View>
-              <View style={[styles.statChip, { backgroundColor: themeColors.chipBackground }]}>
-                <Text style={styles.statLabel}>Lessons</Text>
-                <Text style={styles.statValue}>0</Text>
-              </View>
-              <View style={[styles.statChip, { backgroundColor: themeColors.chipBackground }]}>
-                <Text style={styles.statLabel}>Streak</Text>
-                <Text style={styles.statValue}>0 days</Text>
-              </View>
+          {/* ── Bare stats ── */}
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+              <Text style={[styles.statNum, { color: C.gold }]}>{user.points ?? 0}</Text>
+              <Text style={styles.statLabel}>XP</Text>
+            </View>
+            <View style={styles.statSep} />
+            <View style={styles.stat}>
+              <Text style={[styles.statNum, { color: C.teal }]}>0</Text>
+              <Text style={styles.statLabel}>LEKCJI</Text>
+            </View>
+            <View style={styles.statSep} />
+            <View style={styles.stat}>
+              <Text style={[styles.statNum, { color: C.coral }]}>0</Text>
+              <Text style={styles.statLabel}>STREAK</Text>
             </View>
           </View>
 
-          <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Weekly progress
-            </Text>
-            <View style={styles.progressChart}>
-              {weeklyProgress.map((value, index) => {
-                const heightPercent = (value / maxProgress) * 100;
-                const dayLabels = ["M", "T", "W", "T", "F", "S", "S"];
+          {/* ── Weekly progress — no card, just chart ── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Aktywność tygodniowa</Text>
+            <View style={styles.chart}>
+              {weeklyProgress.map((value, i) => {
+                const h = Math.max(12, (value / maxProgress) * 88);
+                const days = ["P", "W", "Ś", "C", "P", "S", "N"];
+                const isToday = i === new Date().getDay() - 1;
                 return (
-                  <View key={index} style={styles.progressItem}>
+                  <View key={i} style={styles.chartCol}>
                     <View
                       style={[
-                        styles.progressBar,
+                        styles.bar,
                         {
-                          height: `${Math.max(20, heightPercent)}%`,
-                          backgroundColor: themeColors.tint,
+                          height: h,
+                          backgroundColor: isToday ? C.amber : C.surface,
+                          borderWidth: isToday ? 0 : 1,
+                          borderColor: C.border,
                         },
                       ]}
                     />
-                    <Text style={[styles.progressLabel, { color: themeColors.secondaryText }]}>
-                      {dayLabels[index]}
+                    <Text style={[styles.dayLabel, isToday && { color: C.amber }]}>
+                      {days[i]}
                     </Text>
                   </View>
                 );
@@ -198,302 +178,365 @@ const MyAccount: React.FC = () => {
             </View>
           </View>
 
-          <View style={styles.sectionCard}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              About me
-            </Text>
+          {/* ── Hairline divider ── */}
+          <View style={styles.hairline} />
+
+          {/* ── About me — no card wrapper ── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>O mnie</Text>
             {isEditing ? (
               <>
-                <Text style={[styles.inputLabel, { color: themeColors.secondaryText }]}>Username</Text>
+                <Text style={styles.inputLabel}>Nazwa użytkownika</Text>
                 <TextInput
                   value={username}
                   onChangeText={setUsername}
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: themeColors.inputBackground,
-                      color: themeColors.text,
-                      borderColor: themeColors.inputBorder,
-                    },
-                  ]}
-                  placeholder="New username"
-                  placeholderTextColor={themeColors.placeholder}
+                  style={styles.input}
+                  placeholder="Nowa nazwa"
+                  placeholderTextColor={C.textFaint}
                   autoComplete="username"
                   autoCorrect={false}
-                  onFocus={(e) => {
-                    if (Platform.OS === "web") {
-                      e.currentTarget?.focus();
-                    }
-                  }}
+                  onFocus={(e) => { if (Platform.OS === "web") e.currentTarget?.focus(); }}
                 />
-                <Text style={[styles.inputLabel, { color: themeColors.secondaryText }]}>Description</Text>
+                <Text style={styles.inputLabel}>Opis</Text>
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  style={[
-                    styles.input,
-                    styles.inputMultiline,
-                    {
-                      backgroundColor: themeColors.inputBackground,
-                      color: themeColors.text,
-                      borderColor: themeColors.inputBorder,
-                    },
-                  ]}
-                  placeholder="Tell others about your interests and what you teach."
-                  placeholderTextColor={themeColors.placeholder}
+                  style={[styles.input, styles.inputMultiline]}
+                  placeholder="Napisz coś o sobie…"
+                  placeholderTextColor={C.textFaint}
                   autoComplete="off"
                   autoCorrect={false}
                   multiline
                   numberOfLines={4}
-                  onFocus={(e) => {
-                    if (Platform.OS === "web") {
-                      e.currentTarget?.focus();
-                    }
-                  }}
+                  onFocus={(e) => { if (Platform.OS === "web") e.currentTarget?.focus(); }}
                 />
-                <Text style={[styles.charCount, { color: themeColors.secondaryText }]}>
-                  {description.length}/160
-                </Text>
-
+                <Text style={styles.charCount}>{description.length}/160</Text>
                 <View style={styles.actionsRow}>
-                  <Pressable
-                    style={[styles.buttonSecondary, { borderColor: themeColors.tint }]}
-                    onPress={() => setIsEditing(false)}
-                  >
-                    <Text style={[styles.buttonSecondaryText, { color: themeColors.tint }]}>Cancel</Text>
+                  <Pressable style={styles.btnSecondary} onPress={() => setIsEditing(false)}>
+                    <Text style={styles.btnSecondaryText}>Anuluj</Text>
                   </Pressable>
-                  <Pressable
-                    style={[styles.buttonPrimary, { backgroundColor: themeColors.tint }]}
-                    onPress={updateUserProfile}
-                  >
-                    <Text style={styles.buttonPrimaryText}>Save changes</Text>
+                  <Pressable style={styles.btnPrimary} onPress={updateUserProfile}>
+                    <Text style={styles.btnPrimaryText}>Zapisz</Text>
                   </Pressable>
                 </View>
               </>
             ) : (
               <>
-                <Text style={[styles.aboutText, { color: themeColors.text }]}>
-                  {user.description || "Add a short description so others know what you're great at."}
+                <Text style={styles.aboutText}>
+                  {user.description || "Dodaj krótki opis, żeby inni wiedzieli, w czym możesz pomóc."}
                 </Text>
-                <Pressable
-                  style={[styles.buttonPrimary, { backgroundColor: themeColors.tint }]}
-                  onPress={() => setIsEditing(true)}
-                >
-                  <Text style={styles.buttonPrimaryText}>Edit profile</Text>
+                <Pressable style={styles.editLink} onPress={() => setIsEditing(true)}>
+                  <MaterialCommunityIcons name="pencil-outline" size={15} color={C.amber} />
+                  <Text style={styles.editLinkText}>Edytuj profil</Text>
                 </Pressable>
               </>
             )}
           </View>
-        </View>
+        </>
       ) : (
-        <Text style={[styles.userText, { color: themeColors.text }]}>Loading user data...</Text>
+        <View style={styles.loadingWrap}>
+          <Text style={styles.loadingText}>Ładowanie…</Text>
+        </View>
       )}
-      <Modal
-        visible={modalVisible && !!user?.photoPath}
-        transparent
-        animationType="fade"
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setModalVisible(false)}
-        >
-           {user?.photoPath ? (
-             <>
-               <Image
-                 source={{ uri: user.photoPath }}
-                 style={styles.fullScreenImage}
-                 resizeMode="contain"
-               />
-               <UploadPhoto onUploaded={savePhotoToBackend} />
-             </>
-           ) : (
-             <Text style={{ color: "white" }}>No photo available</Text>
-           )}
+
+      {/* ── Photo modal ── */}
+      <Modal visible={modalVisible && !!user?.photoPath} transparent animationType="fade">
+        <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)}>
+          {user?.photoPath && (
+            <>
+              <Image
+                source={{ uri: user.photoPath }}
+                style={styles.fullImg}
+                resizeMode="contain"
+              />
+              <UploadPhoto onUploaded={savePhotoToBackend} />
+            </>
+          )}
         </Pressable>
       </Modal>
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    flexGrow: 1,
-    justifyContent: "flex-start",
+  screen: {
+    flex: 1,
+    backgroundColor: C.bg,
   },
-  contentWrapper: {
+  content: {
+    paddingHorizontal: 24,
+    gap: 28,
+  },
+
+  // top bar
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pageTitle: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 32,
+    color: C.text,
+    letterSpacing: -1,
+  },
+  settingsBtn: {
+    padding: 4,
+  },
+
+  // avatar hero
+  avatarSection: {
+    alignItems: "center",
     gap: 10,
   },
-  headerCard: {
-    padding: 20,
-    borderRadius: 16,
+  avatarWrap: {
+    position: "relative",
+  },
+  avatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    borderColor: C.border,
+  },
+  avatarPlaceholder: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: C.surface,
+    borderWidth: 2,
+    borderColor: C.border,
     alignItems: "center",
-    marginBottom: 4,
+    justifyContent: "center",
   },
-  userText: {
-    fontSize: 16,
-    marginBottom: 12,
+  avatarInitial: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 38,
+    color: C.purple,
   },
-  userName: {
-    fontSize: 24,
-    textAlign: "center",
-    marginBottom: 10,
+  cameraBtn: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: C.amber,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: C.bg,
   },
-  userSub: {
+  username: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
+    fontSize: 22,
+    color: C.text,
+    letterSpacing: -0.4,
+  },
+  xpBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: R.full,
+    backgroundColor: C.surface,
+    borderWidth: 1.5,
+    borderColor: C.border,
+  },
+  xpBadgeText: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 13,
+    color: C.gold,
+    fontVariant: ["tabular-nums"] as any,
+  },
+
+  // bare stat numbers
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  stat: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
+  },
+  statNum: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 40,
+    fontVariant: ["tabular-nums"] as any,
+    letterSpacing: -1,
+    lineHeight: 44,
+  },
+  statLabel: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: C.textDim,
+  },
+  statSep: {
+    width: 1,
+    height: 40,
+    backgroundColor: C.border,
+  },
+
+  // chart
+  section: {
+    gap: 16,
+  },
+  sectionLabel: {
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    color: C.textDim,
+  },
+  chart: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    height: 100,
+  },
+  chartCol: {
+    flex: 1,
+    alignItems: "center",
+    gap: 6,
+    justifyContent: "flex-end",
+  },
+  bar: {
+    width: 14,
+    borderRadius: 6,
+  },
+  dayLabel: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 11,
+    color: C.textDim,
+  },
+
+  // hairline
+  hairline: {
+    height: 1,
+    backgroundColor: C.border,
+    marginHorizontal: -24,
+  },
+
+  // about me
+  aboutText: {
+    fontFamily: T.family.medium,
+    fontSize: 15,
+    color: C.textDim,
+    lineHeight: 23,
+  },
+  editLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+  },
+  editLinkText: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
     fontSize: 14,
-    marginBottom: 8,
+    color: C.amber,
+  },
+
+  // edit form
+  inputLabel: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 12,
+    letterSpacing: 0.5,
+    color: C.textDim,
+    textTransform: "uppercase",
+    marginBottom: -8,
   },
   input: {
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 6,
-    borderWidth: 1,
+    backgroundColor: C.surface,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    borderRadius: R.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontFamily: T.family.medium,
+    fontSize: 15,
+    color: C.text,
   },
   inputMultiline: {
     minHeight: 90,
     textAlignVertical: "top",
   },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 12,
-    alignSelf: "center",
-    borderWidth: 3,
-  },
-  avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 12,
-    alignSelf: "center",
-    borderWidth: 3,
-    borderColor: "#444",
-    backgroundColor: "#333",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInitial: {
-    fontSize: 36,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  headerXpPill: {
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  headerXpText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  sectionCard: {
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  statChip: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-  },
-  statLabel: {
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    color: "#9BA1A6",
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginTop: 4,
-    color: "#ECEDEE",
-  },
-  progressChart: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    height: 120,
-  },
-  progressItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  progressBar: {
-    width: 14,
-    borderRadius: 999,
-  },
-  progressLabel: {
-    marginTop: 6,
-    fontSize: 12,
-  },
-  aboutText: {
-    marginBottom: 16,
-    fontSize: 15,
-  },
-  inputLabel: {
-    fontSize: 14,
-    marginBottom: 4,
-    marginTop: 4,
-  },
   charCount: {
-    alignSelf: "flex-end",
+    fontFamily: T.family.medium,
     fontSize: 12,
-    marginBottom: 8,
+    color: C.textFaint,
+    alignSelf: "flex-end",
+    marginTop: -20,
   },
   actionsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 10,
-  },
-  buttonPrimary: {
     marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    alignItems: "center",
   },
-  buttonPrimaryText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  buttonSecondary: {
+  btnPrimary: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 999,
+    backgroundColor: C.amber,
+    borderRadius: R.full,
+    paddingVertical: 13,
     alignItems: "center",
-    borderWidth: 1,
+    borderBottomWidth: 3,
+    borderBottomColor: C.amberDark,
   },
-  buttonSecondaryText: {
-    fontWeight: "600",
+  btnPrimaryText: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
     fontSize: 15,
+    color: "#241608",
   },
+  btnSecondary: {
+    flex: 1,
+    borderRadius: R.full,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: C.border,
+  },
+  btnSecondaryText: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 15,
+    color: C.textDim,
+  },
+
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center",
+    paddingTop: 80,
+  },
+  loadingText: {
+    fontFamily: T.family.medium,
+    fontSize: 15,
+    color: C.textDim,
+  },
+
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    backgroundColor: "rgba(0,0,0,0.88)",
     justifyContent: "center",
     alignItems: "center",
   },
-  fullScreenImage: {
+  fullImg: {
     width: "85%",
     height: "50%",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#c678dd",
+    borderRadius: 16,
   },
 });
 

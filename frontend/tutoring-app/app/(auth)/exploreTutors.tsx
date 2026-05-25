@@ -9,8 +9,6 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Defs, RadialGradient, Stop, Rect } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { fetchTutors, TutorCard } from "@/api/tutorDiscoveryApi";
 import { addFavoriteTutor } from "@/api/favoriteApi";
@@ -19,7 +17,7 @@ import SwipeCards from "@components/ui/SwipeCards";
 import { Chip } from "@/components/ui/Chip";
 import { C, T, R } from "@/constants/theme";
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+
 
 const BATCH_THRESHOLD = 2;
 const HEADER_H = 220;
@@ -56,22 +54,7 @@ function HeaderPill({
 
 function CardHeader({ initial, match, rating }: { initial: string; match: number; rating: number }) {
   return (
-    <LinearGradient
-      colors={["#FFA53D", "#FF6B4A"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.cardHeader}
-    >
-      <Svg style={StyleSheet.absoluteFillObject}>
-        <Defs>
-          <RadialGradient id="glare" cx="30%" cy="30%" r="60%">
-            <Stop offset="0" stopColor="#ffffff" stopOpacity="0.35" />
-            <Stop offset="1" stopColor="#ffffff" stopOpacity="0"   />
-          </RadialGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#glare)" />
-      </Svg>
-
+    <View style={styles.cardHeader}>
       <Text style={styles.initial}>{initial}</Text>
 
       <HeaderPill style={styles.pillTL}>
@@ -83,8 +66,7 @@ function CardHeader({ initial, match, rating }: { initial: string; match: number
         <MaterialCommunityIcons name="star" size={11} color={C.gold} />
         <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
       </HeaderPill>
-
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -212,7 +194,7 @@ const ExploreTutors: React.FC = () => {
     if (!card) return;
     try {
       await addFavoriteTutor(card.tutorId);
-      const conv = await sendMessageToTutor(card.tutorId);
+      await sendMessageToTutor(card.tutorId);
       setCards(p => p.slice(1));
       setSeen(n => n + 1);
     } catch (e: any) {
@@ -248,7 +230,6 @@ const ExploreTutors: React.FC = () => {
     );
   }
 
-  // ── Normal state ──
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -370,7 +351,6 @@ const styles = StyleSheet.create({
     color: C.textDim,
   },
 
-  // ── deck ──
   deckArea: {
     flex: 1,
     paddingHorizontal: 20,
@@ -439,30 +419,23 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     backgroundColor: C.surface,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
+    borderWidth: 1.5,
+    borderColor: C.border,
     borderBottomWidth: 8,
-    borderTopColor:    "rgba(255,165,61,0.33)",
-    borderLeftColor:   "rgba(255,165,61,0.33)",
-    borderRightColor:  "rgba(255,165,61,0.33)",
-    borderBottomColor: "#C97A1A",
+    borderBottomColor: C.bgDeep,
   },
 
-  // card header (gradient zone)
   cardHeader: {
     height: HEADER_H,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: C.bgDeep,
   },
   initial: {
     fontFamily: T.family.black,
     fontWeight: "900",
     fontSize: 92,
-    color: "#fff",
-    textShadowColor: "rgba(0,0,0,0.25)",
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 12,
+    color: C.purple,
   },
 
   pill: {
@@ -473,11 +446,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: R.full,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   pillTL: { top: 12, left: 12 },
   pillTR: { top: 12, right: 12 },
-  pillBL: { bottom: 12, left: 12, backgroundColor: "rgba(0,0,0,0.4)" },
+  pillBL: { bottom: 12, left: 12 },
   matchText: {
     fontFamily: T.family.extraBold,
     fontWeight: T.weight.extraBold,

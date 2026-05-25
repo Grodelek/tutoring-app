@@ -59,6 +59,8 @@ const LoginForm: React.FC = () => {
             const data = await postLogin({ email, password });
             const token = data.token;
             const userId = data.userId;
+            const loginUserType = data.userType;
+            const tutorProfileComplete = data.tutorProfileComplete;
             if (!token) {
                 Alert.alert("Błąd", "Brak tokenu w odpowiedzi.");
                 return;
@@ -68,12 +70,18 @@ const LoginForm: React.FC = () => {
             }
             await AsyncStorage.setItem("jwtToken", token);
             await AsyncStorage.setItem("userId", userId.toString());
+            if (loginUserType) {
+                await AsyncStorage.setItem("userType", loginUserType);
+            }
+            if (typeof tutorProfileComplete === "boolean") {
+                await AsyncStorage.setItem("hasCompletedTutorProfile", tutorProfileComplete ? "true" : "false");
+            }
 
             const userType = await AsyncStorage.getItem("userType");
             const completed = await AsyncStorage.getItem("hasCompletedTutorProfile");
 
             if (userType === "TUTOR" && completed !== "true") {
-                router.replace("/components/AfterLoginPopUp/moreInfoAboutTutor");
+                router.replace("/AfterLoginPopUp/moreInfoAboutTutor");
 
             } else {
                 setToken(token);
