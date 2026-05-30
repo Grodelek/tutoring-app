@@ -91,6 +91,8 @@ public class UserService {
       Map<String, Object> response = new HashMap<>();
       response.put("token", token);
       response.put("userId", id);
+      response.put("userType", user.getUserType());
+      response.put("tutorProfileComplete", isTutorProfileComplete(user));
 
       return ResponseEntity.ok(response);
 
@@ -161,6 +163,15 @@ public class UserService {
                       .experienceTime(user.getExperienceTime())
                       .lessonType(user.getLessonType())
                       .build();
+  }
+
+  private boolean isTutorProfileComplete(User user) {
+    if (!user.getUserType().equals("TUTOR")) {
+      return true;
+    }
+    return user.getExperienceTime() != null
+        && user.getAvailability() != null
+        && user.getLessonType() != null;
   }
 
   public TutorWithInfoResponse getTutorInfo(UserDetails userDetails){

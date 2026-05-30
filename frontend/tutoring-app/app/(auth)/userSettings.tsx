@@ -33,7 +33,12 @@ const UserSettings = () => {
 
     return (
         <View style={[styles.screen, { paddingTop: insets.top }]}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Pressable
+                onPress={() => {
+                    router.replace("./myAccount");
+                }}
+                style={styles.backBtn}
+            >
                 <MaterialCommunityIcons name="arrow-left" size={24} color={C.text} />
             </Pressable>
 
@@ -47,9 +52,7 @@ const UserSettings = () => {
                     <Text style={styles.sectionLabel}>Konto</Text>
                     <View style={styles.card}>
                         <Pressable style={styles.menuRow}>
-                            <View style={[styles.menuIcon, { backgroundColor: C.amber + "22" }]}>
-                                <MaterialCommunityIcons name="account-edit-outline" size={20} color={C.amber} />
-                            </View>
+                            <MaterialCommunityIcons name="account-edit-outline" size={20} color={C.amber} />
                             <Text style={styles.menuText}>Edytuj profil</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
                         </Pressable>
@@ -57,9 +60,7 @@ const UserSettings = () => {
                         <View style={styles.divider} />
 
                         <Pressable style={styles.menuRow}>
-                            <View style={[styles.menuIcon, { backgroundColor: C.teal + "22" }]}>
-                                <MaterialCommunityIcons name="bell-outline" size={20} color={C.teal} />
-                            </View>
+                            <MaterialCommunityIcons name="bell-outline" size={20} color={C.teal} />
                             <Text style={styles.menuText}>Powiadomienia</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
                         </Pressable>
@@ -67,9 +68,7 @@ const UserSettings = () => {
                         <View style={styles.divider} />
 
                         <Pressable style={styles.menuRow}>
-                            <View style={[styles.menuIcon, { backgroundColor: C.purple + "22" }]}>
-                                <MaterialCommunityIcons name="shield-lock-outline" size={20} color={C.purple} />
-                            </View>
+                            <MaterialCommunityIcons name="shield-lock-outline" size={20} color={C.purple} />
                             <Text style={styles.menuText}>Prywatność</Text>
                             <MaterialCommunityIcons name="chevron-right" size={20} color={C.textFaint} />
                         </Pressable>
@@ -145,13 +144,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 14,
     },
-    menuIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: R.xs,
-        justifyContent: "center",
-        alignItems: "center",
-    },
     menuText: {
         flex: 1,
         fontFamily: T.family.medium,
@@ -161,7 +153,7 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         backgroundColor: C.border,
-        marginLeft: 66,
+        marginLeft: 50,
     },
     logoutBtn: {
         backgroundColor: "#C0392B",

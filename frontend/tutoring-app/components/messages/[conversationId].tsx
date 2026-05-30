@@ -5,7 +5,7 @@ import {
   Text,
   FlatList,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -13,10 +13,11 @@ import {
   Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import {fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId} from "@/api/lessonApi";
+import { fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
 import { sendOffer } from "@/api/offerApi";
 import styles from "./styles/styles";
 
@@ -34,15 +35,8 @@ type UUID = string;
 
 const getImageUri = (photoPath: string | null | undefined): string | null => {
   if (!photoPath) return null;
-
-  if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
-    return photoPath;
-  }
-
-  if (photoPath.startsWith("/")) {
-    return `${BASE_URL}${photoPath}`;
-  }
-
+  if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) return photoPath;
+  if (photoPath.startsWith("/")) return `${BASE_URL}${photoPath}`;
   return photoPath;
 };
 
@@ -52,42 +46,33 @@ const ChatScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { conversationId, receiverId, lessonId: lessonIdParam, scheduledTime, lessonId: scheduledLessonId } = useLocalSearchParams();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [Receiver, setReceiver] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [studentId, setStudentId] = useState<string | null>(null);
-  const [lessonId, setLessonId] = useState<string | null>(null);
   const [lesson, setLesson] = useState<any>(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [availableLessons, setAvailableLessons] = useState<any[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+
   useWebSocketMessages(conversationId, (incomingMessage) => {
     setMessages((prev) => [...prev, incomingMessage]);
   });
 
   useEffect(() => {
-    const initializeUser = async () => {
-      const id = await AsyncStorage.getItem("userId");
-      if (id) setUserId(id);
-    };
-    initializeUser();
+    AsyncStorage.getItem("userId").then((id) => { if (id) setUserId(id); });
     if (receiverId) fetchReceiver(receiverId.toString());
   }, [receiverId]);
 
   useEffect(() => {
     fetchMessages();
-    if (lessonIdParam) {
-      fetchLesson(lessonIdParam.toString());
-    }
+    if (lessonIdParam) fetchLesson(lessonIdParam.toString());
   }, [conversationId, lessonIdParam]);
 
   useEffect(() => {
     const maybeSendOffer = async () => {
-      if (!scheduledTime || !scheduledLessonId) return;
-      if (!userId || !receiverId) return;
-
+      if (!scheduledTime || !scheduledLessonId || !userId || !receiverId) return;
       router.setParams({ scheduledTime: undefined as any, lessonId: undefined as any });
-
       try {
         await sendOffer({
           tutorId: receiverId.toString(),
@@ -95,10 +80,9 @@ const ChatScreen: React.FC = () => {
           lessonId: scheduledLessonId.toString(),
           sessionStartTime: scheduledTime.toString(),
         });
-
-        Alert.alert("Offer sent", `Scheduled: ${new Date(scheduledTime.toString()).toLocaleString()}`);
+        Alert.alert("Zaplanowano", `Termin: ${new Date(scheduledTime.toString()).toLocaleString()}`);
       } catch (e: any) {
-        Alert.alert("Error", e?.message || "Failed to send offer");
+        Alert.alert("Błąd", e?.message || "Nie udało się wysłać propozycji");
       }
     };
     maybeSendOffer();
@@ -108,43 +92,28 @@ const ChatScreen: React.FC = () => {
     try {
       const lessonData = await fetchLessonFromApi(id);
       setLesson(lessonData);
-      setLessonId(id);
     } catch (error: any) {
-      console.error("Error fetching lesson:", error);
       if (error.message === "Authentication token not found") {
-        Alert.alert("Session expired", "Please log in again.");
+        Alert.alert("Sesja wygasła", "Zaloguj się ponownie.");
         router.push("/login");
-        return;
       }
-      console.log("Lesson not found or error:", error.message);
     }
   };
 
   const fetchReceiver = async (id: string) => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
+      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
       const response = await fetch(`${BASE_URL}/api/users/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
         setReceiver(data);
-        setStudentId(data.id);
         setAvatarError(false);
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Failed to fetch user: ${errorText}`);
       }
     } catch (error: any) {
-      Alert.alert("Error", `Connection error: ${error.message}`);
+      Alert.alert("Błąd połączenia", error.message);
     }
   };
 
@@ -153,37 +122,21 @@ const ChatScreen: React.FC = () => {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const res = await fetch(
-        `${BASE_URL}/api/messages/${conversationId}`,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        },
-      );
+      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
+      const res = await fetch(`${BASE_URL}/api/messages/${conversationId}`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
       if (res.ok) {
         const data = await res.json();
-        console.log("Fetched messages:", data);
-        const messagesArray = Array.isArray(data) ? data : [];
-        setMessages(messagesArray);
-        if (messagesArray.length === 0) {
-          console.log("No messages found for conversation:", conversationId);
-        }
+        setMessages(Array.isArray(data) ? data : []);
       } else {
-        const errorText = await res.text();
-        console.error(`Failed to fetch messages: ${res.status} - ${errorText}`);
-        setMessages([]);
         if (res.status !== 404) {
-          Alert.alert("Error", `Cannot fetch messages: ${res.status} - ${errorText}`);
+          const errorText = await res.text();
+          Alert.alert("Błąd", `Nie udało się załadować wiadomości: ${res.status} — ${errorText}`);
         }
+        setMessages([]);
       }
     } catch (e: any) {
-      console.error("Error fetching messages:", e);
       setMessages([]);
       Alert.alert("Błąd", `Problem z połączeniem: ${e.message}`);
     } finally {
@@ -195,21 +148,11 @@ const ChatScreen: React.FC = () => {
     if (!newMessage.trim() || !userId || !conversationId) return;
     try {
       const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
+      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
       const res = await fetch(`${BASE_URL}/api/messages/send`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          senderId: userId,
-          receiverId: receiverId,
-          content: newMessage.trim(),
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ senderId: userId, receiverId, content: newMessage.trim() }),
       });
       if (res.ok) {
         const message = await res.json();
@@ -223,14 +166,6 @@ const ChatScreen: React.FC = () => {
     }
   };
 
-  if (!userId || !conversationId) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={{ color: "#fff" }}>Loading...</Text>
-      </View>
-    );
-  }
-
   const chooseLesson = async () => {
     setShowLessonModal(true);
     setLoadingLessons(true);
@@ -240,18 +175,14 @@ const ChatScreen: React.FC = () => {
         : await fetchLessonByTutor();
       setAvailableLessons(lessons);
     } catch (error: any) {
-      console.error("Error fetching lessons:", error);
-      Alert.alert("Error", `Cannot load lessons: ${error.message}`);
+      Alert.alert("Błąd", `Nie udało się załadować lekcji: ${error.message}`);
     } finally {
       setLoadingLessons(false);
     }
   };
 
   const startSession = (selectedLessonId: string) => {
-    if (!conversationId || !receiverId) {
-      Alert.alert("Error", "Missing conversation/receiver");
-      return;
-    }
+    if (!conversationId || !receiverId) { Alert.alert("Błąd", "Brak danych konwersacji"); return; }
     setShowLessonModal(false);
     router.push({
       pathname: "/session/calendar" as any,
@@ -266,29 +197,44 @@ const ChatScreen: React.FC = () => {
     });
   };
 
-  const handleDeleteSessionoffer = async () => {
-    const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-      Alert.alert("Error", "Missing token – user not logged in.");
-      return;
-    }
-    //TODO add endpoint on backend
-    const res = await fetch(`${BASE_URL}/api/messages/offer`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      }
-    });
+  const handleDeleteSessionOffer = async (messageId: string) => {
+    Alert.alert(
+      "Usuń zaproszenie",
+      "Na pewno chcesz usunąć tę propozycję?",
+      [
+        { text: "Anuluj", style: "cancel" },
+        {
+          text: "Usuń",
+          style: "destructive",
+          onPress: async () => {
+            const token = await AsyncStorage.getItem("jwtToken");
+            if (!token) { Alert.alert("Błąd", "Brak tokenu."); return; }
+            const res = await fetch(`${BASE_URL}/api/messages/${messageId}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              Alert.alert("Usunięto", "Zaproszenie zostało usunięte.");
+              fetchMessages();
+            } else {
+              Alert.alert("Błąd", "Nie udało się usunąć zaproszenia.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (!userId || !conversationId) {
     return (
-        <View style={styles.loadingContainer}>
-          <Text style={{ color: "#fff" }}>Loading...</Text>
-        </View>
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: "#fff" }}>Ładowanie…</Text>
+      </View>
     );
   }
+
+  const initial = Receiver?.username?.[0]?.toUpperCase() ?? "?";
+  const imageUri = getImageUri(Receiver?.photoPath);
 
   return (
     <KeyboardAvoidingView
@@ -297,271 +243,210 @@ const ChatScreen: React.FC = () => {
       keyboardVerticalOffset={80}
       enabled={RNPlatform.OS !== "web"}
     >
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.push("/conversations")}
-          style={styles.backButton}
-        >
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
+      {/* ── Header ── */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <Pressable onPress={() => router.push("/conversations")} style={styles.backButton}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+        </Pressable>
+
         <View style={styles.receiverInfo}>
           {Receiver && (
             <>
-              {(() => {
-                const imageUri = getImageUri(Receiver.photoPath);
-                return imageUri && !avatarError ? (
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={styles.avatar}
-                    onError={(e) => {
-                      console.error("Error loading avatar:", e.nativeEvent.error);
-                      console.error("Failed URI:", imageUri);
-                      setAvatarError(true);
-                    }}
-                    onLoad={() => {
-                      setAvatarError(false);
-                    }}
-                  />
-                ) : (
+              {imageUri && !avatarError ? (
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.avatar}
+                  onError={() => setAvatarError(true)}
+                  onLoad={() => setAvatarError(false)}
+                />
+              ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <Text style={styles.avatarPlaceholderText}>
-                    {Receiver.username?.[0]?.toUpperCase() || "?"}
-                  </Text>
+                  <Text style={styles.avatarPlaceholderText}>{initial}</Text>
                 </View>
-              );
-              })()}
+              )}
               <Text style={styles.receiverName}>{Receiver.username}</Text>
             </>
           )}
         </View>
+
+        <Pressable style={styles.calendarBtn} onPress={chooseLesson}>
+          <MaterialCommunityIcons name="calendar-plus" size={20} color="#fff" />
+        </Pressable>
       </View>
 
-      <View style={{ flex: 1 }}>
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => String(item.id)}
-          refreshing={loading}
-          onRefresh={fetchMessages}
-          contentContainerStyle={{ paddingVertical: 10 }}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            !loading ? (
-              <View style={{ padding: 20, alignItems: "center" }}>
-                <Text style={{ color: "#888" }}>No messages</Text>
-              </View>
-            ) : null
-          }
-          renderItem={({ item }) => {
-            const isMyMessage = String(item.senderId) === String(userId);
-            if (item.messageType === "INVITATION") {
-              console.log('RENDER INVITATION CARD:', item);
-              const isReceiver = String(item.receiverId) === String(userId);
-              let lessonDetails = null;
-              if (lesson && lesson.id === item.lessonId) {
-                lessonDetails = lesson;
-              } else if (availableLessons && Array.isArray(availableLessons)) {
-                lessonDetails = availableLessons.find(l => l.id === item.lessonId);
-              }
-              const scheduledTime = lessonDetails?.startTime || lessonDetails?.scheduledTime || "-";
-              const price = lessonDetails?.price ? `$${lessonDetails.price}` : "-";
-              const subject = lessonDetails?.subject || "-";
-              const tutor = lessonDetails?.tutor?.username || "-";
-              return (
-                  <View style={[
-                    styles.invitationCard,
-                  ]}>
-                    <View style={styles.invitationHeaderRow}>
-                      <Text style={styles.invitationEmoji}>📅</Text>
-                      <Text style={styles.invitationTitleStrong}>Pending invitation</Text>
-                    </View>
-                    <View style={styles.invitationDetailsBlock}>
-                      <Text style={styles.invitationDetailStrong}>Subject:</Text>
-                      <Text style={styles.invitationDetailValue}>{subject}</Text>
-                    </View>
-                    <View style={styles.invitationDetailsBlock}>
-                      <Text style={styles.invitationDetailStrong}>Tutor:</Text>
-                      <Text style={styles.invitationDetailValue}>{tutor}</Text>
-                    </View>
-                    <View style={styles.invitationDetailsBlock}>
-                      <Text style={styles.invitationDetailStrong}>Scheduled for:</Text>
-                      <Text style={styles.invitationDetailValue}>{scheduledTime}</Text>
-                    </View>
-                    <View style={styles.invitationDetailsBlock}>
-                      <Text style={styles.invitationDetailStrong}>Price:</Text>
-                      <Text style={styles.invitationDetailValue}>{price}</Text>
-                    </View>
-                    {isReceiver && (
-                        <>
-                          <TouchableOpacity style={styles.acceptButton}>Decline</TouchableOpacity><TouchableOpacity style={styles.acceptButton}>
-                          <Text style={styles.acceptButtonText}>Accept</Text>
-                        </TouchableOpacity></>
-                    )}
-                    {isMyMessage && (
-                      <TouchableOpacity
-                        style={styles.declineButton}
-                        onPress={async () => {
-                          try {
-                            const token = await AsyncStorage.getItem("jwtToken");
-                            if (!token) throw new Error("No token");
-                            const res = await fetch(`${BASE_URL}/api/messages/${item.id}`, {
-                              method: "DELETE",
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                              },
-                            });
-                            if (!res.ok) throw new Error("Failed to remove invitation");
-                            Alert.alert("Removed", "Invitation has been removed.");
-                            fetchMessages();
-                          } catch (e: any) {
-                            Alert.alert("Error", e.message);
-                          }
-                        }}
-                      >
-                        <Text style={styles.declineButtonText} onPress={async() => {
-                          Alert.alert(
-                              "Confirm Deletion",
-                              "You sure you want to delete session?",
-                              [
-                                { text: "Cancel", style: "cancel" },
-                                { text: "Delete", style: "destructive", onPress: () => handleDeleteSessionoffer() },
-                              ]
-                          );
-                        }}>Remove invitation</Text>
-                      </TouchableOpacity>
-                    )}
-                    <Text style={styles.timestamp}>
-                      {item.timestamp
-                          ? new Date(item.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                          : ""}
-                    </Text>
-                  </View>
-              );
-            }
+      {/* ── Message list ── */}
+      <FlatList
+        data={messages}
+        keyExtractor={(item) => String(item.id)}
+        refreshing={loading}
+        onRefresh={fetchMessages}
+        contentContainerStyle={{ paddingVertical: 12 }}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          !loading ? (
+            <View style={{ padding: 32, alignItems: "center" }}>
+              <Text style={{ fontFamily: "DMSans_500Medium", fontSize: 14, color: "rgba(255,255,255,0.38)" }}>
+                Brak wiadomości — zacznij rozmowę!
+              </Text>
+            </View>
+          ) : null
+        }
+        renderItem={({ item }) => {
+          const isMyMessage = String(item.senderId) === String(userId);
+
+          if (item.messageType === "INVITATION") {
+            const isReceiver = String(item.receiverId) === String(userId);
+            const lessonDetails =
+              lesson?.id === item.lessonId
+                ? lesson
+                : availableLessons.find((l) => l.id === item.lessonId);
+            const scheduledAt = lessonDetails?.startTime || lessonDetails?.scheduledTime || "—";
+            const price = lessonDetails?.price ? `${lessonDetails.price} zł` : "—";
+            const subject = lessonDetails?.subject || "—";
+            const tutor = lessonDetails?.tutor?.username || "—";
+
             return (
-              <View
-                style={[
-                  styles.message,
-                  isMyMessage ? styles.myMessage : styles.otherMessage,
-                ]}
-              >
-                <Text style={styles.messageText}>{item.content}</Text>
+              <View style={styles.invitationCard}>
+                <View style={styles.invitationHeaderRow}>
+                  <MaterialCommunityIcons name="calendar-clock" size={20} color="#4FB8D9" />
+                  <Text style={styles.invitationTitleStrong}>Propozycja sesji</Text>
+                </View>
+                <View style={styles.invitationDetailsBlock}>
+                  <Text style={styles.invitationDetailStrong}>Przedmiot</Text>
+                  <Text style={styles.invitationDetailValue}>{subject}</Text>
+                </View>
+                <View style={styles.invitationDetailsBlock}>
+                  <Text style={styles.invitationDetailStrong}>Korepetytor</Text>
+                  <Text style={styles.invitationDetailValue}>{tutor}</Text>
+                </View>
+                <View style={styles.invitationDetailsBlock}>
+                  <Text style={styles.invitationDetailStrong}>Termin</Text>
+                  <Text style={styles.invitationDetailValue}>{scheduledAt}</Text>
+                </View>
+                <View style={styles.invitationDetailsBlock}>
+                  <Text style={styles.invitationDetailStrong}>Cena</Text>
+                  <Text style={styles.invitationDetailValue}>{price}</Text>
+                </View>
+                {isReceiver && (
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                    <Pressable style={styles.declineButton}>
+                      <Text style={styles.declineButtonText}>Odrzuć</Text>
+                    </Pressable>
+                    <Pressable style={styles.acceptButton}>
+                      <Text style={styles.acceptButtonText}>Akceptuj</Text>
+                    </Pressable>
+                  </View>
+                )}
+                {isMyMessage && (
+                  <Pressable
+                    style={[styles.declineButton, { marginTop: 10 }]}
+                    onPress={() => handleDeleteSessionOffer(String(item.id))}
+                  >
+                    <Text style={styles.declineButtonText}>Cofnij propozycję</Text>
+                  </Pressable>
+                )}
                 <Text style={styles.timestamp}>
                   {item.timestamp
-                    ? new Date(item.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
+                    ? new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                     : ""}
                 </Text>
               </View>
             );
-          }}
+          }
+
+          return (
+            <View style={[styles.message, isMyMessage ? styles.myMessage : styles.otherMessage]}>
+              <Text style={[styles.messageText, isMyMessage && styles.myMessageText]}>
+                {item.content}
+              </Text>
+              <Text style={[styles.timestamp, isMyMessage && styles.myTimestamp]}>
+                {item.timestamp
+                  ? new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                  : ""}
+              </Text>
+            </View>
+          );
+        }}
+      />
+
+      {/* ── Input bar ── */}
+      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <TextInput
+          style={styles.input}
+          placeholder="Napisz wiadomość…"
+          placeholderTextColor="rgba(255,255,255,0.38)"
+          value={newMessage}
+          onChangeText={setNewMessage}
+          multiline
+          autoComplete="off"
+          autoCorrect={false}
+          onFocus={(e) => { if (RNPlatform.OS === "web") e.currentTarget?.focus(); }}
         />
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Write message..."
-            placeholderTextColor="#888"
-            value={newMessage}
-            onChangeText={setNewMessage}
-            multiline
-            autoComplete="off"
-            autoCorrect={false}
-            onFocus={(e) => {
-              if (RNPlatform.OS === 'web') {
-                e.currentTarget?.focus();
-              }
-            }}
-          />
-          <View style={styles.actionsRow}>
-            <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-              <Text style={styles.sendText}>Send</Text>
-            </TouchableOpacity>
-            <Ionicons
-              name="calendar-outline"
-              size={22}
-              color="#fff"
-              onPress={chooseLesson}
-              style={{ paddingHorizontal: 10, paddingVertical: 8 }}
-            />
-          </View>
+        <View style={styles.actionsRow}>
+          <Pressable onPress={sendMessage} style={styles.sendButton}>
+            <MaterialCommunityIcons name="send" size={20} color="#241608" />
+          </Pressable>
         </View>
       </View>
 
+      {/* ── Lesson picker modal ── */}
       <Modal
         visible={showLessonModal}
         animationType="slide"
-        transparent={true}
+        transparent
         onRequestClose={() => setShowLessonModal(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choose a Lesson</Text>
-              <TouchableOpacity
-                onPress={() => setShowLessonModal(false)}
-                style={styles.closeButton}
-              >
+              <Text style={styles.modalTitle}>Wybierz lekcję</Text>
+              <Pressable onPress={() => setShowLessonModal(false)} style={styles.closeButton}>
                 <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {loadingLessons ? (
               <View style={styles.modalCenter}>
-                <Text style={styles.modalText}>Loading lessons...</Text>
+                <Text style={styles.modalText}>Ładowanie lekcji…</Text>
               </View>
             ) : availableLessons.length === 0 ? (
               <View style={styles.modalCenter}>
-                <Text style={styles.modalText}>No lessons available</Text>
+                <Text style={styles.modalText}>Brak dostępnych lekcji</Text>
               </View>
             ) : (
               <FlatList
                 data={availableLessons}
                 keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
                 contentContainerStyle={{ paddingBottom: 20 }}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.lessonModalItem}
-                    onPress={() => startSession(item.id)}
-                  >
-                    <View style={styles.lessonModalContent}>
-                      {(() => {
-                        const tutorImageUri = getImageUri(item.tutor?.photoPath);
-                        return tutorImageUri ? (
-                          <Image
-                            source={{ uri: tutorImageUri }}
-                            style={styles.lessonModalAvatar}
-                            onError={(e) => {
-                              console.error("Error loading tutor avatar:", e.nativeEvent.error);
-                              console.error("Failed URI:", tutorImageUri);
-                            }}
-                          />
+                renderItem={({ item }) => {
+                  const tutorImageUri = getImageUri(item.tutor?.photoPath);
+                  return (
+                    <Pressable
+                      style={styles.lessonModalItem}
+                      onPress={() => startSession(item.id)}
+                    >
+                      <View style={styles.lessonModalContent}>
+                        {tutorImageUri ? (
+                          <Image source={{ uri: tutorImageUri }} style={styles.lessonModalAvatar} />
                         ) : (
-                        <View style={[styles.lessonModalAvatar, styles.avatarPlaceholder]}>
-                          <Text style={styles.avatarPlaceholderText}>
-                            {item.tutor?.username?.[0]?.toUpperCase() || "?"}
+                          <View style={[styles.lessonModalAvatar, styles.avatarPlaceholder]}>
+                            <Text style={styles.avatarPlaceholderText}>
+                              {item.tutor?.username?.[0]?.toUpperCase() || "?"}
+                            </Text>
+                          </View>
+                        )}
+                        <View style={styles.lessonModalInfo}>
+                          <Text style={styles.lessonModalSubject}>{item.subject}</Text>
+                          <Text style={styles.lessonModalTutor}>{item.tutor?.username || "Nieznany"}</Text>
+                          <Text style={styles.lessonModalDescription} numberOfLines={2}>
+                            {item.description}
                           </Text>
+                          <Text style={styles.lessonModalDuration}>{item.durationTime} min</Text>
                         </View>
-                      );
-                      })()}
-                      <View style={styles.lessonModalInfo}>
-                        <Text style={styles.lessonModalSubject}>{item.subject}</Text>
-                        <Text style={styles.lessonModalTutor}>
-                          Tutor: {item.tutor?.username || "Unknown"}
-                        </Text>
-                        <Text style={styles.lessonModalDescription} numberOfLines={2}>
-                          {item.description}
-                        </Text>
-                        <Text style={styles.lessonModalDuration}>
-                          Duration: {item.durationTime} minutes
-                        </Text>
                       </View>
-                    </View>
-                  </TouchableOpacity>
-                )}
+                    </Pressable>
+                  );
+                }}
               />
             )}
           </View>
@@ -570,4 +455,5 @@ const ChatScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
+
 export default ChatScreen;

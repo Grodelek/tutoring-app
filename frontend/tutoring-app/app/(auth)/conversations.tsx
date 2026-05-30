@@ -18,13 +18,6 @@ import { fetchUserById, Lesson } from "@/api/userApi";
 import { fetchConversationHistoryFromApi } from "@/api/conversationApi";
 import { C, T } from "@/constants/theme";
 
-function hexAlpha(hex: string, a: number) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
 function formatTime(raw?: string): string {
   if (!raw) return "";
   const date = new Date(raw);
@@ -174,7 +167,7 @@ const ConversationHistoryScreen: React.FC = () => {
         ? String(item.user2Id)
         : String(item.user1Id);
     router.push({
-      pathname: "/messages/[conversationId]",
+      pathname: "./messages/[conversationId]",
       params: { conversationId, receiverId },
     });
   };
@@ -183,13 +176,7 @@ const ConversationHistoryScreen: React.FC = () => {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Chat</Text>
-          <Text style={styles.headerSub}>Twoje rozmowy z tutorami</Text>
-        </View>
-        <View style={styles.headerIcon}>
-          <MaterialCommunityIcons name="message-text" size={20} color={C.teal} />
-        </View>
+        <Text style={styles.headerTitle}>Chat</Text>
       </View>
 
       <FlatList<Conversation>
@@ -210,13 +197,7 @@ const ConversationHistoryScreen: React.FC = () => {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <View style={styles.emptyIcon}>
-              <MaterialCommunityIcons
-                name="message-text-outline"
-                size={32}
-                color={C.teal}
-              />
-            </View>
+            <MaterialCommunityIcons name="message-text-outline" size={48} color={C.border} />
             <Text style={styles.emptyTitle}>Brak rozmów</Text>
             <Text style={styles.emptyBody}>
               Połącz się z tutorem, aby rozpocząć pierwszą rozmowę!
@@ -241,41 +222,20 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
   },
 
-  // ── header ──
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderBottomWidth: 2,
+    borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
   headerTitle: {
-    fontFamily: T.family.extraBold,
-    fontWeight: T.weight.extraBold,
-    fontSize: 24,
-    letterSpacing: -0.55,
+    fontFamily: T.family.black,
+    fontWeight: "900",
+    fontSize: 32,
+    letterSpacing: -1,
     color: C.text,
   },
-  headerSub: {
-    fontFamily: T.family.medium,
-    fontSize: 12,
-    color: C.textDim,
-    marginTop: 2,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: hexAlpha(C.teal, 0.13),
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: hexAlpha(C.teal, 0.25),
-  },
 
-  // ── list ──
   list: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -290,7 +250,6 @@ const styles = StyleSheet.create({
     marginLeft: 76,
   },
 
-  // ── row ──
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -302,7 +261,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
 
-  // ── avatar ──
   avatarWrap: {
     position: "relative",
   },
@@ -310,24 +268,24 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: hexAlpha(C.teal, 0.15),
+    backgroundColor: C.surface,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: hexAlpha(C.teal, 0.3),
+    borderWidth: 1.5,
+    borderColor: C.border,
   },
   avatarImg: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    borderWidth: 2,
-    borderColor: hexAlpha(C.teal, 0.3),
+    borderWidth: 1.5,
+    borderColor: C.border,
   },
   avatarInitial: {
     fontFamily: T.family.black,
     fontWeight: "900",
     fontSize: 20,
-    color: C.teal,
+    color: C.purple,
   },
   unreadDot: {
     position: "absolute",
@@ -387,22 +345,10 @@ const styles = StyleSheet.create({
     color: C.text,
   },
 
-  // ── empty ──
   emptyWrap: {
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 32,
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: hexAlpha(C.teal, 0.13),
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: hexAlpha(C.teal, 0.25),
-    marginBottom: 4,
   },
   emptyTitle: {
     fontFamily: T.family.extraBold,

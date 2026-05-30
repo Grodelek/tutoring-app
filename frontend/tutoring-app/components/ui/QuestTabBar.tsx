@@ -42,20 +42,20 @@ export function QuestTabBar({ state, navigation, staticTabs }: Props) {
   const authTabs: TabDef[] = useMemo(() => {
     if (staticTabs) return staticTabs;
 
-    const base: TabDef[] = [
-      { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass', color: C.coral },
-    ];
-
     if (userType === 'TUTOR') {
-      base.push({ route: 'createPost', label: 'POST', icon: 'plus-box', color: C.amber });
+      return [
+        { route: 'tutorDashboard', label: 'DASHBOARD', icon: 'view-dashboard', color: C.amber },
+        { route: 'createPost',     label: 'NOWE',      icon: 'plus-box',        color: C.coral },
+        { route: 'myAccount',      label: 'PROFIL',    icon: 'account',         color: C.purple },
+        { route: 'conversations',  label: 'CHAT',      icon: 'message-text',    color: C.teal },
+      ];
     }
 
-    base.push(
-      { route: 'myAccount', label: 'PROFIL', icon: 'account', color: C.purple },
-      { route: 'conversations', label: 'CHAT', icon: 'message-text', color: C.teal },
-    );
-
-    return base;
+    return [
+      { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass',      color: C.coral },
+      { route: 'myAccount',     label: 'PROFIL',  icon: 'account',      color: C.purple },
+      { route: 'conversations', label: 'CHAT',    icon: 'message-text', color: C.teal },
+    ];
   }, [staticTabs, userType]);
 
   const tabs = authTabs;

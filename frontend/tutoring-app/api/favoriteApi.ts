@@ -39,3 +39,14 @@ export const addFavoriteTutor = async (
   return response.json();
 };
 
+export const getFavoriteTutors = async (): Promise<FavoriteTutor[]> => {
+  const token = await AsyncStorage.getItem("jwtToken");
+  const studentId = await AsyncStorage.getItem("userId");
+  if (!token || !studentId) return [];
+  const response = await fetch(`${BASE_URL}/api/favorites/student/${studentId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return [];
+  return response.json();
+};
+

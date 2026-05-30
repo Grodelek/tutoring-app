@@ -22,6 +22,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card } from "@components/ui/Card";
 import { Chip } from "@components/ui/Chip";
 import { C, T, R } from "@/constants/theme";
+import { fetchTutors } from "@/api/tutorDiscoveryApi";
+import { getFavoriteTutors } from "@/api/favoriteApi";
 
 const PREFERENCES_KEY = "tutorPreferences";
 const PRICE_MIN = 20;
@@ -161,6 +163,9 @@ const ExplorePreferences: React.FC = () => {
   const [teachStyle,  setTeachStyle]  = useState<string | null>(null);
   const [userType,    setUserType]    = useState<string | null>(null);
   const [avail,       setAvail]       = useState<string | null>(null);
+  const [matchCount,    setMatchCount]    = useState<number | null>(null);
+  const [connectedIds,  setConnectedIds]  = useState<Set<string>>(new Set());
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -177,6 +182,34 @@ const ExplorePreferences: React.FC = () => {
       } catch {}
     })();
   }, []);
+
+  useEffect(() => {
+    getFavoriteTutors().then(favs => {
+      setConnectedIds(new Set(favs.map(f => f.tutorId)));
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setMatchCount(null);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const results = await fetchTutors({
+          subject: subject || null,
+          minPrice,
+          maxPrice,
+          preferredTeachingStyle: teachStyle as any,
+          preferredUserType: userType as any,
+          preferredAvailability: avail,
+        });
+        const fresh = (results ?? []).filter(c => !connectedIds.has(c.tutorId));
+        setMatchCount(fresh.length);
+      } catch {
+        setMatchCount(null);
+      }
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [subject, minPrice, maxPrice, teachStyle, userType, avail, connectedIds]);
 
   const filteredSubjects = SUBJECTS.filter((s) =>
     s.toLowerCase().includes(inputText.toLowerCase())
@@ -376,7 +409,13 @@ const ExplorePreferences: React.FC = () => {
         </SectionCard>
 
         <Pressable onPress={handleSearch} style={styles.ctaBtn}>
-          <Text style={styles.ctaText}>Pokaż 12 dopasowań ➜</Text>
+          <Text style={styles.ctaText}>
+            {matchCount === null
+              ? "Szukam dopasowań…"
+              : matchCount === 0
+              ? "Brak dopasowań"
+              : `Pokaż ${matchCount} dopasowań ➜`}
+          </Text>
         </Pressable>
       </ScrollView>
     </View>
