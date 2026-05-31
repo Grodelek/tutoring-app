@@ -52,9 +52,10 @@ export function QuestTabBar({ state, navigation, staticTabs }: Props) {
     }
 
     return [
-      { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass',      color: C.coral },
-      { route: 'myAccount',     label: 'PROFIL',  icon: 'account',      color: C.purple },
-      { route: 'conversations', label: 'CHAT',    icon: 'message-text', color: C.teal },
+      { route: 'exploreTutors', label: 'EXPLORE', icon: 'compass',        color: C.coral },
+      { route: 'myBookings',    label: 'ZAJĘCIA', icon: 'calendar-check', color: C.amber },
+      { route: 'conversations', label: 'CHAT',    icon: 'message-text',   color: C.teal },
+      { route: 'myAccount',     label: 'PROFIL',  icon: 'account',        color: C.purple },
     ];
   }, [staticTabs, userType]);
 

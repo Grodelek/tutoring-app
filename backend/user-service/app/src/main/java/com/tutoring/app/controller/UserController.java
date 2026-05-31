@@ -76,7 +76,8 @@ public class UserController {
         user.getEmail(),
         user.getPhotoPath(),
         user.getPoints(),
-        user.getDescription()
+        user.getDescription(),
+        user.getStreak() == null ? 0 : user.getStreak()
     ));
   }
 

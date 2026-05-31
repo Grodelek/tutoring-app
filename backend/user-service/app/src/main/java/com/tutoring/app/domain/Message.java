@@ -40,4 +40,8 @@ public class Message {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "lesson_id")
   private Lesson lesson;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "offer_id")
+  private TutorOffer offer;
 }

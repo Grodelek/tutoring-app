@@ -120,6 +120,7 @@ public class UserService {
             .description(user.getDescription())
             .points(user.getPoints())
             .photoPath(user.getPhotoPath())
+            .streak(user.getStreak() == null ? 0 : user.getStreak())
             .build();
   }
 

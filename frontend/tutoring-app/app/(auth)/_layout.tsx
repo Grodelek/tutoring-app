@@ -57,6 +57,11 @@ export default function AuthenticatedTabsLayout() {
       <Tabs.Screen name="userSettings" options={{ href: null }} />
       <Tabs.Screen name="conversations" />
       <Tabs.Screen name="messages/[conversationId]" options={{ href: null }} />
+      <Tabs.Screen name="session/calendar" options={{ href: null }} />
+      <Tabs.Screen
+        name="myBookings"
+        options={{ href: isStudent ? undefined : null }}
+      />
       <Tabs.Screen name="createPost" />
     </Tabs>
   );

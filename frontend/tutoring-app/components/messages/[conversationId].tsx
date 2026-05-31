@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
 import { fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
-import { sendOffer } from "@/api/offerApi";
+import { sendOffer, acceptOffer, declineOffer, confirmPayment } from "@/api/offerApi";
 import styles from "./styles/styles";
 
 interface Message {
@@ -75,12 +75,12 @@ const ChatScreen: React.FC = () => {
       router.setParams({ scheduledTime: undefined as any, lessonId: undefined as any });
       try {
         await sendOffer({
-          tutorId: receiverId.toString(),
-          studentId: userId,
           lessonId: scheduledLessonId.toString(),
+          receiverId: receiverId.toString(),
           sessionStartTime: scheduledTime.toString(),
         });
         Alert.alert("Zaplanowano", `Termin: ${new Date(scheduledTime.toString()).toLocaleString()}`);
+        fetchMessages();
       } catch (e: any) {
         Alert.alert("Błąd", e?.message || "Nie udało się wysłać propozycji");
       }
@@ -225,6 +225,54 @@ const ChatScreen: React.FC = () => {
     );
   };
 
+  const handleAcceptOffer = async (offerId: string) => {
+    try {
+      await acceptOffer(offerId);
+      Alert.alert("Zaakceptowano", "Termin został potwierdzony.");
+      fetchMessages();
+    } catch (e: any) {
+      Alert.alert("Błąd", e?.message || "Nie udało się zaakceptować.");
+    }
+  };
+
+  const handleDeclineOffer = async (offerId: string) => {
+    try {
+      await declineOffer(offerId);
+      fetchMessages();
+    } catch (e: any) {
+      Alert.alert("Błąd", e?.message || "Nie udało się odrzucić.");
+    }
+  };
+
+  const handleConfirmPayment = async (offerId: string) => {
+    try {
+      const updated = await confirmPayment(offerId);
+      if (updated.completed) {
+        Alert.alert("Rozliczono", "Zajęcia rozliczone! +10 XP i +1 do streaka.");
+      } else {
+        Alert.alert("Potwierdzono", "Czekamy na potwierdzenie drugiej strony.");
+      }
+      fetchMessages();
+    } catch (e: any) {
+      Alert.alert("Błąd", e?.message || "Nie udało się potwierdzić płatności.");
+    }
+  };
+
+  const handleProposeAnotherTime = (offerLessonId: string) => {
+    if (!conversationId || !receiverId) { Alert.alert("Błąd", "Brak danych konwersacji"); return; }
+    router.push({
+      pathname: "/session/calendar" as any,
+      params: {
+        returnTo: "/messages/[conversationId]",
+        returnParams: JSON.stringify({
+          conversationId: conversationId.toString(),
+          receiverId: receiverId.toString(),
+          lessonId: offerLessonId,
+        }),
+      },
+    });
+  };
+
   if (!userId || !conversationId) {
     return (
       <View style={styles.loadingContainer}>
@@ -296,14 +344,23 @@ const ChatScreen: React.FC = () => {
 
           if (item.messageType === "INVITATION") {
             const isReceiver = String(item.receiverId) === String(userId);
-            const lessonDetails =
-              lesson?.id === item.lessonId
-                ? lesson
-                : availableLessons.find((l) => l.id === item.lessonId);
-            const scheduledAt = lessonDetails?.startTime || lessonDetails?.scheduledTime || "—";
-            const price = lessonDetails?.price ? `${lessonDetails.price} zł` : "—";
-            const subject = lessonDetails?.subject || "—";
-            const tutor = lessonDetails?.tutor?.username || "—";
+            const offer = (item as any).offer;
+            const offerLesson = offer?.lesson;
+            const status = offer?.status ?? "PENDING";
+            const sessionStart = offer?.sessionStartTime ? new Date(offer.sessionStartTime) : null;
+            const duration = offerLesson?.durationTime ?? 0;
+            const sessionEnd = sessionStart ? new Date(sessionStart.getTime() + duration * 60000) : null;
+            const now = new Date();
+
+            const scheduledAt = sessionStart ? sessionStart.toLocaleString() : "—";
+            const price = offerLesson?.price != null ? `${offerLesson.price} zł` : "—";
+            const subject = offerLesson?.subject || "—";
+            const tutor = offer?.tutorUsername || "—";
+
+            const isStudentSide = offer && String(offer.studentId) === String(userId);
+            const myConfirmed = isStudentSide ? offer?.studentConfirmedPayment : offer?.tutorConfirmedPayment;
+            const otherConfirmed = isStudentSide ? offer?.tutorConfirmedPayment : offer?.studentConfirmedPayment;
+            const sessionEnded = sessionEnd ? now >= sessionEnd : false;
 
             return (
               <View style={styles.invitationCard}>
@@ -324,27 +381,71 @@ const ChatScreen: React.FC = () => {
                   <Text style={styles.invitationDetailValue}>{scheduledAt}</Text>
                 </View>
                 <View style={styles.invitationDetailsBlock}>
+                  <Text style={styles.invitationDetailStrong}>Czas</Text>
+                  <Text style={styles.invitationDetailValue}>{duration ? `${duration} min` : "—"}</Text>
+                </View>
+                <View style={styles.invitationDetailsBlock}>
                   <Text style={styles.invitationDetailStrong}>Cena</Text>
                   <Text style={styles.invitationDetailValue}>{price}</Text>
                 </View>
-                {isReceiver && (
-                  <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-                    <Pressable style={styles.declineButton}>
-                      <Text style={styles.declineButtonText}>Odrzuć</Text>
-                    </Pressable>
-                    <Pressable style={styles.acceptButton}>
-                      <Text style={styles.acceptButtonText}>Akceptuj</Text>
+
+                {/* PENDING — receiver decides */}
+                {status === "PENDING" && isReceiver && offer && (
+                  <View style={{ gap: 8, marginTop: 10 }}>
+                    <View style={{ flexDirection: "row", gap: 8 }}>
+                      <Pressable style={[styles.declineButton, { marginTop: 0 }]} onPress={() => handleDeclineOffer(String(offer.id))}>
+                        <Text style={styles.declineButtonText}>Odrzuć</Text>
+                      </Pressable>
+                      <Pressable style={[styles.acceptButton, { marginTop: 0 }]} onPress={() => handleAcceptOffer(String(offer.id))}>
+                        <Text style={styles.acceptButtonText}>Akceptuj</Text>
+                      </Pressable>
+                    </View>
+                    <Pressable style={styles.proposeButton} onPress={() => handleProposeAnotherTime(String(offerLesson?.id))}>
+                      <Text style={styles.proposeButtonText}>Zaproponuj inny termin</Text>
                     </Pressable>
                   </View>
                 )}
-                {isMyMessage && (
-                  <Pressable
-                    style={[styles.declineButton, { marginTop: 10 }]}
-                    onPress={() => handleDeleteSessionOffer(String(item.id))}
-                  >
-                    <Text style={styles.declineButtonText}>Cofnij propozycję</Text>
-                  </Pressable>
+
+                {/* PENDING — proposer waits */}
+                {status === "PENDING" && isMyMessage && (
+                  <View style={{ gap: 8, marginTop: 10 }}>
+                    <Text style={[styles.statusLine, { color: "#4FB8D9" }]}>Oczekuje na odpowiedź…</Text>
+                    <Pressable style={styles.proposeButton} onPress={() => handleDeleteSessionOffer(String(item.id))}>
+                      <Text style={styles.proposeButtonText}>Cofnij propozycję</Text>
+                    </Pressable>
+                  </View>
                 )}
+
+                {/* DECLINED */}
+                {status === "DECLINED" && (
+                  <Text style={[styles.statusLine, { color: "#FF6B4A", marginTop: 10 }]}>Propozycja odrzucona</Text>
+                )}
+
+                {/* ACCEPTED */}
+                {status === "ACCEPTED" && offer && (
+                  <View style={{ marginTop: 10, gap: 6 }}>
+                    {offer.completed ? (
+                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia rozliczone • +10 XP, +1 🔥</Text>
+                    ) : !sessionEnded ? (
+                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>
+                        Zaakceptowano • płatność potwierdzisz po zakończeniu zajęć
+                      </Text>
+                    ) : (
+                      <>
+                        <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia zakończone — potwierdź płatność</Text>
+                        <Text style={styles.paymentStatusText}>
+                          Ty: {myConfirmed ? "✅ potwierdzono" : "⏳ oczekuje"}   •   Druga strona: {otherConfirmed ? "✅" : "⏳"}
+                        </Text>
+                        {!myConfirmed && (
+                          <Pressable style={styles.paymentButton} onPress={() => handleConfirmPayment(String(offer.id))}>
+                            <Text style={styles.paymentButtonText}>Płatność wykonana ✓</Text>
+                          </Pressable>
+                        )}
+                      </>
+                    )}
+                  </View>
+                )}
+
                 <Text style={styles.timestamp}>
                   {item.timestamp
                     ? new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })

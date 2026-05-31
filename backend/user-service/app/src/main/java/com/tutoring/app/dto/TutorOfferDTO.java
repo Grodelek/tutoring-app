@@ -9,8 +9,7 @@ import java.util.UUID;
 @Getter
 @Setter
 public class TutorOfferDTO {
-    private UUID tutorId;
-    private UUID studentId;
     private UUID lessonId;
+    private UUID receiverId;
     private LocalDateTime sessionStartTime;
 }

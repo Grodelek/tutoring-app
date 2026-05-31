@@ -2,9 +2,6 @@ package com.tutoring.app.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,5 +31,22 @@ public class TutorOffer {
     @Column(nullable = false, columnDefinition = "boolean default false")
     @Builder.Default
     private boolean accepted = false;
-    
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'PENDING'")
+    @Builder.Default
+    private OfferStatus status = OfferStatus.PENDING;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean studentConfirmedPayment = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean tutorConfirmedPayment = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean completed = false;
+
 }

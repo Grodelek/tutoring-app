@@ -23,6 +23,8 @@ public class MessageDTO {
   private MessageType messageType;
   private UUID lessonId;
   private LessonResponseDTO lesson;
+  private UUID offerId;
+  private OfferResponseDTO offer;
   public MessageDTO(Message message) {
     this.id = message.getId();
     this.senderId = message.getSender().getId();
@@ -38,7 +40,12 @@ public class MessageDTO {
       this.lesson.setSubject(message.getLesson().getSubject());
       this.lesson.setDescription(message.getLesson().getDescription());
       this.lesson.setDurationTime(message.getLesson().getDurationTime());
+      this.lesson.setPrice(message.getLesson().getPrice());
       this.lesson.setTutorId(message.getLesson().getTutor().getId());
+    }
+    if (message.getOffer() != null) {
+      this.offerId = message.getOffer().getId();
+      this.offer = new OfferResponseDTO(message.getOffer());
     }
   }
 }

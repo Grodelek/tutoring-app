@@ -18,6 +18,7 @@ import com.tutoring.app.repository.MessageRepository;
 import com.tutoring.app.repository.UserRepository;
 import com.tutoring.app.repository.LessonRepository;
 import com.tutoring.app.domain.Lesson;
+import com.tutoring.app.domain.TutorOffer;
 
 @Service
 public class MessageService {
@@ -99,6 +100,31 @@ public class MessageService {
         messageDTO.setSenderId(message.getSender().getId());
         messageDTO.setMessageType(message.getMessageType());
         return messageDTO;
+    }
+
+    public MessageDTO sendOfferInvitation(UUID senderId, UUID receiverId, TutorOffer offer) throws Exception {
+        Conversation conversation = getOrCreateConversation(senderId, receiverId);
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+
+        Message message = new Message();
+        message.setSender(sender);
+        message.setReceiver(receiver);
+        message.setContent(aesUtils.encrypt("Propozycja sesji"));
+        message.setConversation(conversation);
+        message.setMessageType(MessageType.INVITATION);
+        message.setLesson(offer.getLesson());
+        message.setOffer(offer);
+
+        conversation.setLastMessageAt(LocalDateTime.now());
+        conversationRepository.save(conversation);
+        messageRepository.save(message);
+
+        MessageDTO dto = new MessageDTO(message);
+        dto.setContent("Propozycja sesji");
+        return dto;
     }
 
     public List<MessageDTO> getMessages(UUID conversationId) {

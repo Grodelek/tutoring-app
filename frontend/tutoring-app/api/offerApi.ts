@@ -2,63 +2,104 @@ import {BASE_URL} from "@/config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface OfferRequest{
-    tutorId: string,
-    studentId: string,
     lessonId: string,
-    sessionStartTime?: string
+    receiverId: string,
+    sessionStartTime: string
 }
 
-export interface User {
+export interface OfferLesson {
     id: string;
-    email: string;
-    roles: string[];
-    username: string;
-    photoPath: string;
-    description: string | null;
-    points: number;
-    confirmed: boolean;
-}
-
-export interface Lesson {
-    id: string;
-    student: User;
-    tutor: User;
     subject: string;
-    startTime: string | null;
-    durationMinutes: number;
-    status: string | null;
-    price: number | null;
     description: string;
     durationTime: number;
+    price: number | null;
+    tutorId: string;
 }
 
 export interface Offer {
     id: string;
-    tutor: User;
-    student: User;
-    lesson: Lesson;
+    status: "PENDING" | "ACCEPTED" | "DECLINED";
     sessionStartTime: string | null;
-    accepted: boolean;
+    studentConfirmedPayment: boolean;
+    tutorConfirmedPayment: boolean;
+    completed: boolean;
+    tutorId: string;
+    tutorUsername: string;
+    tutorPhotoPath: string | null;
+    studentId: string;
+    studentUsername: string;
+    studentPhotoPath: string | null;
+    lesson: OfferLesson | null;
 }
 
-export const sendOffer = async (data: OfferRequest): Promise<Offer> => {
+const authHeaders = async () => {
     const token = await AsyncStorage.getItem("jwtToken");
-    if(!token){
+    if (!token) {
         throw new Error("Authentication token not found");
     }
+    return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+    };
+};
+
+export const sendOffer = async (data: OfferRequest): Promise<Offer> => {
+    const headers = await authHeaders();
     const response = await fetch(`${BASE_URL}/api/offer/send`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify(data),
     });
-
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
+        throw new Error(await response.text());
     }
+    return response.json();
+};
 
-    return await response.json();
+export const acceptOffer = async (offerId: string): Promise<Offer> => {
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/api/offer/accept/${offerId}`, {
+        method: "POST",
+        headers,
+    });
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+    return response.json();
+};
+
+export const declineOffer = async (offerId: string): Promise<Offer> => {
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/api/offer/decline/${offerId}`, {
+        method: "POST",
+        headers,
+    });
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+    return response.json();
+};
+
+export const confirmPayment = async (offerId: string): Promise<Offer> => {
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/api/offer/confirm-payment/${offerId}`, {
+        method: "POST",
+        headers,
+    });
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+    return response.json();
+};
+
+export const fetchMyBookings = async (): Promise<Offer[]> => {
+    const headers = await authHeaders();
+    const response = await fetch(`${BASE_URL}/api/offer/my`, {
+        method: "GET",
+        headers,
+    });
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+    return response.json();
 };

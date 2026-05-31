@@ -48,6 +48,10 @@ public class User {
   @Column(nullable = false)
   private Integer points = 0;
 
+  @Builder.Default
+  @Column(nullable = false, columnDefinition = "integer default 0")
+  private Integer streak = 0;
+
   @OneToMany(mappedBy = "tutor", cascade = CascadeType.ALL)
   @JsonIgnore
   private List<Lesson> lessons = new ArrayList<>();
