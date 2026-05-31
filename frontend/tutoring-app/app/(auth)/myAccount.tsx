@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   View,
   Text,
@@ -16,11 +17,24 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Svg, { Circle } from "react-native-svg";
 import { useAuth } from "@/context/AuthContext";
 import UploadPhoto from "@components/ui/UploadPhoto";
 import useUpdateUserProfile from "@/hooks/MyAccount/useUpdateUserProfile";
 import { getMyAccount, saveToBackend } from "@/api/userApi";
+import { fetchMyBookings } from "@/api/offerApi";
 import { C, T, R } from "@/constants/theme";
+
+const XP_PER_LEVEL = 100;
+const getLevel = (xp: number) => Math.floor(xp / XP_PER_LEVEL) + 1;
+const getLevelProgress = (xp: number) => (xp % XP_PER_LEVEL) / XP_PER_LEVEL;
+
+const RING_SIZE = 116;
+const RING_CENTER = RING_SIZE / 2;
+const RING_R = 54;
+const RING_STROKE = 4;
+const RING_CIRC = 2 * Math.PI * RING_R;
+
 
 const MyAccount: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -31,11 +45,12 @@ const MyAccount: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState("");
   const [refreshing, setRefreshing]   = useState(false);
+  const [lessonsCount, setLessonsCount] = useState(0);
   const { setToken } = useAuth();
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchUser();
+    await Promise.all([fetchUser(), fetchLessons()]);
     setRefreshing(false);
   };
 
@@ -54,13 +69,15 @@ const MyAccount: React.FC = () => {
     }
   };
 
+  const fetchLessons = async () => {
+    try {
+      const bookings = await fetchMyBookings();
+      setLessonsCount(bookings.filter(b => b.completed).length);
+    } catch {}
+  };
+
   const updateUserProfile = useUpdateUserProfile({
-    user,
-    username,
-    password,
-    description,
-    setIsEditing,
-    fetchUser,
+    user, username, password, description, setIsEditing, fetchUser,
   });
 
   const savePhotoToBackend = async (imageUrl: string) => {
@@ -77,16 +94,19 @@ const MyAccount: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchUser(); }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchUser();
+      fetchLessons();
+    }, [])
+  );
 
-  const weeklyProgress = useMemo(() => {
-    const total = user?.points ?? 0;
-    const base = Math.max(5, Math.floor(total / 10));
-    return [base + 5, base + 2, base + 8, base + 4, base + 6, base + 3, base + 1];
-  }, [user?.points]);
-
-  const maxProgress = Math.max(...weeklyProgress, 1);
-  const initial = user?.username?.charAt(0)?.toUpperCase() || "?";
+  const xp       = user?.points ?? 0;
+  const level    = getLevel(xp);
+  const xpInLevel = xp % XP_PER_LEVEL;
+  const initial  = user?.username?.charAt(0)?.toUpperCase() || "?";
+  const filled   = RING_CIRC * getLevelProgress(xp);
+  const empty    = RING_CIRC - filled;
 
   return (
     <ScrollView
@@ -98,7 +118,6 @@ const MyAccount: React.FC = () => {
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.amber} />}
     >
-      {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <Text style={styles.pageTitle}>Profil</Text>
         <Pressable onPress={() => router.push("./userSettings")} style={styles.settingsBtn}>
@@ -106,82 +125,66 @@ const MyAccount: React.FC = () => {
         </Pressable>
       </View>
 
-      {/* ── Avatar hero ── */}
       {user ? (
         <>
           <View style={styles.avatarSection}>
-            <Pressable onPress={() => setModalVisible(true)} style={styles.avatarWrap}>
-              {user.photoPath ? (
-                <Image source={{ uri: user.photoPath }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarInitial}>{initial}</Text>
+            <View style={styles.ringWrap}>
+              <Svg
+                width={RING_SIZE}
+                height={RING_SIZE}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              >
+                <Circle
+                  cx={RING_CENTER} cy={RING_CENTER} r={RING_R}
+                  stroke={C.surface} strokeWidth={RING_STROKE} fill="none"
+                />
+                <Circle
+                  cx={RING_CENTER} cy={RING_CENTER} r={RING_R}
+                  stroke={C.gold} strokeWidth={RING_STROKE} fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${filled} ${empty}`}
+                  transform={`rotate(-90 ${RING_CENTER} ${RING_CENTER})`}
+                />
+              </Svg>
+
+              <Pressable onPress={() => setModalVisible(true)} style={styles.avatarWrap}>
+                {user.photoPath ? (
+                  <Image source={{ uri: user.photoPath }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarInitial}>{initial}</Text>
+                  </View>
+                )}
+                <View style={styles.cameraBtn}>
+                  <MaterialCommunityIcons name="camera" size={14} color={C.bg} />
                 </View>
-              )}
-              <View style={styles.cameraBtn}>
-                <MaterialCommunityIcons name="camera" size={14} color={C.bg} />
-              </View>
-            </Pressable>
+              </Pressable>
+            </View>
 
             <Text style={styles.username}>{user.username}</Text>
-            <View style={styles.xpBadge}>
-              <MaterialCommunityIcons name="star-four-points" size={12} color={C.gold} />
-              <Text style={styles.xpBadgeText}>{user.points ?? 0} XP</Text>
+
+            <View style={styles.levelBadge}>
+              <MaterialCommunityIcons name="shield-star" size={14} color={C.gold} />
+              <Text style={styles.levelText}>Poziom {level}</Text>
+              <Text style={styles.levelXp}>· {xpInLevel}/{XP_PER_LEVEL} XP</Text>
             </View>
           </View>
 
-          {/* ── Bare stats ── */}
           <View style={styles.statsRow}>
             <View style={styles.stat}>
-              <Text style={[styles.statNum, { color: C.gold }]}>{user.points ?? 0}</Text>
+              <Text style={[styles.statNum, { color: C.gold }]}>{xp}</Text>
               <Text style={styles.statLabel}>XP</Text>
             </View>
             <View style={styles.statSep} />
             <View style={styles.stat}>
-              <Text style={[styles.statNum, { color: C.teal }]}>0</Text>
+              <Text style={[styles.statNum, { color: C.teal }]}>{lessonsCount}</Text>
               <Text style={styles.statLabel}>LEKCJI</Text>
             </View>
-            <View style={styles.statSep} />
-            <View style={styles.stat}>
-              <Text style={[styles.statNum, { color: C.coral }]}>0</Text>
-              <Text style={styles.statLabel}>STREAK</Text>
-            </View>
           </View>
 
-          {/* ── Weekly progress — no card, just chart ── */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Aktywność tygodniowa</Text>
-            <View style={styles.chart}>
-              {weeklyProgress.map((value, i) => {
-                const h = Math.max(12, (value / maxProgress) * 88);
-                const days = ["P", "W", "Ś", "C", "P", "S", "N"];
-                const isToday = i === new Date().getDay() - 1;
-                return (
-                  <View key={i} style={styles.chartCol}>
-                    <View
-                      style={[
-                        styles.bar,
-                        {
-                          height: h,
-                          backgroundColor: isToday ? C.amber : C.surface,
-                          borderWidth: isToday ? 0 : 1,
-                          borderColor: C.border,
-                        },
-                      ]}
-                    />
-                    <Text style={[styles.dayLabel, isToday && { color: C.amber }]}>
-                      {days[i]}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* ── Hairline divider ── */}
           <View style={styles.hairline} />
 
-          {/* ── About me — no card wrapper ── */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>O mnie</Text>
             {isEditing ? (
@@ -239,7 +242,6 @@ const MyAccount: React.FC = () => {
         </View>
       )}
 
-      {/* ── Photo modal ── */}
       <Modal visible={modalVisible && !!user?.photoPath} transparent animationType="fade">
         <Pressable style={styles.modalBackdrop} onPress={() => setModalVisible(false)}>
           {user?.photoPath && (
@@ -259,285 +261,112 @@ const MyAccount: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: C.bg,
-  },
-  content: {
-    paddingHorizontal: 24,
-    gap: 28,
-  },
+  screen: { flex: 1, backgroundColor: C.bg },
+  content: { paddingHorizontal: 24, gap: 28 },
 
-  // top bar
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  pageTitle: {
-    fontFamily: T.family.black,
-    fontWeight: "900",
-    fontSize: 32,
-    color: C.text,
-    letterSpacing: -1,
-  },
-  settingsBtn: {
-    padding: 4,
-  },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  pageTitle: { fontFamily: T.family.black, fontSize: 32, color: C.text, letterSpacing: -1 },
+  settingsBtn: { padding: 4 },
 
-  // avatar hero
-  avatarSection: {
+  avatarSection: { alignItems: "center", gap: 12 },
+  ringWrap: {
+    width: RING_SIZE,
+    height: RING_SIZE,
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
   },
-  avatarWrap: {
-    position: "relative",
-  },
+  avatarWrap: { position: "relative" },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 2,
-    borderColor: C.border,
+    width: 96, height: 96, borderRadius: 48,
+    borderWidth: 2, borderColor: C.border,
   },
   avatarPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: C.surface,
-    borderWidth: 2,
-    borderColor: C.border,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: C.surface, borderWidth: 2, borderColor: C.border,
+    alignItems: "center", justifyContent: "center",
   },
-  avatarInitial: {
-    fontFamily: T.family.black,
-    fontWeight: "900",
-    fontSize: 38,
-    color: C.purple,
-  },
+  avatarInitial: { fontFamily: T.family.black, fontSize: 38, color: C.purple },
   cameraBtn: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: C.amber,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: C.bg,
-  },
-  username: {
-    fontFamily: T.family.extraBold,
-    fontWeight: T.weight.extraBold,
-    fontSize: 22,
-    color: C.text,
-    letterSpacing: -0.4,
-  },
-  xpBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: R.full,
-    backgroundColor: C.surface,
-    borderWidth: 1.5,
-    borderColor: C.border,
-  },
-  xpBadgeText: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 13,
-    color: C.gold,
-    fontVariant: ["tabular-nums"] as any,
+    position: "absolute", bottom: 0, right: 0,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: C.amber, alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: C.bg,
   },
 
-  // bare stat numbers
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  username: {
+    fontFamily: T.family.extraBold, fontSize: 22,
+    color: C.text, letterSpacing: -0.4,
   },
-  stat: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
+  levelBadge: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: R.full, backgroundColor: C.surface,
+    borderWidth: 1.5, borderColor: C.border,
   },
+  levelText: {
+    fontFamily: T.family.bold, fontSize: 13, color: C.gold,
+  },
+  levelXp: {
+    fontFamily: T.family.medium, fontSize: 12, color: C.textDim,
+    fontVariant: ["tabular-nums"] as const,
+  },
+
+  statsRow: { flexDirection: "row", alignItems: "center" },
+  stat: { flex: 1, alignItems: "center", gap: 4 },
   statNum: {
-    fontFamily: T.family.black,
-    fontWeight: "900",
-    fontSize: 40,
-    fontVariant: ["tabular-nums"] as any,
-    letterSpacing: -1,
-    lineHeight: 44,
+    fontFamily: T.family.black, fontSize: 40,
+    fontVariant: ["tabular-nums"] as const, letterSpacing: -1, lineHeight: 44,
   },
   statLabel: {
-    fontFamily: T.family.black,
-    fontWeight: "900",
-    fontSize: 10,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    color: C.textDim,
+    fontFamily: T.family.black, fontSize: 10,
+    letterSpacing: 1.5, textTransform: "uppercase", color: C.textDim,
   },
-  statSep: {
-    width: 1,
-    height: 40,
-    backgroundColor: C.border,
-  },
+  statSep: { width: 1, height: 40, backgroundColor: C.border },
 
-  // chart
-  section: {
-    gap: 16,
-  },
+  hairline: { height: 1, backgroundColor: C.border, marginHorizontal: -24 },
+
+  section: { gap: 16 },
   sectionLabel: {
-    fontFamily: T.family.black,
-    fontWeight: "900",
-    fontSize: 11,
-    letterSpacing: 1.5,
-    textTransform: "uppercase",
-    color: C.textDim,
-  },
-  chart: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    height: 100,
-  },
-  chartCol: {
-    flex: 1,
-    alignItems: "center",
-    gap: 6,
-    justifyContent: "flex-end",
-  },
-  bar: {
-    width: 14,
-    borderRadius: 6,
-  },
-  dayLabel: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 11,
-    color: C.textDim,
+    fontFamily: T.family.black, fontSize: 11,
+    letterSpacing: 1.5, textTransform: "uppercase", color: C.textDim,
   },
 
-  // hairline
-  hairline: {
-    height: 1,
-    backgroundColor: C.border,
-    marginHorizontal: -24,
-  },
+  aboutText: { fontFamily: T.family.medium, fontSize: 15, color: C.textDim, lineHeight: 23 },
+  editLink: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" },
+  editLinkText: { fontFamily: T.family.bold, fontSize: 14, color: C.amber },
 
-  // about me
-  aboutText: {
-    fontFamily: T.family.medium,
-    fontSize: 15,
-    color: C.textDim,
-    lineHeight: 23,
-  },
-  editLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-  },
-  editLinkText: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 14,
-    color: C.amber,
-  },
-
-  // edit form
   inputLabel: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 12,
-    letterSpacing: 0.5,
-    color: C.textDim,
-    textTransform: "uppercase",
-    marginBottom: -8,
+    fontFamily: T.family.bold, fontSize: 12, letterSpacing: 0.5,
+    color: C.textDim, textTransform: "uppercase", marginBottom: -8,
   },
   input: {
-    backgroundColor: C.surface,
-    borderWidth: 1.5,
-    borderColor: C.border,
-    borderRadius: R.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontFamily: T.family.medium,
-    fontSize: 15,
-    color: C.text,
+    backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border,
+    borderRadius: R.md, paddingHorizontal: 14, paddingVertical: 12,
+    fontFamily: T.family.medium, fontSize: 15, color: C.text,
   },
-  inputMultiline: {
-    minHeight: 90,
-    textAlignVertical: "top",
-  },
+  inputMultiline: { minHeight: 90, textAlignVertical: "top" },
   charCount: {
-    fontFamily: T.family.medium,
-    fontSize: 12,
-    color: C.textFaint,
-    alignSelf: "flex-end",
-    marginTop: -20,
+    fontFamily: T.family.medium, fontSize: 12, color: C.textFaint,
+    alignSelf: "flex-end", marginTop: -20,
   },
-  actionsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 4,
-  },
+  actionsRow: { flexDirection: "row", gap: 10, marginTop: 4 },
   btnPrimary: {
-    flex: 1,
-    backgroundColor: C.amber,
-    borderRadius: R.full,
-    paddingVertical: 13,
-    alignItems: "center",
-    borderBottomWidth: 3,
-    borderBottomColor: C.amberDark,
+    flex: 1, backgroundColor: C.amber, borderRadius: R.full,
+    paddingVertical: 13, alignItems: "center",
+    borderBottomWidth: 3, borderBottomColor: C.amberDark,
   },
-  btnPrimaryText: {
-    fontFamily: T.family.extraBold,
-    fontWeight: T.weight.extraBold,
-    fontSize: 15,
-    color: "#241608",
-  },
+  btnPrimaryText: { fontFamily: T.family.extraBold, fontSize: 15, color: "#241608" },
   btnSecondary: {
-    flex: 1,
-    borderRadius: R.full,
-    paddingVertical: 13,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: C.border,
+    flex: 1, borderRadius: R.full, paddingVertical: 13, alignItems: "center",
+    borderWidth: 1.5, borderColor: C.border,
   },
-  btnSecondaryText: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 15,
-    color: C.textDim,
-  },
+  btnSecondaryText: { fontFamily: T.family.bold, fontSize: 15, color: C.textDim },
 
-  loadingWrap: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: 80,
-  },
-  loadingText: {
-    fontFamily: T.family.medium,
-    fontSize: 15,
-    color: C.textDim,
-  },
+  loadingWrap: { flex: 1, alignItems: "center", paddingTop: 80 },
+  loadingText: { fontFamily: T.family.medium, fontSize: 15, color: C.textDim },
 
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.88)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullImg: {
-    width: "85%",
-    height: "50%",
-    borderRadius: 16,
-  },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.88)", justifyContent: "center", alignItems: "center" },
+  fullImg: { width: "85%", height: "50%", borderRadius: 16 },
 });
 
 export default MyAccount;

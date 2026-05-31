@@ -414,7 +414,7 @@ const ExplorePreferences: React.FC = () => {
               ? "Szukam dopasowań…"
               : matchCount === 0
               ? "Brak dopasowań"
-              : `Pokaż ${matchCount} dopasowań ➜`}
+              : `Pokaż ${matchCount} dopasowań`}
           </Text>
         </Pressable>
       </ScrollView>

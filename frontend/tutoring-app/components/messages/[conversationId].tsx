@@ -425,7 +425,7 @@ const ChatScreen: React.FC = () => {
                 {status === "ACCEPTED" && offer && (
                   <View style={{ marginTop: 10, gap: 6 }}>
                     {offer.completed ? (
-                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia rozliczone • +10 XP, +1 🔥</Text>
+                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia rozliczone • +10 XP, +1 lekcji</Text>
                     ) : !sessionEnded ? (
                       <Text style={[styles.statusLine, { color: "#5ED674" }]}>
                         Zaakceptowano • płatność potwierdzisz po zakończeniu zajęć
@@ -434,11 +434,11 @@ const ChatScreen: React.FC = () => {
                       <>
                         <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia zakończone — potwierdź płatność</Text>
                         <Text style={styles.paymentStatusText}>
-                          Ty: {myConfirmed ? "✅ potwierdzono" : "⏳ oczekuje"}   •   Druga strona: {otherConfirmed ? "✅" : "⏳"}
+                          Ty: {myConfirmed ? "potwierdzono" : "oczekuje"}   •   Druga strona: {otherConfirmed ? "potwierdzono" : "oczekuje"}
                         </Text>
                         {!myConfirmed && (
                           <Pressable style={styles.paymentButton} onPress={() => handleConfirmPayment(String(offer.id))}>
-                            <Text style={styles.paymentButtonText}>Płatność wykonana ✓</Text>
+                            <Text style={styles.paymentButtonText}>Płatność wykonana</Text>
                           </Pressable>
                         )}
                       </>
@@ -502,7 +502,7 @@ const ChatScreen: React.FC = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Wybierz lekcję</Text>
               <Pressable onPress={() => setShowLessonModal(false)} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
+                <MaterialCommunityIcons name="close" size={18} color={C.textDim} />
               </Pressable>
             </View>
 

@@ -144,18 +144,18 @@ export default function MyBookingsScreen() {
 
         {phase === "toSettle" && (
           <Text style={styles.payInfo}>
-            Ty: {item.studentConfirmedPayment ? "✅" : "⏳"}   •   Korepetytor: {item.tutorConfirmedPayment ? "✅" : "⏳"}
+            Ty: {item.studentConfirmedPayment ? "potwierdzono" : "oczekuje"}   •   Korepetytor: {item.tutorConfirmedPayment ? "potwierdzono" : "oczekuje"}
           </Text>
         )}
 
         {canConfirm && (
           <Pressable style={styles.payBtn} onPress={() => handleConfirm(item.id)}>
-            <Text style={styles.payBtnText}>Płatność wykonana ✓</Text>
+            <Text style={styles.payBtnText}>Płatność wykonana</Text>
           </Pressable>
         )}
 
         {phase === "settled" && (
-          <Text style={styles.settledText}>+10 XP • +1 🔥</Text>
+          <Text style={styles.settledText}>+10 XP • +1 lekcji</Text>
         )}
       </View>
     );

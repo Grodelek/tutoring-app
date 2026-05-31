@@ -10,8 +10,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { C, T, R } from "@/constants/theme";
-import { Wispa } from "@/components/ui/Wispa";
-
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
 
 const FEATURES: { icon: IconName; color: string; title: string; desc: string }[] = [
@@ -64,7 +62,6 @@ export default function ExploreScreen() {
         {/* ── Hero ── */}
         <View style={styles.hero}>
           <View style={styles.glow} />
-          <Wispa size={148} floating />
           <Text style={styles.heroTitle}>
             Witaj w{" "}
             <Text style={styles.heroAccent}>Skill Swap</Text>!

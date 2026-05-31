@@ -10,7 +10,8 @@ type Params = {
   returnParams?: string;
 };
 
-const HOUR_SLOTS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const HOUR_SLOTS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
+const MINUTE_STEP = 5;
 
 const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
@@ -39,14 +40,15 @@ export default function CalendarScreen() {
 
   const [selectedDayOffset, setSelectedDayOffset] = useState<number>(0);
   const [hour, setHour] = useState<number | null>(null);
+  const [minute, setMinute] = useState<number>(0);
 
   const selectedDate = useMemo(() => {
     if (hour == null) return null;
     const d = new Date(initialDay);
     d.setDate(d.getDate() + selectedDayOffset);
-    d.setHours(hour, 0, 0, 0);
+    d.setHours(hour, minute, 0, 0);
     return d;
-  }, [hour, initialDay, selectedDayOffset]);
+  }, [hour, minute, initialDay, selectedDayOffset]);
 
   const dayLabel = useMemo(() => {
     const d = new Date(initialDay);
@@ -59,12 +61,20 @@ export default function CalendarScreen() {
     });
   }, [initialDay, selectedDayOffset]);
 
-  // A slot is unavailable if it's in the past (only matters for today).
-  const isSlotDisabled = (h: number) => {
+  const isHourDisabled = (h: number) => {
     const d = new Date(initialDay);
     d.setDate(d.getDate() + selectedDayOffset);
-    d.setHours(h, 0, 0, 0);
+    d.setHours(h, 59, 0, 0);
     return d.getTime() < Date.now() + 5 * 60 * 1000;
+  };
+
+  const handleHourPress = (h: number) => {
+    setHour(h);
+    setMinute(0);
+  };
+
+  const adjustMinute = (delta: number) => {
+    setMinute((m) => Math.min(55, Math.max(0, m + delta)));
   };
 
   const confirm = () => {
@@ -99,7 +109,6 @@ export default function CalendarScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        {/* Day picker */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Data</Text>
           <View style={styles.row}>
@@ -119,23 +128,18 @@ export default function CalendarScreen() {
           </View>
         </View>
 
-        {/* Hour slots */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dostępna godzina</Text>
+          <Text style={styles.sectionTitle}>Godzina</Text>
           <View style={styles.slotsWrap}>
             {HOUR_SLOTS.map((h) => {
-              const disabled = isSlotDisabled(h);
+              const disabled = isHourDisabled(h);
               const active = hour === h;
               return (
                 <TouchableOpacity
                   key={h}
                   disabled={disabled}
-                  onPress={() => setHour(h)}
-                  style={[
-                    styles.slot,
-                    active && styles.slotActive,
-                    disabled && styles.slotDisabled,
-                  ]}
+                  onPress={() => handleHourPress(h)}
+                  style={[styles.slot, active && styles.slotActive, disabled && styles.slotDisabled]}
                 >
                   <Text style={[styles.slotText, active && styles.slotTextActive, disabled && styles.slotTextDisabled]}>
                     {pad2(h)}:00
@@ -146,7 +150,33 @@ export default function CalendarScreen() {
           </View>
         </View>
 
-        {/* Selection summary */}
+        {hour != null && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Minuta</Text>
+            <View style={styles.stepperRow}>
+              <TouchableOpacity
+                style={[styles.stepBtn, minute === 0 && styles.btnDisabled]}
+                disabled={minute === 0}
+                onPress={() => adjustMinute(-MINUTE_STEP)}
+              >
+                <MaterialCommunityIcons name="minus" size={20} color={C.text} />
+              </TouchableOpacity>
+              <View style={styles.timeDisplay}>
+                <Text style={styles.timeText}>
+                  {pad2(hour)}:{pad2(minute)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.stepBtn, minute === 55 && styles.btnDisabled]}
+                disabled={minute === 55}
+                onPress={() => adjustMinute(MINUTE_STEP)}
+              >
+                <MaterialCommunityIcons name="plus" size={20} color={C.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Wybrany termin</Text>
           <Text style={styles.selectedText}>
@@ -193,6 +223,11 @@ const styles = StyleSheet.create({
   slotText: { color: C.text, fontFamily: T.family.bold, fontSize: T.size.body },
   slotTextActive: { color: "#fff" },
   slotTextDisabled: { color: C.textFaint },
+
+  stepperRow: { flexDirection: "row", alignItems: "center", gap: S.md },
+  stepBtn: { backgroundColor: C.surfaceUp, padding: 12, borderRadius: R.md, borderWidth: 1, borderColor: C.border },
+  timeDisplay: { flex: 1, alignItems: "center", paddingVertical: 12, backgroundColor: C.bgDeep, borderRadius: R.md },
+  timeText: { color: C.teal, fontFamily: T.family.extraBold, fontSize: T.size.h3, letterSpacing: T.tracking.h3 },
 
   selectedText: { color: C.text, fontFamily: T.family.bold, fontSize: T.size.bodyLg },
 
