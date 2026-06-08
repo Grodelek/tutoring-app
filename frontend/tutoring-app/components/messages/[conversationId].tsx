@@ -19,6 +19,7 @@ import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
 import { fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
 import { sendOffer, acceptOffer, declineOffer, confirmPayment } from "@/api/offerApi";
+import { C } from "@/constants/theme";
 import styles from "./styles/styles";
 
 interface Message {
