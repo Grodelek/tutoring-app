@@ -21,9 +21,7 @@ export const useWebSocketMessages = (conversationId: string | string[], onMessag
         console.error('WebSocket error', frame);
       },
     });
-
     client.activate();
-
     return () => {
       client.deactivate();
     };

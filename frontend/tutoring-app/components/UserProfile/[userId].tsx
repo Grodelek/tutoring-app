@@ -10,9 +10,8 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
-import { BASE_URL } from "@/config/baseUrl";
+import { fetchUserById } from "@/api/userApi";
 const UserProfile: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState("");
@@ -35,29 +34,11 @@ const UserProfile: React.FC = () => {
 
   const fetchUser = async (id: string) => {
     try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        return;
-      }
-      const response = await fetch(`${BASE_URL}/api/users/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Fetched user data:", data);
-        setUser(data);
-        setUsername(data.username);
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Failed to fetch user: ${errorText}`);
-      }
+      const data = await fetchUserById(id);
+      setUser(data);
+      setUsername(data.username);
     } catch (error: any) {
-      Alert.alert("Error", `Connection error: ${error.message}`);
+      Alert.alert("Error", `Failed to fetch user: ${error.message}`);
     }
   };
 

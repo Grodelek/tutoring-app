@@ -7,6 +7,7 @@ import {
   DarkTheme,
   DefaultTheme,
 } from "@react-navigation/native";
+import React from "react";
 
 export default function AuthLayout() {
   const { token, isLoading } = useAuth();
@@ -29,6 +30,7 @@ export default function AuthLayout() {
           <Stack.Screen name="(tabs)" />
         )}
         <Stack.Screen name="registerForm" />
+        <Stack.Screen name="AfterLoginPopUp/moreInfoAboutTutor" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

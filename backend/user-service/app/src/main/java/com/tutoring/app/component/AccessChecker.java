@@ -1,8 +1,8 @@
 package com.tutoring.app.component;
 
-import com.tutoring.app.domain.User;
-import com.tutoring.app.domain.UserPrincipal;
-import com.tutoring.app.repository.UserRepository;
+import com.tutoring.app.user.User;
+import com.tutoring.app.user.UserPrincipal;
+import com.tutoring.app.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;

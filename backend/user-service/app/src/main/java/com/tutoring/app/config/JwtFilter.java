@@ -11,8 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import com.tutoring.app.service.JWTService;
-import com.tutoring.app.service.MyUserDetailsService;
+import com.tutoring.app.user.JWTService;
+import com.tutoring.app.user.MyUserDetailsService;
 
 import java.io.IOException;
 

@@ -1,6 +1,6 @@
-import { BASE_URL } from "../config/baseUrl";
+import {BASE_URL} from "@/config/baseUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert } from "react-native";
+import {Alert} from "react-native";
 
 export interface LoginResponse {
   token: string;
@@ -120,8 +120,7 @@ export const postRegister = async (data: AuthDataRegister): Promise<User> => {
     throw new Error(errorText);
   }
 
-  const user: User = await response.json();
-  return user;
+  return await response.json();
 };
 
 export const getMyAccount = async (): Promise<UserResponseDTO> => {
@@ -196,6 +195,40 @@ export const fetchUserById = async (id: any) => {
         throw new Error("Login failed");
     }
     return response.json();
+};
+
+export const updateUser = async (
+  id: string,
+  data: { username: string; description: string },
+  token: string,
+): Promise<void> => {
+  const response = await fetch(`${BASE_URL}/api/users/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText);
+  }
+};
+
+export const reLogin = async (
+  username: string,
+  password: string,
+): Promise<LoginResponse> => {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) {
+    throw new Error("Re-login failed");
+  }
+  return response.json();
 };
 
 export const addMoreInfo = async (

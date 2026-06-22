@@ -1,7 +1,7 @@
 import React from "react";
 import { Alert, GestureResponderEvent } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BASE_URL } from "@/config/baseUrl";
+import { updateUser, reLogin } from "@/api/userApi";
 
 type Props = {
   user: any;
@@ -27,41 +27,15 @@ const useUpdateUserProfile = ({
       const token = await AsyncStorage.getItem("jwtToken");
       if (!token || !user) return;
 
-      const response = await fetch(
-      `${BASE_URL}/api/users/${user.id}`,
-      {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ username, description }),
-        },
-      );
+      await updateUser(user.id, { username, description }, token);
+      Alert.alert("Success", "User profile updated.");
 
-      if (response.ok) {
-        Alert.alert("Success", "User profile updated.");
-        const loginResponse = await fetch(
-          `${BASE_URL}/api/auth/login`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password }),
-          },
-        );
-
-        if (loginResponse.ok) {
-          const data = await loginResponse.json();
-          await AsyncStorage.setItem("jwtToken", data.token);
-          setIsEditing(false);
-          fetchUser();
-        }
-      } else {
-        const errorText = await response.text();
-        Alert.alert("Error", `Could not update: ${errorText}`);
-      }
+      const data = await reLogin(username, password);
+      await AsyncStorage.setItem("jwtToken", data.token);
+      setIsEditing(false);
+      fetchUser();
     } catch (error: any) {
-      Alert.alert("Error", `Connection issue: ${error.message}`);
+      Alert.alert("Error", `Could not update: ${error.message}`);
     }
   };
 

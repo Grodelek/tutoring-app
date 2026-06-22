@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ import { addFavoriteTutor } from "@/api/favoriteApi";
 import { sendMessageToTutor } from "@/api/lessonApi";
 import SwipeCards from "@components/ui/SwipeCards";
 import { Chip } from "@/components/ui/Chip";
+import { MatchingAnimation } from "@/components/ui/MatchingAnimation";
 import { C, T, R } from "@/constants/theme";
 
 
@@ -82,7 +84,6 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
         <CardHeader initial={initial} match={match} rating={card.rating} />
 
         <View style={styles.cardBody}>
-          {/* Name + price row */}
           <View style={styles.bodyTop}>
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={styles.tutorName} numberOfLines={1}>
@@ -101,7 +102,6 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
             </View>
           </View>
 
-          {/* Chips */}
           <View style={styles.chipsRow}>
             <Chip label={chipStyle} color={C.amber} active />
             {avail && <Chip label={avail} color={C.amber} />}
@@ -131,23 +131,43 @@ const ExploreTutors: React.FC = () => {
     try { return JSON.parse(raw); } catch { return null; }
   }, [params.filters]);
 
-  const hasFilters = rawFilters !== null;
+  const [savedFilters, setSavedFilters] = useState<any>(null);
+  const [prefsLoaded,  setPrefsLoaded]  = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem("tutorPreferences").then(raw => {
+      if (raw) { try { setSavedFilters(JSON.parse(raw)); } catch {} }
+      setPrefsLoaded(true);
+    });
+  }, []);
+
+  const activeFilters = rawFilters ?? savedFilters;
+  const hasFilters    = prefsLoaded && activeFilters !== null;
 
   const [cards, setCards]           = useState<TutorCard[]>([]);
   const [loading, setLoading]       = useState(false);
   const [seen, setSeen]             = useState(0);
   const [allExhausted, setAllExhausted] = useState(false);
+  const [showMatchAnim, setShowMatchAnim] = useState(false);
+  const [studentInitial, setStudentInitial] = useState("S");
+  const matchDataRef = useRef<{ tutorName: string; tutorInitial: string; conversationId?: string; receiverId: string } | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem("savedEmail").then(email => {
+      if (email) setStudentInitial(email.charAt(0).toUpperCase());
+    });
+  }, []);
 
   const shownIdsRef  = useRef(new Set<string>());
   const fetchingRef  = useRef(false);
   const currentCard  = cards[0];
 
   const fetchBatch = useCallback(async (isInitial: boolean) => {
-    if (fetchingRef.current || !rawFilters) return;
+    if (fetchingRef.current || !activeFilters) return;
     fetchingRef.current = true;
     if (isInitial) setLoading(true);
     try {
-      const results = await fetchTutors(rawFilters);
+      const results = await fetchTutors(activeFilters);
       const fresh = (results ?? []).filter(c => !shownIdsRef.current.has(c.tutorId));
       if (fresh.length === 0) {
         if (!isInitial) setAllExhausted(true);
@@ -165,7 +185,7 @@ const ExploreTutors: React.FC = () => {
       fetchingRef.current = false;
       if (isInitial) setLoading(false);
     }
-  }, [rawFilters]);
+  }, [activeFilters]);
 
   useEffect(() => {
     if (!hasFilters) return;
@@ -194,17 +214,46 @@ const ExploreTutors: React.FC = () => {
     if (!card) return;
     try {
       await addFavoriteTutor(card.tutorId);
-      await sendMessageToTutor(card.tutorId);
+      const conversation = await sendMessageToTutor(card.tutorId);
+      const conversationId = conversation?.conversationId ?? conversation?.id;
+      matchDataRef.current = {
+        tutorName: card.tutorUsername ?? "",
+        tutorInitial: (card.tutorUsername ?? "T").charAt(0),
+        conversationId: conversationId ? String(conversationId) : undefined,
+        receiverId: card.tutorId,
+      };
       setCards(p => p.slice(1));
       setSeen(n => n + 1);
+      setShowMatchAnim(true);
     } catch (e: any) {
       Alert.alert("Błąd", e.message || "Nie udało się połączyć");
       setCards(p => p.slice(1));
     }
-  }, [currentCard, router]);
+  }, [currentCard]);
+
+  const handleMatchAnimComplete = () => {
+    setShowMatchAnim(false);
+    const data = matchDataRef.current;
+    router.push({
+      pathname: "/(auth)/matchCelebration" as any,
+      params: {
+        conversationId: data?.conversationId ?? "",
+        receiverId: data?.receiverId ?? "",
+        tutorName: data?.tutorName ?? "",
+      },
+    });
+  };
 
   const total   = cards.length + seen;
   const current = seen + 1;
+
+  if (!prefsLoaded) {
+    return (
+      <View style={[styles.screen, { paddingTop: insets.top, alignItems: "center", justifyContent: "center" }]}>
+        <ActivityIndicator color={C.amber} size="large" />
+      </View>
+    );
+  }
 
   if (!hasFilters) {
     return (
@@ -301,6 +350,13 @@ const ExploreTutors: React.FC = () => {
           </Pressable>
         </View>
       )}
+
+      <MatchingAnimation
+        visible={showMatchAnim}
+        student={{ initial: studentInitial, color: C.purple }}
+        tutor={{ initial: matchDataRef.current?.tutorInitial ?? "T", color: C.teal }}
+        onComplete={handleMatchAnimComplete}
+      />
     </View>
   );
 };
@@ -328,7 +384,7 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontFamily: T.family.medium,
-    fontWeight: "600",
+    fontWeight: T.weight.medium,
     fontSize: 12,
     color: C.textDim,
     marginTop: 2,
@@ -358,7 +414,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // full-screen no-filters state
   emptyFullScreen: {
     flex: 1,
     alignItems: "center",
@@ -452,7 +507,6 @@ const styles = StyleSheet.create({
   },
   pillTL: { top: 12, left: 12 },
   pillTR: { top: 12, right: 12 },
-  pillBL: { bottom: 12, left: 12 },
   matchText: {
     fontFamily: T.family.extraBold,
     fontWeight: T.weight.extraBold,
@@ -492,7 +546,7 @@ const styles = StyleSheet.create({
   },
   tutorSub: {
     fontFamily: T.family.medium,
-    fontWeight: "600",
+    fontWeight: T.weight.medium,
     fontSize: 13,
     color: C.textDim,
     marginTop: 2,

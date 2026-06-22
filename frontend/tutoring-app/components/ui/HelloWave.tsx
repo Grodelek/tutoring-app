@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet } from 'react-native';
-
-import { ThemedText } from '@components/ui/ThemedText';
+import { Animated, StyleSheet, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export function HelloWave() {
   const rotationAnimation = useRef(new Animated.Value(0)).current;
@@ -11,25 +10,14 @@ export function HelloWave() {
 
     const animation = Animated.loop(
       Animated.sequence([
-        Animated.timing(rotationAnimation, {
-          toValue: 25,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotationAnimation, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
+        Animated.timing(rotationAnimation, { toValue: 25, duration: 150, useNativeDriver: true }),
+        Animated.timing(rotationAnimation, { toValue: 0,  duration: 150, useNativeDriver: true }),
       ]),
       { iterations: 4 }
     );
 
     animation.start();
-
-    return () => {
-      animation.stop();
-    };
+    return () => animation.stop();
   }, [rotationAnimation]);
 
   const rotate = rotationAnimation.interpolate({
@@ -39,7 +27,9 @@ export function HelloWave() {
 
   return (
     <Animated.View style={[styles.wave, { transform: [{ rotate }] }]}>
-      <ThemedText style={styles.text}>👋</ThemedText>
+      <View style={styles.icon}>
+        <MaterialCommunityIcons name="hand-wave" size={28} color="#fff" />
+      </View>
     </Animated.View>
   );
 }
@@ -48,9 +38,7 @@ const styles = StyleSheet.create({
   wave: {
     display: 'flex',
   },
-  text: {
-    fontSize: 28,
-    lineHeight: 32,
+  icon: {
     marginTop: -6,
   },
 });
