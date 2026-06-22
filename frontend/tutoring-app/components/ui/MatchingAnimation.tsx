@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, Modal, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, Image, Modal, StyleSheet, Text, View } from "react-native";
 import { C, T } from "@/constants/theme";
 
 interface AvatarConfig {
   initial: string;
   color: string;
+  photoUri?: string | null;
 }
 
 interface Props {
@@ -103,13 +104,17 @@ export function MatchingAnimation({ visible, student, tutor, onComplete }: Props
 
           <Animated.View style={[styles.orb, { transform: [{ translateX: leftX }] }]}>
             <View style={[styles.orbInner, { backgroundColor: student.color }]}>
-              <Text style={styles.orbInitial}>{student.initial.toUpperCase()}</Text>
+              {student.photoUri
+                ? <Image source={{ uri: student.photoUri }} style={styles.orbPhoto} />
+                : <Text style={styles.orbInitial}>{student.initial.toUpperCase()}</Text>}
             </View>
           </Animated.View>
 
           <Animated.View style={[styles.orb, { transform: [{ translateX: rightX }] }]}>
             <View style={[styles.orbInner, { backgroundColor: tutor.color }]}>
-              <Text style={styles.orbInitial}>{tutor.initial.toUpperCase()}</Text>
+              {tutor.photoUri
+                ? <Image source={{ uri: tutor.photoUri }} style={styles.orbPhoto} />
+                : <Text style={styles.orbInitial}>{tutor.initial.toUpperCase()}</Text>}
             </View>
           </Animated.View>
         </View>
@@ -170,6 +175,12 @@ const styles = StyleSheet.create({
     fontFamily: T.family.black,
     fontSize: 26,
     color: "#fff",
+  },
+  orbPhoto: {
+    width: ORB,
+    height: ORB,
+    borderRadius: ORB / 2,
+    resizeMode: "cover",
   },
   label: {
     fontFamily: T.family.extraBold,

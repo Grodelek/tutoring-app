@@ -129,18 +129,25 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  const [isSending, setIsSending] = useState(false);
+
   const sendMessage = async () => {
-    if (!newMessage.trim() || !userId || !conversationId) return;
+    if (!newMessage.trim() || !userId || !conversationId || isSending) return;
+    const content = newMessage.trim();
+    setNewMessage("");
+    setIsSending(true);
     try {
       const message = await sendMessageApi({
         senderId: userId,
         receiverId: receiverId?.toString() ?? "",
-        content: newMessage.trim(),
+        content,
       });
       setMessages((prev) => [...prev, message]);
-      setNewMessage("");
     } catch {
+      setNewMessage(content);
       Alert.alert("Błąd", "Nie udało się wysłać wiadomości");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -457,7 +464,11 @@ const ChatScreen: React.FC = () => {
           onFocus={(e) => { if (RNPlatform.OS === "web") e.currentTarget?.focus(); }}
         />
         <View style={styles.actionsRow}>
-          <Pressable onPress={sendMessage} style={styles.sendButton}>
+          <Pressable
+            onPress={sendMessage}
+            disabled={isSending}
+            style={[styles.sendButton, isSending && { opacity: 0.45 }]}
+          >
             <MaterialCommunityIcons name="send" size={20} color="#241608" />
           </Pressable>
         </View>

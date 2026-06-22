@@ -40,7 +40,7 @@ const MoreInfoAboutTutor: React.FC = () => {
             await AsyncStorage.setItem("hasCompletedTutorProfile", "true");
             const savedToken = await AsyncStorage.getItem("jwtToken");
             setToken(savedToken);
-            router.replace("/(auth)/exploreTutors");
+            router.replace("/(auth)/(tabs)/exploreTutors");
         } catch (error) {
             console.log("Error while saving tutor info", error);
             showAlert("Error while saving tutor info");

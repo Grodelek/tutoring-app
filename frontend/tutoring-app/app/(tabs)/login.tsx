@@ -85,7 +85,7 @@ const LoginForm: React.FC = () => {
 
             } else {
                 setToken(token);
-                router.replace("/(auth)/myAccount");
+                router.replace("/(auth)/(tabs)/myAccount");
             }
         } catch (error: any) {
             Alert.alert("Błąd", `Problem z połączeniem: ${error?.message ?? "Nieznany błąd"}`);
