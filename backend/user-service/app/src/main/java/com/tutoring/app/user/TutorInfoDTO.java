@@ -2,7 +2,8 @@ package com.tutoring.app.user;
 
 import lombok.*;
 
-@Getter @Setter
+@Getter
+@Setter
 public class TutorInfoDTO {
     Availability availability;
     ExperienceTime experienceTime;

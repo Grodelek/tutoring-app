@@ -4,7 +4,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter @Setter
+@Getter
+@Setter
 public class TutorOfferDTO {
     private UUID lessonId;
     private UUID receiverId;

@@ -14,7 +14,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Slf4j @Service
+@Slf4j
+@Service
 public class LessonService {
   private final LessonRepository lessonRepository;
   private final UserRepository userRepository;

@@ -8,8 +8,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-@RestController @RequestMapping("/api/tutors/discover") @RequiredArgsConstructor
-@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)") @CrossOrigin
+@RestController
+@RequestMapping("/api/tutors/discover")
+@RequiredArgsConstructor
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+@CrossOrigin
 public class TutorDiscoveryController {
   private final TutorDiscoveryService tutorDiscoveryService;
 

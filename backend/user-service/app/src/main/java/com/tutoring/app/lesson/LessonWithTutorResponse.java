@@ -3,7 +3,11 @@ package com.tutoring.app.lesson;
 import java.util.UUID;
 import lombok.*;
 
-@NoArgsConstructor @AllArgsConstructor @Getter @Setter @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
 public class LessonWithTutorResponse {
   private UUID id;
   private String subject;

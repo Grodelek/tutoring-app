@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Service @RequiredArgsConstructor
+@Service
+@RequiredArgsConstructor
 public class FavoriteTutorService {
   private final FavoriteTutorRepository favoriteTutorRepository;
   private final UserRepository userRepository;

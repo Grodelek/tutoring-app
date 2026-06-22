@@ -7,8 +7,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-@RestController @RequestMapping("/api/favorites") @RequiredArgsConstructor
-@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)") @CrossOrigin
+@RestController
+@RequestMapping("/api/favorites")
+@RequiredArgsConstructor
+@PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+@CrossOrigin
 public class FavoriteTutorController {
   private final FavoriteTutorService favoriteTutorService;
 

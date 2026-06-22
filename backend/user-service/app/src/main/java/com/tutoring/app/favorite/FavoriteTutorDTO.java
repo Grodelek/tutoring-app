@@ -3,7 +3,11 @@ package com.tutoring.app.favorite;
 import lombok.*;
 import java.util.UUID;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class FavoriteTutorDTO {
   private UUID id;
   private UUID studentId;

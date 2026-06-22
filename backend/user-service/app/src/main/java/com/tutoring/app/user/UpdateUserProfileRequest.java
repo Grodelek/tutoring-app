@@ -4,7 +4,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 public class UpdateUserProfileRequest {
   @Size(min = 5, max = 20)
   private String username;

@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service @RequiredArgsConstructor @Slf4j
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class TutorDiscoveryService {
   private final LessonRepository lessonRepository;
   private final UserService userService;

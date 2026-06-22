@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.*;
 
-@Getter @Setter
+@Getter
+@Setter
 public class LessonResponseDTO {
   private UUID id;
   private String subject;
