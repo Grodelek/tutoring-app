@@ -19,6 +19,8 @@ import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
 import { fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
 import { sendOffer, acceptOffer, declineOffer, confirmPayment } from "@/api/offerApi";
+import { fetchUserById } from "@/api/userApi";
+import { getMessages, sendMessage as sendMessageApi, deleteMessage } from "@/api/conversationApi";
 import { C } from "@/constants/theme";
 import styles from "./styles/styles";
 
@@ -103,16 +105,9 @@ const ChatScreen: React.FC = () => {
 
   const fetchReceiver = async (id: string) => {
     try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
-      const response = await fetch(`${BASE_URL}/api/users/${id}`, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setReceiver(data);
-        setAvatarError(false);
-      }
+      const data = await fetchUserById(id);
+      setReceiver(data);
+      setAvatarError(false);
     } catch (error: any) {
       Alert.alert("Błąd połączenia", error.message);
     }
@@ -122,24 +117,13 @@ const ChatScreen: React.FC = () => {
     if (!conversationId) return;
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
-      const res = await fetch(`${BASE_URL}/api/messages/${conversationId}`, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(Array.isArray(data) ? data : []);
-      } else {
-        if (res.status !== 404) {
-          const errorText = await res.text();
-          Alert.alert("Błąd", `Nie udało się załadować wiadomości: ${res.status} — ${errorText}`);
-        }
-        setMessages([]);
-      }
+      const data = await getMessages(conversationId.toString());
+      setMessages(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setMessages([]);
-      Alert.alert("Błąd", `Problem z połączeniem: ${e.message}`);
+      if (!e.message?.includes("404")) {
+        Alert.alert("Błąd", `Problem z połączeniem: ${e.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -148,22 +132,15 @@ const ChatScreen: React.FC = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !userId || !conversationId) return;
     try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      if (!token) { Alert.alert("Błąd", "Brak tokenu — zaloguj się ponownie."); return; }
-      const res = await fetch(`${BASE_URL}/api/messages/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ senderId: userId, receiverId, content: newMessage.trim() }),
+      const message = await sendMessageApi({
+        senderId: userId,
+        receiverId: receiverId?.toString() ?? "",
+        content: newMessage.trim(),
       });
-      if (res.ok) {
-        const message = await res.json();
-        setMessages((prev) => [...prev, message]);
-        setNewMessage("");
-      } else {
-        Alert.alert("Błąd", "Nie udało się wysłać wiadomości");
-      }
+      setMessages((prev) => [...prev, message]);
+      setNewMessage("");
     } catch {
-      Alert.alert("Błąd", "Problem z połączeniem");
+      Alert.alert("Błąd", "Nie udało się wysłać wiadomości");
     }
   };
 
@@ -208,16 +185,11 @@ const ChatScreen: React.FC = () => {
           text: "Usuń",
           style: "destructive",
           onPress: async () => {
-            const token = await AsyncStorage.getItem("jwtToken");
-            if (!token) { Alert.alert("Błąd", "Brak tokenu."); return; }
-            const res = await fetch(`${BASE_URL}/api/messages/${messageId}`, {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
+            try {
+              await deleteMessage(messageId);
               Alert.alert("Usunięto", "Zaproszenie zostało usunięte.");
               fetchMessages();
-            } else {
+            } catch {
               Alert.alert("Błąd", "Nie udało się usunąć zaproszenia.");
             }
           },
