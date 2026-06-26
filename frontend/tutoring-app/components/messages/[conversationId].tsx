@@ -17,7 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWebSocketMessages } from "@/hooks/useWebSocketMessages";
 import { BASE_URL } from "@/config/baseUrl";
-import { fetchLesson as fetchLessonFromApi, fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
+import { fetchLessonByTutor, fetchLessonsByTutorId } from "@/api/lessonApi";
 import { sendOffer, acceptOffer, declineOffer, confirmPayment } from "@/api/offerApi";
 import { fetchUserById } from "@/api/userApi";
 import { getMessages, sendMessage as sendMessageApi, deleteMessage } from "@/api/conversationApi";
@@ -47,12 +47,11 @@ const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const { conversationId, receiverId, lessonId: lessonIdParam, scheduledTime, lessonId: scheduledLessonId } = useLocalSearchParams();
+  const { conversationId, receiverId, scheduledTime, lessonId: scheduledLessonId } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [Receiver, setReceiver] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [lesson, setLesson] = useState<any>(null);
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [availableLessons, setAvailableLessons] = useState<any[]>([]);
   const [loadingLessons, setLoadingLessons] = useState(false);
@@ -69,8 +68,7 @@ const ChatScreen: React.FC = () => {
 
   useEffect(() => {
     fetchMessages();
-    if (lessonIdParam) fetchLesson(lessonIdParam.toString());
-  }, [conversationId, lessonIdParam]);
+  }, [conversationId]);
 
   useEffect(() => {
     const maybeSendOffer = async () => {
@@ -90,18 +88,6 @@ const ChatScreen: React.FC = () => {
     };
     maybeSendOffer();
   }, [scheduledTime, scheduledLessonId, userId, receiverId]);
-
-  const fetchLesson = async (id: string) => {
-    try {
-      const lessonData = await fetchLessonFromApi(id);
-      setLesson(lessonData);
-    } catch (error: any) {
-      if (error.message === "Authentication token not found") {
-        Alert.alert("Sesja wygasła", "Zaloguj się ponownie.");
-        router.push("/login");
-      }
-    }
-  };
 
   const fetchReceiver = async (id: string) => {
     try {
@@ -129,18 +115,25 @@ const ChatScreen: React.FC = () => {
     }
   };
 
+  const [isSending, setIsSending] = useState(false);
+
   const sendMessage = async () => {
-    if (!newMessage.trim() || !userId || !conversationId) return;
+    if (!newMessage.trim() || !userId || !conversationId || isSending) return;
+    const content = newMessage.trim();
+    setNewMessage("");
+    setIsSending(true);
     try {
       const message = await sendMessageApi({
         senderId: userId,
         receiverId: receiverId?.toString() ?? "",
-        content: newMessage.trim(),
+        content,
       });
       setMessages((prev) => [...prev, message]);
-      setNewMessage("");
     } catch {
+      setNewMessage(content);
       Alert.alert("Błąd", "Nie udało się wysłać wiadomości");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -221,7 +214,7 @@ const ChatScreen: React.FC = () => {
     try {
       const updated = await confirmPayment(offerId);
       if (updated.completed) {
-        Alert.alert("Rozliczono", "Zajęcia rozliczone! +10 XP i +1 do streaka.");
+        Alert.alert("Rozliczono!", "Zajęcia zakończone. +10 XP i +1 ukończona lekcja w profilu.");
       } else {
         Alert.alert("Potwierdzono", "Czekamy na potwierdzenie drugiej strony.");
       }
@@ -325,7 +318,12 @@ const ChatScreen: React.FC = () => {
             const sessionEnd = sessionStart ? new Date(sessionStart.getTime() + duration * 60000) : null;
             const now = new Date();
 
-            const scheduledAt = sessionStart ? sessionStart.toLocaleString() : "—";
+            const scheduledAt = sessionStart
+              ? sessionStart.toLocaleString("pl-PL", {
+                  weekday: "short", day: "2-digit", month: "2-digit",
+                  hour: "2-digit", minute: "2-digit",
+                })
+              : "—";
             const price = offerLesson?.price != null ? `${offerLesson.price} zł` : "—";
             const subject = offerLesson?.subject || "—";
             const tutor = offer?.tutorUsername || "—";
@@ -333,14 +331,62 @@ const ChatScreen: React.FC = () => {
             const isStudentSide = offer && String(offer.studentId) === String(userId);
             const myConfirmed = isStudentSide ? offer?.studentConfirmedPayment : offer?.tutorConfirmedPayment;
             const otherConfirmed = isStudentSide ? offer?.tutorConfirmedPayment : offer?.studentConfirmedPayment;
+            const otherLabel = isStudentSide ? "Korepetytor" : "Student";
             const sessionEnded = sessionEnd ? now >= sessionEnd : false;
+            const isDeclined = status === "DECLINED";
+            const isAccepted = status === "ACCEPTED";
+            const isCompleted = offer?.completed === true;
+
+            const steps = [
+              { label: "Wysłano",    done: true,                        error: false },
+              { label: "Akceptacja", done: isAccepted || isCompleted,   error: isDeclined },
+              { label: "Sesja",      done: isAccepted && sessionEnded,  error: false },
+              { label: "Rozliczono", done: isCompleted,                 error: false },
+            ];
 
             return (
               <View style={styles.invitationCard}>
+                {/* ── Header ── */}
                 <View style={styles.invitationHeaderRow}>
-                  <MaterialCommunityIcons name="calendar-clock" size={20} color="#4FB8D9" />
+                  <MaterialCommunityIcons name="calendar-clock" size={18} color={C.teal} />
                   <Text style={styles.invitationTitleStrong}>Propozycja sesji</Text>
+                  {isCompleted && (
+                    <View style={styles.invitationCompletedBadge}>
+                      <Text style={styles.invitationCompletedBadgeText}>Zakończone</Text>
+                    </View>
+                  )}
                 </View>
+
+                {/* ── Stepper ── */}
+                <View style={styles.stepperRow}>
+                  {steps.map((step, idx) => (
+                    <React.Fragment key={idx}>
+                      <View style={styles.stepWrap}>
+                        <View style={[
+                          styles.stepCircle,
+                          step.done && styles.stepCircleDone,
+                          step.error && styles.stepCircleError,
+                        ]}>
+                          {step.done && <MaterialCommunityIcons name="check" size={13} color="#fff" />}
+                          {step.error && <MaterialCommunityIcons name="close" size={13} color="#fff" />}
+                        </View>
+                        <Text style={[
+                          styles.stepLabel,
+                          step.done && styles.stepLabelDone,
+                          step.error && styles.stepLabelError,
+                        ]}>{step.label}</Text>
+                      </View>
+                      {idx < steps.length - 1 && (
+                        <View style={[
+                          styles.stepLine,
+                          step.done && !step.error && styles.stepLineDone,
+                        ]} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </View>
+
+                {/* ── Details ── */}
                 <View style={styles.invitationDetailsBlock}>
                   <Text style={styles.invitationDetailStrong}>Przedmiot</Text>
                   <Text style={styles.invitationDetailValue}>{subject}</Text>
@@ -354,7 +400,7 @@ const ChatScreen: React.FC = () => {
                   <Text style={styles.invitationDetailValue}>{scheduledAt}</Text>
                 </View>
                 <View style={styles.invitationDetailsBlock}>
-                  <Text style={styles.invitationDetailStrong}>Czas</Text>
+                  <Text style={styles.invitationDetailStrong}>Czas trwania</Text>
                   <Text style={styles.invitationDetailValue}>{duration ? `${duration} min` : "—"}</Text>
                 </View>
                 <View style={styles.invitationDetailsBlock}>
@@ -362,14 +408,16 @@ const ChatScreen: React.FC = () => {
                   <Text style={styles.invitationDetailValue}>{price}</Text>
                 </View>
 
-                {/* PENDING — receiver decides */}
+                <View style={styles.invitationDivider} />
+
+                {/* ── PENDING — odbiorca decyduje ── */}
                 {status === "PENDING" && isReceiver && offer && (
-                  <View style={{ gap: 8, marginTop: 10 }}>
+                  <View style={{ gap: 8 }}>
                     <View style={{ flexDirection: "row", gap: 8 }}>
-                      <Pressable style={[styles.declineButton, { marginTop: 0 }]} onPress={() => handleDeclineOffer(String(offer.id))}>
+                      <Pressable style={styles.declineButton} onPress={() => handleDeclineOffer(String(offer.id))}>
                         <Text style={styles.declineButtonText}>Odrzuć</Text>
                       </Pressable>
-                      <Pressable style={[styles.acceptButton, { marginTop: 0 }]} onPress={() => handleAcceptOffer(String(offer.id))}>
+                      <Pressable style={styles.acceptButton} onPress={() => handleAcceptOffer(String(offer.id))}>
                         <Text style={styles.acceptButtonText}>Akceptuj</Text>
                       </Pressable>
                     </View>
@@ -379,36 +427,68 @@ const ChatScreen: React.FC = () => {
                   </View>
                 )}
 
-                {/* PENDING — proposer waits */}
+                {/* ── PENDING — nadawca czeka ── */}
                 {status === "PENDING" && isMyMessage && (
-                  <View style={{ gap: 8, marginTop: 10 }}>
-                    <Text style={[styles.statusLine, { color: "#4FB8D9" }]}>Oczekuje na odpowiedź…</Text>
+                  <View style={{ gap: 8 }}>
+                    <View style={styles.invitationStatusRow}>
+                      <MaterialCommunityIcons name="clock-outline" size={14} color={C.teal} />
+                      <Text style={[styles.statusLine, { color: C.teal }]}>Oczekuje na odpowiedź…</Text>
+                    </View>
                     <Pressable style={styles.proposeButton} onPress={() => handleDeleteSessionOffer(String(item.id))}>
                       <Text style={styles.proposeButtonText}>Cofnij propozycję</Text>
                     </Pressable>
                   </View>
                 )}
 
-                {/* DECLINED */}
-                {status === "DECLINED" && (
-                  <Text style={[styles.statusLine, { color: "#FF6B4A", marginTop: 10 }]}>Propozycja odrzucona</Text>
+                {/* ── DECLINED ── */}
+                {isDeclined && (
+                  <View style={styles.invitationStatusRow}>
+                    <MaterialCommunityIcons name="close-circle-outline" size={15} color={C.coral} />
+                    <Text style={[styles.statusLine, { color: C.coral }]}>Propozycja odrzucona</Text>
+                  </View>
                 )}
 
-                {/* ACCEPTED */}
-                {status === "ACCEPTED" && offer && (
-                  <View style={{ marginTop: 10, gap: 6 }}>
-                    {offer.completed ? (
-                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia rozliczone • +10 XP, +1 lekcji</Text>
+                {/* ── ACCEPTED ── */}
+                {isAccepted && offer && (
+                  <View style={{ gap: 8 }}>
+                    {isCompleted ? (
+                      <View style={styles.invitationRewardBox}>
+                        <MaterialCommunityIcons name="trophy-outline" size={16} color={C.gold} />
+                        <Text style={styles.invitationRewardText}>+10 XP • +1 ukończona lekcja</Text>
+                      </View>
                     ) : !sessionEnded ? (
-                      <Text style={[styles.statusLine, { color: "#5ED674" }]}>
-                        Zaakceptowano • płatność potwierdzisz po zakończeniu zajęć
-                      </Text>
+                      <View style={styles.invitationStatusRow}>
+                        <MaterialCommunityIcons name="check-circle-outline" size={15} color={C.green} />
+                        <Text style={[styles.statusLine, { color: C.green }]}>
+                          Zaakceptowano — płatność po zakończeniu zajęć
+                        </Text>
+                      </View>
                     ) : (
                       <>
-                        <Text style={[styles.statusLine, { color: "#5ED674" }]}>Zajęcia zakończone — potwierdź płatność</Text>
-                        <Text style={styles.paymentStatusText}>
-                          Ty: {myConfirmed ? "potwierdzono" : "oczekuje"}   •   Druga strona: {otherConfirmed ? "potwierdzono" : "oczekuje"}
-                        </Text>
+                        <View style={styles.invitationStatusRow}>
+                          <MaterialCommunityIcons name="cash-check" size={15} color={C.amber} />
+                          <Text style={[styles.statusLine, { color: C.amber }]}>
+                            Zajęcia skończone — potwierdź płatność
+                          </Text>
+                        </View>
+                        <View style={styles.paymentConfirmRow}>
+                          <View style={styles.paymentConfirmItem}>
+                            <MaterialCommunityIcons
+                              name={myConfirmed ? "check-circle" : "circle-outline"}
+                              size={16}
+                              color={myConfirmed ? C.green : C.textFaint}
+                            />
+                            <Text style={styles.paymentConfirmLabel}>Ty</Text>
+                          </View>
+                          <View style={styles.paymentConfirmItem}>
+                            <MaterialCommunityIcons
+                              name={otherConfirmed ? "check-circle" : "circle-outline"}
+                              size={16}
+                              color={otherConfirmed ? C.green : C.textFaint}
+                            />
+                            <Text style={styles.paymentConfirmLabel}>{otherLabel}</Text>
+                          </View>
+                        </View>
                         {!myConfirmed && (
                           <Pressable style={styles.paymentButton} onPress={() => handleConfirmPayment(String(offer.id))}>
                             <Text style={styles.paymentButtonText}>Płatność wykonana</Text>
@@ -419,7 +499,7 @@ const ChatScreen: React.FC = () => {
                   </View>
                 )}
 
-                <Text style={styles.timestamp}>
+                <Text style={[styles.timestamp, { marginTop: 6 }]}>
                   {item.timestamp
                     ? new Date(item.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
                     : ""}
@@ -457,7 +537,11 @@ const ChatScreen: React.FC = () => {
           onFocus={(e) => { if (RNPlatform.OS === "web") e.currentTarget?.focus(); }}
         />
         <View style={styles.actionsRow}>
-          <Pressable onPress={sendMessage} style={styles.sendButton}>
+          <Pressable
+            onPress={sendMessage}
+            disabled={isSending}
+            style={[styles.sendButton, isSending && { opacity: 0.45 }]}
+          >
             <MaterialCommunityIcons name="send" size={20} color="#241608" />
           </Pressable>
         </View>

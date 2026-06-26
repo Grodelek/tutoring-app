@@ -256,7 +256,7 @@ const ExplorePreferences: React.FC = () => {
     };
     await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(filters));
     router.push({
-      pathname: "/(auth)/exploreTutors",
+      pathname: "/(auth)/(tabs)/exploreTutors",
       params:   { filters: JSON.stringify(filters) },
     });
   }, [subject, minPrice, maxPrice, teachStyle, userType, avail, router]);

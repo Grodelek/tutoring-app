@@ -1,17 +1,11 @@
-package com.tutoring.app.Lesson;
+package com.tutoring.app.lesson;
 
-import com.tutoring.app.domain.User;
-import com.tutoring.app.domain.UserPrincipal;
-import com.tutoring.app.dto.LessonRequestDTO;
-import com.tutoring.app.dto.LessonResponseDTO;
-import com.tutoring.app.repository.LessonRepository;
-import com.tutoring.app.repository.UserRepository;
-import com.tutoring.app.service.LessonService;
-
+import com.tutoring.app.user.User;
+import com.tutoring.app.user.UserPrincipal;
+import com.tutoring.app.user.UserRepository;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
-import com.tutoring.app.domain.Lesson;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;

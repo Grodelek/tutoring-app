@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BASE_URL } from "@/config/baseUrl";
+import { authFetch } from "./httpClient";
 
 export interface FavoriteTutor {
   id: string;
@@ -10,43 +10,30 @@ export interface FavoriteTutor {
   tutorDescription?: string | null;
 }
 
-export const addFavoriteTutor = async (
-  tutorId: string
-): Promise<FavoriteTutor> => {
-  const token = await AsyncStorage.getItem("jwtToken");
+export const addFavoriteTutor = async (tutorId: string): Promise<FavoriteTutor> => {
   const studentId = await AsyncStorage.getItem("userId");
+  if (!studentId) throw new Error("Authentication required");
 
-  if (!token || !studentId) {
-    throw new Error("Authentication required");
-  }
-
-  const response = await fetch(`${BASE_URL}/api/favorites/add`, {
+  const response = await authFetch("/api/favorites/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify({ studentId, tutorId }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Failed to add favorite tutor: ${response.status} - ${errorText}`
-    );
+    throw new Error(`Failed to add favorite tutor: ${response.status} - ${errorText}`);
   }
-
   return response.json();
 };
 
 export const getFavoriteTutors = async (): Promise<FavoriteTutor[]> => {
-  const token = await AsyncStorage.getItem("jwtToken");
   const studentId = await AsyncStorage.getItem("userId");
-  if (!token || !studentId) return [];
-  const response = await fetch(`${BASE_URL}/api/favorites/student/${studentId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) return [];
-  return response.json();
+  if (!studentId) return [];
+  try {
+    const response = await authFetch(`/api/favorites/student/${studentId}`);
+    if (!response.ok) return [];
+    return response.json();
+  } catch {
+    return [];
+  }
 };
-

@@ -86,9 +86,9 @@ export default function MyBookingsScreen() {
     try {
       const updated = await confirmPayment(offerId);
       Alert.alert(
-        updated.completed ? "Rozliczono" : "Potwierdzono",
+        updated.completed ? "Rozliczono!" : "Potwierdzono",
         updated.completed
-          ? "Zajęcia rozliczone! +10 XP i +1 do streaka."
+          ? "Zajęcia zakończone. +10 XP i +1 ukończona lekcja w profilu."
           : "Czekamy na potwierdzenie korepetytora."
       );
       load();

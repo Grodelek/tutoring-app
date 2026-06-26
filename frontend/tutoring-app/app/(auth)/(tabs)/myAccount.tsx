@@ -45,7 +45,7 @@ const MyAccount: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [description, setDescription] = useState("");
   const [refreshing, setRefreshing]   = useState(false);
-  const [lessonsCount, setLessonsCount] = useState(0);
+  const [lessonsCount, setLessonsCount] = useState<number | null>(null);
   const { setToken } = useAuth();
 
   const onRefresh = async () => {
@@ -178,7 +178,7 @@ const MyAccount: React.FC = () => {
             </View>
             <View style={styles.statSep} />
             <View style={styles.stat}>
-              <Text style={[styles.statNum, { color: C.teal }]}>{lessonsCount}</Text>
+              <Text style={[styles.statNum, { color: C.teal }]}>{lessonsCount ?? "—"}</Text>
               <Text style={styles.statLabel}>LEKCJI</Text>
             </View>
           </View>

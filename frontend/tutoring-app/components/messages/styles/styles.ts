@@ -279,7 +279,7 @@ export default StyleSheet.create({
   invitationHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
     gap: 8,
   },
   invitationEmoji: {
@@ -290,7 +290,81 @@ export default StyleSheet.create({
     fontWeight: T.weight.extraBold,
     fontSize: 15,
     color: C.teal,
+    flex: 1,
   },
+  invitationCompletedBadge: {
+    backgroundColor: C.green + "22",
+    borderWidth: 1,
+    borderColor: C.green,
+    borderRadius: R.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  invitationCompletedBadgeText: {
+    fontFamily: T.family.extraBold,
+    fontWeight: T.weight.extraBold,
+    fontSize: 10,
+    color: C.green,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+
+  // ── Stepper ──
+  stepperRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 14,
+    paddingHorizontal: 2,
+  },
+  stepWrap: {
+    alignItems: "center",
+    gap: 4,
+    width: 54,
+  },
+  stepCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: C.bg,
+    borderWidth: 2,
+    borderColor: C.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepCircleDone: {
+    backgroundColor: C.teal,
+    borderColor: C.teal,
+  },
+  stepCircleError: {
+    backgroundColor: C.coral,
+    borderColor: C.coral,
+  },
+  stepLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: C.border,
+    marginTop: 11,
+    marginBottom: 18,
+  },
+  stepLineDone: {
+    backgroundColor: C.teal,
+  },
+  stepLabel: {
+    fontFamily: T.family.medium,
+    fontSize: 9,
+    color: C.textFaint,
+    textAlign: "center",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.3,
+  },
+  stepLabelDone: {
+    color: C.teal,
+  },
+  stepLabelError: {
+    color: C.coral,
+  },
+
+  // ── Details ──
   invitationDetailsBlock: {
     flexDirection: "row",
     marginBottom: 5,
@@ -302,7 +376,7 @@ export default StyleSheet.create({
     fontSize: 13,
     color: C.textDim,
     marginRight: 6,
-    minWidth: 80,
+    minWidth: 84,
   },
   invitationDetailValue: {
     fontFamily: T.family.medium,
@@ -310,13 +384,59 @@ export default StyleSheet.create({
     color: C.text,
     flexShrink: 1,
   },
+  invitationDivider: {
+    height: 1,
+    backgroundColor: C.border,
+    marginVertical: 10,
+  },
+  invitationStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  invitationRewardBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: C.gold + "18",
+    borderWidth: 1,
+    borderColor: C.gold + "55",
+    borderRadius: R.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  invitationRewardText: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 13,
+    color: C.gold,
+  },
+
+  // ── Payment confirm row ──
+  paymentConfirmRow: {
+    flexDirection: "row",
+    gap: 20,
+    paddingVertical: 4,
+  },
+  paymentConfirmItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  paymentConfirmLabel: {
+    fontFamily: T.family.medium,
+    fontSize: 12,
+    color: C.textDim,
+  },
+
+  // ── Buttons ──
   acceptButton: {
     backgroundColor: C.teal,
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: R.full,
-    alignSelf: "flex-start",
-    marginTop: 10,
+    flex: 1,
+    alignItems: "center",
     borderBottomWidth: 3,
     borderBottomColor: "#2E8AA3",
   },
@@ -331,8 +451,8 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: R.full,
-    alignSelf: "flex-start",
-    marginTop: 6,
+    flex: 1,
+    alignItems: "center",
     borderBottomWidth: 3,
     borderBottomColor: C.coralDark,
   },
@@ -347,7 +467,7 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: R.full,
-    alignSelf: "flex-start",
+    alignItems: "center",
     borderWidth: 1.5,
     borderColor: C.border,
   },
@@ -359,10 +479,9 @@ export default StyleSheet.create({
   },
   paymentButton: {
     backgroundColor: C.amber,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingVertical: 11,
     borderRadius: R.full,
-    alignSelf: "flex-start",
+    alignItems: "center",
     borderBottomWidth: 3,
     borderBottomColor: C.amberDark,
   },

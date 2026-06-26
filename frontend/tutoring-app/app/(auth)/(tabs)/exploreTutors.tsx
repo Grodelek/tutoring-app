@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Alert,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +14,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { fetchTutors, TutorCard } from "@/api/tutorDiscoveryApi";
+import { getMyAccount } from "@/api/userApi";
+import { BASE_URL } from "@/config/baseUrl";
 import { addFavoriteTutor } from "@/api/favoriteApi";
 import { sendMessageToTutor } from "@/api/lessonApi";
 import SwipeCards from "@components/ui/SwipeCards";
@@ -54,10 +58,29 @@ function HeaderPill({
   );
 }
 
-function CardHeader({ initial, match, rating }: { initial: string; match: number; rating: number }) {
+function CardHeader({ initial, match, rating, photoPath }: {
+  initial: string;
+  match: number;
+  rating: number;
+  photoPath?: string | null;
+}) {
+  const [imgError, setImgError] = React.useState(false);
+  const uri = photoPath
+    ? photoPath.startsWith("http") ? photoPath : `${BASE_URL}${photoPath}`
+    : null;
+  const showPhoto = !!uri && !imgError;
+
   return (
     <View style={styles.cardHeader}>
-      <Text style={styles.initial}>{initial}</Text>
+      {showPhoto ? (
+        <Image
+          source={{ uri }}
+          style={styles.avatar}
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <Text style={styles.initial}>{initial}</Text>
+      )}
 
       <HeaderPill style={styles.pillTL}>
         <MaterialCommunityIcons name="star-four-points" size={11} color={C.gold} />
@@ -73,15 +96,48 @@ function CardHeader({ initial, match, rating }: { initial: string; match: number
 }
 
 function TutorQuestCard({ card }: { card: TutorCard }) {
-  const initial  = (card.tutorUsername || "?").charAt(0).toUpperCase();
-  const match    = Math.round(Math.min(Math.max(card.rating, 0), 100));
-  const avail    = availLabel(card.tutorAvailability);
+  const initial   = (card.tutorUsername || "?").charAt(0).toUpperCase();
+  const match     = Math.round(Math.min(Math.max(card.rating, 0), 100));
+  const avail     = availLabel(card.tutorAvailability);
   const chipStyle = styleLabel(card.tutorTeachingStyle);
+
+  const flipAnim  = useRef(new Animated.Value(0)).current;
+  const isFlipped = useRef(false);
+
+  const handleFlip = () => {
+    isFlipped.current = !isFlipped.current;
+    Animated.timing(flipAnim, {
+      toValue: isFlipped.current ? 1 : 0,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const frontStyle = {
+    transform: [
+      { perspective: 1200 },
+      { rotateY: flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] }) },
+    ],
+    backfaceVisibility: "hidden" as const,
+  };
+
+  const backStyle = {
+    transform: [
+      { perspective: 1200 },
+      { rotateY: flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["180deg", "360deg"] }) },
+    ],
+    backfaceVisibility: "hidden" as const,
+  };
 
   return (
     <View style={styles.cardOuter}>
-      <View style={styles.cardInner}>
-        <CardHeader initial={initial} match={match} rating={card.rating} />
+      {/* Front */}
+      <Animated.View style={[styles.cardInner, frontStyle]}>
+        <CardHeader initial={initial} match={match} rating={card.rating} photoPath={card.tutorPhotoPath} />
+
+        <Pressable onPress={handleFlip} style={styles.infoBtn} hitSlop={8}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={C.textDim} />
+        </Pressable>
 
         <View style={styles.cardBody}>
           <View style={styles.bodyTop}>
@@ -114,7 +170,51 @@ function TutorQuestCard({ card }: { card: TutorCard }) {
             </Text>
           )}
         </View>
-      </View>
+      </Animated.View>
+
+      {/* Back */}
+      <Animated.View style={[styles.cardInner, styles.cardBack, backStyle]}>
+        <Pressable onPress={handleFlip} style={styles.infoBtn} hitSlop={8}>
+          <MaterialCommunityIcons name="close-circle-outline" size={18} color={C.textDim} />
+        </Pressable>
+
+        <View style={styles.cardBody}>
+          <Text style={styles.tutorName}>{card.tutorUsername}</Text>
+          <Text style={styles.tutorSub}>{card.subject}</Text>
+
+          <View style={[styles.chipsRow, { marginTop: 4 }]}>
+            <Chip label={chipStyle} color={C.amber} active />
+            {avail && <Chip label={avail} color={C.amber} />}
+          </View>
+
+          <View style={styles.backRow}>
+            <MaterialCommunityIcons name="clock-outline" size={14} color={C.textDim} />
+            <Text style={styles.backLabel}>Czas lekcji</Text>
+            <Text style={styles.backValue}>{card.durationTime} min</Text>
+          </View>
+
+          <View style={styles.backRow}>
+            <MaterialCommunityIcons name="currency-usd" size={14} color={C.textDim} />
+            <Text style={styles.backLabel}>Cena</Text>
+            <Text style={styles.backValue}>{card.price != null ? `${card.price} zł` : "—"}</Text>
+          </View>
+
+          <View style={styles.backRow}>
+            <MaterialCommunityIcons name="star" size={14} color={C.gold} />
+            <Text style={styles.backLabel}>Ocena</Text>
+            <Text style={styles.backValue}>{card.rating.toFixed(1)}</Text>
+          </View>
+
+          {!!card.tutorDescription && (
+            <>
+              <Text style={[styles.backLabel, { marginTop: 10 }]}>O tutorze</Text>
+              <Text style={styles.description}>
+                {card.tutorDescription}
+              </Text>
+            </>
+          )}
+        </View>
+      </Animated.View>
     </View>
   );
 }
@@ -150,12 +250,16 @@ const ExploreTutors: React.FC = () => {
   const [allExhausted, setAllExhausted] = useState(false);
   const [showMatchAnim, setShowMatchAnim] = useState(false);
   const [studentInitial, setStudentInitial] = useState("S");
-  const matchDataRef = useRef<{ tutorName: string; tutorInitial: string; conversationId?: string; receiverId: string } | null>(null);
+  const [studentPhotoUri, setStudentPhotoUri] = useState<string | null>(null);
+  const matchDataRef = useRef<{ tutorName: string; tutorInitial: string; tutorPhotoUri?: string | null; conversationId?: string; receiverId: string } | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem("savedEmail").then(email => {
       if (email) setStudentInitial(email.charAt(0).toUpperCase());
     });
+    getMyAccount().then(me => {
+      if (me.photoPath) setStudentPhotoUri(me.photoPath);
+    }).catch(() => {});
   }, []);
 
   const shownIdsRef  = useRef(new Set<string>());
@@ -219,6 +323,7 @@ const ExploreTutors: React.FC = () => {
       matchDataRef.current = {
         tutorName: card.tutorUsername ?? "",
         tutorInitial: (card.tutorUsername ?? "T").charAt(0),
+        tutorPhotoUri: card.tutorPhotoPath ?? null,
         conversationId: conversationId ? String(conversationId) : undefined,
         receiverId: card.tutorId,
       };
@@ -353,8 +458,8 @@ const ExploreTutors: React.FC = () => {
 
       <MatchingAnimation
         visible={showMatchAnim}
-        student={{ initial: studentInitial, color: C.purple }}
-        tutor={{ initial: matchDataRef.current?.tutorInitial ?? "T", color: C.teal }}
+        student={{ initial: studentInitial, color: C.purple, photoUri: studentPhotoUri }}
+        tutor={{ initial: matchDataRef.current?.tutorInitial ?? "T", color: C.teal, photoUri: matchDataRef.current?.tutorPhotoUri }}
         onComplete={handleMatchAnimComplete}
       />
     </View>
@@ -479,6 +584,49 @@ const styles = StyleSheet.create({
     borderBottomWidth: 8,
     borderBottomColor: C.bgDeep,
   },
+  cardBack: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: 16,
+    justifyContent: "flex-start",
+  },
+  infoBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  backLabel: {
+    flex: 1,
+    fontFamily: T.family.medium,
+    fontSize: 13,
+    color: C.textDim,
+  },
+  backValue: {
+    fontFamily: T.family.bold,
+    fontWeight: T.weight.bold,
+    fontSize: 13,
+    color: C.text,
+  },
 
   cardHeader: {
     height: HEADER_H,
@@ -491,6 +639,11 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 92,
     color: C.purple,
+  },
+  avatar: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 
   pill: {
