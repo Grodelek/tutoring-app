@@ -1,6 +1,5 @@
-import {BASE_URL} from "@/config/baseUrl";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {User} from "@/api/lessonApi";
+import { User } from "@/api/lessonApi";
+import { authFetch } from "./httpClient";
 
 export interface ChatMessage {
   id: string;
@@ -14,11 +13,7 @@ export interface ChatMessage {
 }
 
 export const getMessages = async (conversationId: string): Promise<ChatMessage[]> => {
-  const token = await AsyncStorage.getItem("jwtToken");
-  if (!token) throw new Error("Authentication token not found");
-  const response = await fetch(`${BASE_URL}/api/messages/${conversationId}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const response = await authFetch(`/api/messages/${conversationId}`);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || `HTTP ${response.status}`);
@@ -31,11 +26,8 @@ export const sendMessage = async (payload: {
   receiverId: string;
   content: string;
 }): Promise<ChatMessage> => {
-  const token = await AsyncStorage.getItem("jwtToken");
-  if (!token) throw new Error("Authentication token not found");
-  const response = await fetch(`${BASE_URL}/api/messages/send`, {
+  const response = await authFetch("/api/messages/send", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error("Failed to send message");
@@ -43,52 +35,28 @@ export const sendMessage = async (payload: {
 };
 
 export const deleteMessage = async (messageId: string): Promise<void> => {
-  const token = await AsyncStorage.getItem("jwtToken");
-  if (!token) throw new Error("Authentication token not found");
-  const response = await fetch(`${BASE_URL}/api/messages/${messageId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await authFetch(`/api/messages/${messageId}`, { method: "DELETE" });
   if (!response.ok) throw new Error("Failed to delete message");
 };
 
 export interface Conversation {
-    id: string;
-    student: User;
-    tutor: User;
-    subject: string;
-    startTime: string | null;
-    durationMinutes: number;
-    status: string | null;
-    price: number | null;
-    description: string;
-    durationTime: number;
+  id: string;
+  student: User;
+  tutor: User;
+  subject: string;
+  startTime: string | null;
+  durationMinutes: number;
+  status: string | null;
+  price: number | null;
+  description: string;
+  durationTime: number;
 }
 
 export const fetchConversationHistoryFromApi = async (id: string): Promise<Conversation> => {
-    try {
-        const token = await AsyncStorage.getItem("jwtToken");
-        if (!token) {
-            throw new Error("Authentication token not found");
-        }
-
-        const response = await fetch(`${BASE_URL}/api/conversation/${id}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to fetch conversation: ${response.status} - ${errorText}`);
-            throw new Error(errorText || `HTTP ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error: any) {
-        console.error("Error fetching conversation history:", error);
-        throw error;
-    }
-}
+  const response = await authFetch(`/api/conversation/${id}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP ${response.status}`);
+  }
+  return response.json();
+};

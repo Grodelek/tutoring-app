@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BASE_URL } from "@/config/baseUrl";
+import { authFetch } from "./httpClient";
 
 export interface TutorSearchRequest {
   userId?: string | null;
@@ -23,42 +23,23 @@ export interface TutorCard {
   durationTime: number;
   price: number | null;
   rating: number;
-
-   tutorTeachingStyle?: "CASUAL" | "PROFESSIONAL" | "FLEXIBLE" | null;
-   tutorUserType?: "STUDENT" | "TUTOR" | null;
-   tutorAvailability?: string | null;
+  tutorTeachingStyle?: "CASUAL" | "PROFESSIONAL" | "FLEXIBLE" | null;
+  tutorUserType?: "STUDENT" | "TUTOR" | null;
+  tutorAvailability?: string | null;
 }
 
-export const fetchTutors = async (
-    filters: TutorSearchRequest
-): Promise<TutorCard[]> => {
-  const token = await AsyncStorage.getItem("jwtToken");
+export const fetchTutors = async (filters: TutorSearchRequest): Promise<TutorCard[]> => {
   const userId = await AsyncStorage.getItem("userId");
+  const payload: TutorSearchRequest = { ...filters, userId: filters.userId ?? userId };
 
-  if (!token) {
-    throw new Error("Authentication token not found");
-  }
-
-  const payload: TutorSearchRequest = {
-    ...filters,
-    userId: filters.userId ?? userId,
-  };
-
-  const response = await fetch(`${BASE_URL}/api/tutors/discover/search`, {
+  const response = await authFetch("/api/tutors/discover/search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(
-      `Failed to search tutors: ${response.status} - ${errorText}`
-    );
+    throw new Error(`Failed to search tutors: ${response.status} - ${errorText}`);
   }
   return response.json();
 };
-

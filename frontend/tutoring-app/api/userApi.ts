@@ -1,6 +1,5 @@
-import {BASE_URL} from "@/config/baseUrl";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {Alert} from "react-native";
+import { BASE_URL } from "@/config/baseUrl";
+import { authFetch } from "./httpClient";
 
 export interface LoginResponse {
   token: string;
@@ -36,24 +35,14 @@ export interface AuthDataRegister {
   userType: string;
 }
 
-export interface AuthData{
-    email: string;
-    username?: string;
-    password: string;
+export interface AuthData {
+  email: string;
+  username?: string;
+  password: string;
 }
 
-export type ExperienceTime =
-  | "BEGINNER"
-  | "INTERMEDIATE"
-  | "ADVANCED"
-  | "EXPERT";
-
-export type Availability =
-  | "WEEKDAYS_ONLY"
-  | "WEEKENDS_ONLY"
-  | "EVENING_ONLY"
-  | "FLEXIBLE";
-
+export type ExperienceTime = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
+export type Availability = "WEEKDAYS_ONLY" | "WEEKENDS_ONLY" | "EVENING_ONLY" | "FLEXIBLE";
 export type LessonType = "PROFESSIONAL" | "CASUAL" | "FLEXIBLE";
 
 export interface TutorInfoRequest {
@@ -69,145 +58,95 @@ export interface TutorInfoResponse {
 }
 
 interface UserResponseDTO {
-    id: string;
-    username: string;
-    email: string;
-    photoPath?: string;
-    points: number;
-    description?: string;
+  id: string;
+  username: string;
+  email: string;
+  photoPath?: string;
+  points: number;
+  description?: string;
 }
 
 interface TutorResponse {
-    username: string;
-    experienceTime: string,
-    availability: string,
-    lessonType: string
+  username: string;
+  experienceTime: string;
+  availability: string;
+  lessonType: string;
 }
+
+// ── Public endpoints (no token) ──
 
 export const postLogin = async (data: AuthData): Promise<LoginResponse> => {
   const response = await fetch(`${BASE_URL}/api/users/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: data.email,
-      password: data.password,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: data.email, password: data.password }),
   });
-  if (!response.ok) {
-    throw new Error("Login failed");
-  }
+  if (!response.ok) throw new Error("Login failed");
   return response.json();
 };
 
 export const postRegister = async (data: AuthDataRegister): Promise<User> => {
   const response = await fetch(`${BASE_URL}/api/users/add`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: data.email,
       username: data.username,
       password: data.password,
-      userType: data.userType
+      userType: data.userType,
     }),
   });
-
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText);
   }
-
-  return await response.json();
+  return response.json();
 };
+
+export const reLogin = async (username: string, password: string): Promise<LoginResponse> => {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) throw new Error("Re-login failed");
+  return response.json();
+};
+
+// ── Authenticated endpoints ──
 
 export const getMyAccount = async (): Promise<UserResponseDTO> => {
-    const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        throw new Error("Missing token");
-    }
-    console.log("token:", token);
-    const response = await fetch(`${BASE_URL}/api/users/me`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    if (!response.ok) {
-        throw new Error("Login failed");
-    }
-    return response.json();
+  const response = await authFetch("/api/users/me");
+  if (!response.ok) throw new Error("Failed to fetch account");
+  return response.json();
 };
-
 
 export const getTutorMyAccount = async (): Promise<TutorResponse> => {
-        const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        throw new Error("Missing token");
-    }
-    const response = await fetch(`${BASE_URL}/api/users/tutor/me`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    if (!response.ok) {
-        throw new Error("Login failed");
-    }
-    return response.json();
+  const response = await authFetch("/api/users/tutor/me");
+  if (!response.ok) throw new Error("Failed to fetch tutor account");
+  return response.json();
 };
 
-export const saveToBackend = async (imageUrl: string) => {
-        const token = await AsyncStorage.getItem("jwtToken");
-        if (!token) {
-            throw new Error("Missing token");
-        }
-        return fetch(`${BASE_URL}/api/users/photo/upload`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(imageUrl),
-        });
+export const saveToBackend = async (imageUrl: string): Promise<Response> => {
+  return authFetch("/api/users/photo/upload", {
+    method: "PUT",
+    body: JSON.stringify(imageUrl),
+  });
 };
 
-export const fetchUserById = async (id: any) => {
-    const token = await AsyncStorage.getItem("jwtToken");
-    if (!token) {
-        Alert.alert("Error", "Missing token – user not logged in.");
-        throw new Error("Missing token");
-    }
-    const response = await fetch(`${BASE_URL}/api/users/${id}`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    if (!response.ok) {
-        throw new Error("Login failed");
-    }
-    return response.json();
+export const fetchUserById = async (id: string): Promise<User> => {
+  const response = await authFetch(`/api/users/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch user");
+  return response.json();
 };
 
 export const updateUser = async (
   id: string,
   data: { username: string; description: string },
-  token: string,
+  _token?: string,
 ): Promise<void> => {
-  const response = await fetch(`${BASE_URL}/api/users/${id}`, {
+  const response = await authFetch(`/api/users/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -216,49 +155,18 @@ export const updateUser = async (
   }
 };
 
-export const reLogin = async (
-  username: string,
-  password: string,
-): Promise<LoginResponse> => {
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  if (!response.ok) {
-    throw new Error("Re-login failed");
-  }
-  return response.json();
-};
-
-export const addMoreInfo = async (
-  data: TutorInfoRequest,
-): Promise<TutorInfoResponse> => {
-  const token = await AsyncStorage.getItem("jwtToken");
-  console.log("Token in addMoreInfo:", token);
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${BASE_URL}/api/users/tutor/info`, {
+export const addMoreInfo = async (data: TutorInfoRequest): Promise<TutorInfoResponse> => {
+  const response = await authFetch("/api/users/tutor/info", {
     method: "PUT",
-    headers,
     body: JSON.stringify({
       experienceTime: data.experienceTime,
       availability: data.availability,
       lessonType: data.lessonType,
     }),
   });
-
   if (!response.ok) {
     const errorText = await response.text();
-    console.log("addMoreInfo error status:", response.status, "body:", errorText);
     throw new Error(errorText || `Failed to save tutor info (${response.status})`);
   }
-
   return response.json();
 };

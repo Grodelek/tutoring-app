@@ -8,6 +8,7 @@ import com.tutoring.app.user.User;
 import com.tutoring.app.user.UserPrincipal;
 import com.tutoring.app.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 public class TutorOfferService {
 
     private static final int REWARD_POINTS = 10;
+
+    @Value("${session.time.multiplier:1.0}")
+    private double sessionTimeMultiplier;
 
     private final UserRepository userRepository;
     private final TutorOfferRepository tutorOfferRepository;
@@ -92,7 +96,8 @@ public class TutorOfferService {
         User user = getLoggedInUser();
         if (offer.getStatus() != OfferStatus.ACCEPTED)
             throw new IllegalStateException("Płatność można potwierdzić tylko dla zaakceptowanych zajęć");
-        LocalDateTime sessionEnd = offer.getSessionStartTime().plusMinutes(offer.getLesson().getDurationTime());
+        long effectiveMinutes = Math.round(offer.getLesson().getDurationTime() * sessionTimeMultiplier);
+        LocalDateTime sessionEnd = offer.getSessionStartTime().plusMinutes(effectiveMinutes);
         if (LocalDateTime.now().isBefore(sessionEnd))
             throw new IllegalStateException("Płatność można potwierdzić dopiero po zakończeniu zajęć");
         if (user.getId().equals(offer.getStudent().getId())) offer.setStudentConfirmedPayment(true);
