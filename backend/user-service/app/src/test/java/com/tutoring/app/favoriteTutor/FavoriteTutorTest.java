@@ -1,16 +1,16 @@
 package com.tutoring.app.favoriteTutor;
 
-import com.tutoring.app.domain.FavoriteTutor;
-import com.tutoring.app.dto.FavoriteTutorDTO;
-import com.tutoring.app.repository.FavoriteTutorRepository;
-import com.tutoring.app.repository.UserRepository;
-import com.tutoring.app.service.FavoriteTutorService;
+import com.tutoring.app.favorite.FavoriteTutor;
+import com.tutoring.app.favorite.FavoriteTutorDTO;
+import com.tutoring.app.favorite.FavoriteTutorRepository;
+import com.tutoring.app.user.UserRepository;
+import com.tutoring.app.favorite.FavoriteTutorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.tutoring.app.domain.User;
+import com.tutoring.app.user.User;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

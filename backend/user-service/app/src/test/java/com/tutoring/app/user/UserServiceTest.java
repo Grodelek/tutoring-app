@@ -1,9 +1,5 @@
-package com.tutoring.app.User;
+package com.tutoring.app.user;
 
-import com.tutoring.app.domain.User;
-import com.tutoring.app.dto.*;
-import com.tutoring.app.repository.UserRepository;
-import com.tutoring.app.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,10 +8,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static com.tutoring.app.domain.Availability.WEEKDAYS_ONLY;
-import static com.tutoring.app.domain.ExperienceTime.INTERMEDIATE;
-import static com.tutoring.app.domain.LessonType.CASUAL;
-import static com.tutoring.app.domain.UserType.TUTOR;
+import static com.tutoring.app.user.Availability.WEEKDAYS_ONLY;
+import static com.tutoring.app.user.ExperienceTime.INTERMEDIATE;
+import static com.tutoring.app.user.LessonType.CASUAL;
+import static com.tutoring.app.user.UserType.TUTOR;
 import static org.mockito.ArgumentMatchers.any;
 import java.util.Optional;
 import java.util.UUID;
