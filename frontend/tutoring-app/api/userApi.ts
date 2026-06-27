@@ -170,3 +170,8 @@ export const addMoreInfo = async (data: TutorInfoRequest): Promise<TutorInfoResp
   }
   return response.json();
 };
+
+export const deleteUser = async (id: string): Promise<void> => {
+  const response = await authFetch(`/api/users/${id}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Nie udało się usunąć konta");
+};

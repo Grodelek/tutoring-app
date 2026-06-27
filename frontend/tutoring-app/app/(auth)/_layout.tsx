@@ -9,6 +9,7 @@ export default function AuthStackLayout() {
       <Stack.Screen name="matchCelebration" />
       <Stack.Screen name="explorePreferences" />
       <Stack.Screen name="userSettings" />
+      <Stack.Screen name="editProfile" />
       <Stack.Screen name="session/calendar" />
     </Stack>
   );
