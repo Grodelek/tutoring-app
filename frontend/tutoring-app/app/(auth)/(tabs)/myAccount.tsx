@@ -120,7 +120,7 @@ const MyAccount: React.FC = () => {
     >
       <View style={styles.topBar}>
         <Text style={styles.pageTitle}>Profil</Text>
-        <Pressable onPress={() => router.push("./userSettings")} style={styles.settingsBtn}>
+        <Pressable onPress={() => router.push("/(auth)/userSettings")} style={styles.settingsBtn}>
           <MaterialCommunityIcons name="cog-outline" size={22} color={C.textDim} />
         </Pressable>
       </View>

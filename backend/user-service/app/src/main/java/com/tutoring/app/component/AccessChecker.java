@@ -26,7 +26,7 @@ public class AccessChecker {
             throw new EntityNotFoundException("User not found");
         }
         User user = userOptional.get();
-        if (!user.getUserType().equals("TUTOR")) return true;
+        if (user.getUserType() != com.tutoring.app.user.UserType.TUTOR) return true;
 
         return user.getExperienceTime() != null &&
                 user.getAvailability() != null &&

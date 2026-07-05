@@ -1,5 +1,6 @@
 package com.tutoring.app.favorite;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Favorites", description = "Add and retrieve favourite tutors")
 @RestController
 @RequestMapping("/api/favorites")
 @RequiredArgsConstructor

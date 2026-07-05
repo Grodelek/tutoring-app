@@ -1,6 +1,7 @@
 package com.tutoring.app.conversation;
 
 import com.tutoring.app.conversation.ConversationRepository.ConversationLastMessageProjection;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -10,8 +11,9 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Tag(name = "Conversations", description = "Conversation retrieval between tutors and students")
 @RestController
-@CrossOrigin(origins = {"http://localhost:8081"})
+@CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.2.167:8081","http://localhost:5173","http://192.168.1.32:5173"})
 @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @RequestMapping("/api/conversation")
 public class ConversationController {
