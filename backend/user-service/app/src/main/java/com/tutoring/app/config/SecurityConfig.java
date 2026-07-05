@@ -27,10 +27,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
   private final UserDetailsService userDetailsService;
   private final JwtFilter jwtFilter;
+  private final RateLimitFilter rateLimitFilter;
 
-  public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter) {
+  public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter, RateLimitFilter rateLimitFilter) {
     this.userDetailsService = userDetailsService;
     this.jwtFilter = jwtFilter;
+    this.rateLimitFilter = rateLimitFilter;
   }
 
   @Bean
@@ -46,6 +48,7 @@ public class SecurityConfig {
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
+        .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
