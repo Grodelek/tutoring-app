@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @RestController
 @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
-@CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.2.167:8081"})
+@CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.2.167:8081","http://localhost:5173","http://192.168.1.32:5173"})
 @RequestMapping("/api/offer")
 public class TutorOfferController {
     private final TutorOfferService tutorOfferService;
