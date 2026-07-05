@@ -3,6 +3,7 @@ package com.tutoring.app.message;
 import com.tutoring.app.conversation.Conversation;
 import com.tutoring.app.conversation.ConversationDTO;
 import com.tutoring.app.conversation.ConversationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Tag(name = "Messages", description = "Sending and retrieving messages within conversations")
 @RestController
 @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 @CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.2.167:8081","http://localhost:5173","http://192.168.1.32:5173"})

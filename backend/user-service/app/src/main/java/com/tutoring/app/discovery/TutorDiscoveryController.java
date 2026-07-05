@@ -1,6 +1,7 @@
 package com.tutoring.app.discovery;
 
 import com.tutoring.app.user.UserPrincipal;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Tag(name = "Tutor Discovery", description = "Search and filter available tutors")
 @RestController
 @RequestMapping("/api/tutors/discover")
 @RequiredArgsConstructor
