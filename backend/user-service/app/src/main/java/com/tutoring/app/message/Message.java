@@ -1,6 +1,7 @@
 package com.tutoring.app.message;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tutoring.app.conversation.Conversation;
 import com.tutoring.app.lesson.Lesson;
 import com.tutoring.app.offer.TutorOffer;
@@ -30,9 +31,11 @@ public class Message {
   @JsonBackReference
   private Conversation conversation;
   private MessageType messageType = MessageType.TEXT;
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "lesson_id")
   private Lesson lesson;
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "offer_id")
   private TutorOffer offer;

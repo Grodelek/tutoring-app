@@ -45,4 +45,9 @@ class LessonController {
   public ResponseEntity<LessonResponseDTO> updateLesson(@PathVariable UUID id, @Valid @RequestBody LessonRequestDTO dto) {
     return lessonService.updateLesson(id, dto);
   }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteLesson(@PathVariable UUID id) {
+    return lessonService.deleteLesson(id);
+  }
 }

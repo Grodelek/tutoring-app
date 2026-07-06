@@ -1,5 +1,6 @@
 package com.tutoring.app.lesson;
 
+import com.tutoring.app.message.MessageRepository;
 import com.tutoring.app.user.User;
 import com.tutoring.app.user.UserPrincipal;
 import com.tutoring.app.user.UserRepository;
@@ -19,10 +20,12 @@ import java.util.stream.Collectors;
 public class LessonService {
   private final LessonRepository lessonRepository;
   private final UserRepository userRepository;
+  private final MessageRepository messageRepository;
 
-  public LessonService(LessonRepository lessonRepository, UserRepository userRepository) {
+  public LessonService(LessonRepository lessonRepository, UserRepository userRepository, MessageRepository messageRepository) {
     this.lessonRepository = lessonRepository;
     this.userRepository = userRepository;
+    this.messageRepository = messageRepository;
   }
 
   public List<Lesson> getAllLessons() { return lessonRepository.findAll(); }
@@ -73,6 +76,18 @@ public class LessonService {
     dto.setDurationTime(lesson.getDurationTime()); dto.setPrice(lesson.getPrice());
     dto.setDescription(lesson.getDescription()); dto.setTutorId(lesson.getTutor().getId());
     return dto;
+  }
+
+  @jakarta.transaction.Transactional
+  public ResponseEntity<Void> deleteLesson(UUID id) {
+    User tutor = getLoggedInUser();
+    Lesson lesson = lessonRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Lesson not found"));
+    if (!lesson.getTutor().getId().equals(tutor.getId()))
+      return ResponseEntity.status(403).build();
+    messageRepository.detachLesson(id);
+    lessonRepository.delete(lesson);
+    return ResponseEntity.noContent().build();
   }
 
   private User getLoggedInUser() {

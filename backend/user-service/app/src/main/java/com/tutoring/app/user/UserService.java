@@ -1,11 +1,14 @@
 package com.tutoring.app.user;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.text.Normalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,10 +51,50 @@ public class UserService {
             .password(passwordEncoder.encode(userDTO.getPassword()))
             .roles(roles)
             .userType(userDTO.getUserType())
+            .slug(generateUniqueSlug(userDTO.getUsername()))
             .photoPath("https://ui-avatars.com/api/?name=" + userDTO.getUsername() + "&background=random&bold=true&color=fff")
             .build();
     userRepository.save(user);
     return user;
+  }
+
+  private String generateUniqueSlug(String username) {
+    String base = generateSlugFrom(username);
+    if (!userRepository.existsBySlug(base)) return base;
+    int i = 2;
+    while (userRepository.existsBySlug(base + "-" + i)) i++;
+    return base + "-" + i;
+  }
+
+  private String generateSlugFrom(String username) {
+    if (username == null) return "";
+    return Normalizer.normalize(username, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "")
+            .replaceAll("([a-z])([A-Z])", "$1-$2")
+            .toLowerCase()
+            .replaceAll("[^a-z0-9]+", "-")
+            .replaceAll("^-|-$", "");
+  }
+
+  public PublicTutorProfileDTO getPublicProfile(String slug) {
+    User user = userRepository.findBySlug(slug)
+            .or(() -> userRepository.findAll().stream()
+                    .filter(u -> slug.equals(generateSlugFrom(u.getUsername())))
+                    .findFirst()
+                    .map(u -> { if (u.getSlug() == null) { u.setSlug(generateUniqueSlug(u.getUsername())); userRepository.save(u); } return u; }))
+            .orElseThrow(() -> new EntityNotFoundException("Tutor not found"));
+    List<PublicTutorProfileDTO.PublicLessonDTO> lessons = user.getLessons().stream()
+            .map(l -> PublicTutorProfileDTO.PublicLessonDTO.builder()
+                    .id(l.getId()).subject(l.getSubject())
+                    .durationTime(l.getDurationTime()).price(l.getPrice())
+                    .description(l.getDescription()).build())
+            .collect(Collectors.toList());
+    return PublicTutorProfileDTO.builder()
+            .id(user.getId()).username(user.getUsername()).slug(user.getSlug())
+            .photoPath(user.getPhotoPath()).description(user.getDescription())
+            .points(user.getPoints()).userType(user.getUserType())
+            .experienceTime(user.getExperienceTime()).availability(user.getAvailability())
+            .lessonType(user.getLessonType()).lessons(lessons).build();
   }
 
   public ResponseEntity<String> delete(UUID id) {
@@ -71,6 +114,7 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
       }
       User user = userOptional.get();
+      if (user.getSlug() == null) { user.setSlug(generateUniqueSlug(user.getUsername())); userRepository.save(user); }
       authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(user.getUsername(), userDTO.getPassword()));
       String token = jwtService.generateToken(user.getUsername());
@@ -134,7 +178,7 @@ public class UserService {
   }
 
   private boolean isTutorProfileComplete(User user) {
-    if (!user.getUserType().equals("TUTOR")) return true;
+    if (user.getUserType() != UserType.TUTOR) return true;
     return user.getExperienceTime() != null && user.getAvailability() != null && user.getLessonType() != null;
   }
 

@@ -48,7 +48,8 @@ public class UserController {
     User user = userService.findByUsername(userDetails.getUsername());
     return ResponseEntity.ok(new UserDTO(
         user.getId(), user.getUsername(), user.getEmail(), user.getPhotoPath(),
-        user.getPoints(), user.getDescription(), user.getStreak() == null ? 0 : user.getStreak()
+        user.getPoints(), user.getDescription(), user.getStreak() == null ? 0 : user.getStreak(),
+        user.getSlug(), user.getUserType()
     ));
   }
 
@@ -76,5 +77,10 @@ public class UserController {
   @GetMapping("/tutor/me")
   public TutorWithInfoResponse getTutorInfo(@AuthenticationPrincipal UserDetails userDetails) {
     return userService.getTutorInfo(userDetails);
+  }
+
+  @GetMapping("/public/{slug}")
+  public ResponseEntity<PublicTutorProfileDTO> getPublicProfile(@PathVariable String slug) {
+    return ResponseEntity.ok(userService.getPublicProfile(slug));
   }
 }

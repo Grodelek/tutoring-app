@@ -11,5 +11,7 @@ public record UserDTO(
   String photoPath,
   int points,
   String description,
-  int streak
+  int streak,
+  String slug,
+  UserType userType
 ) {}
