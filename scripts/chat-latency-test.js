@@ -266,7 +266,7 @@ async function main() {
 
     receiverClient = stompClient(receiverLogin.token);
     await connect(receiverClient);
-    subscription = await subscribeAndWait(receiverClient, '/topic/notification', (message) => {
+    subscription = await subscribeAndWait(receiverClient, '/user/queue/messages', (message) => {
       let payload;
       try { payload = JSON.parse(message.body); } catch { return; }
       if (String(payload.senderId) !== state.senderId || String(payload.receiverId) !== state.receiverId) return;
@@ -298,7 +298,6 @@ async function main() {
       state.sent.set(id, item);
       const postStarted = performance.now();
       const response = await sendMessage(senderLogin.token, {
-        senderId: state.senderId,
         receiverId: state.receiverId,
         content: id,
         messageType: 'TEXT',

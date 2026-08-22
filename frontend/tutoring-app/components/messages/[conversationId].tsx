@@ -124,7 +124,6 @@ const ChatScreen: React.FC = () => {
     setIsSending(true);
     try {
       const message = await sendMessageApi({
-        senderId: userId,
         receiverId: receiverId?.toString() ?? "",
         content,
       });

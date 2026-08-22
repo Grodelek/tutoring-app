@@ -7,6 +7,9 @@ import com.tutoring.app.message.MessageService;
 import com.tutoring.app.user.User;
 import com.tutoring.app.user.UserPrincipal;
 import com.tutoring.app.user.UserRepository;
+import com.tutoring.app.session.SessionStatus;
+import com.tutoring.app.session.TutoringSession;
+import com.tutoring.app.session.TutoringSessionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -32,15 +35,18 @@ public class TutorOfferService {
     private final LessonRepository lessonRepository;
     private final MessageService messageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final TutoringSessionRepository tutoringSessionRepository;
 
     public TutorOfferService(UserRepository userRepository, TutorOfferRepository tutorOfferRepository,
                              LessonRepository lessonRepository, MessageService messageService,
-                             SimpMessagingTemplate messagingTemplate) {
+                             SimpMessagingTemplate messagingTemplate,
+                             TutoringSessionRepository tutoringSessionRepository) {
         this.userRepository = userRepository;
         this.tutorOfferRepository = tutorOfferRepository;
         this.lessonRepository = lessonRepository;
         this.messageService = messageService;
         this.messagingTemplate = messagingTemplate;
+        this.tutoringSessionRepository = tutoringSessionRepository;
     }
 
     @Transactional
@@ -70,7 +76,7 @@ public class TutorOfferService {
         tutorOfferRepository.save(offer);
 
         MessageDTO invitation = messageService.sendOfferInvitation(proposer.getId(), receiver.getId(), offer);
-        messagingTemplate.convertAndSend("/topic/notification", invitation);
+        messagingTemplate.convertAndSendToUser(receiver.getUsername(), "/queue/messages", invitation);
         return new OfferResponseDTO(offer);
     }
 
@@ -78,9 +84,15 @@ public class TutorOfferService {
     public OfferResponseDTO acceptOffer(UUID offerId) {
         TutorOffer offer = getParticipantOffer(offerId);
         requirePending(offer);
-        requireStudent(offer);
+        requireTutor(offer);
         offer.setStatus(OfferStatus.ACCEPTED); offer.setAccepted(true);
         tutorOfferRepository.save(offer);
+        if (!tutoringSessionRepository.existsByOfferId(offer.getId())) {
+            tutoringSessionRepository.save(TutoringSession.builder()
+                    .student(offer.getStudent()).tutor(offer.getTutor()).lesson(offer.getLesson())
+                    .offer(offer).startTime(offer.getSessionStartTime())
+                    .status(SessionStatus.SCHEDULED).build());
+        }
         return new OfferResponseDTO(offer);
     }
 
@@ -88,7 +100,7 @@ public class TutorOfferService {
     public OfferResponseDTO declineOffer(UUID offerId) {
         TutorOffer offer = getParticipantOffer(offerId);
         requirePending(offer);
-        requireStudent(offer);
+        requireTutor(offer);
         offer.setStatus(OfferStatus.DECLINED); offer.setAccepted(false);
         tutorOfferRepository.save(offer);
         return new OfferResponseDTO(offer);
@@ -114,9 +126,12 @@ public class TutorOfferService {
         return new OfferResponseDTO(offer);
     }
 
-    public List<OfferResponseDTO> getMyStudentBookings() {
+    public List<OfferResponseDTO> getMyBookings() {
         User user = getLoggedInUser();
-        return tutorOfferRepository.findByStudentIdOrderBySessionStartTimeAsc(user.getId()).stream()
+        List<TutorOffer> offers = user.getUserType() == com.tutoring.app.user.UserType.TUTOR
+                ? tutorOfferRepository.findByTutorIdOrderBySessionStartTimeAsc(user.getId())
+                : tutorOfferRepository.findByStudentIdOrderBySessionStartTimeAsc(user.getId());
+        return offers.stream()
                 .map(OfferResponseDTO::new).collect(Collectors.toList());
     }
 
@@ -141,9 +156,9 @@ public class TutorOfferService {
         }
     }
 
-    private void requireStudent(TutorOffer offer) {
-        if (!getLoggedInUser().getId().equals(offer.getStudent().getId())) {
-            throw new SecurityException("Only the student can accept or decline an offer");
+    private void requireTutor(TutorOffer offer) {
+        if (!getLoggedInUser().getId().equals(offer.getTutor().getId())) {
+            throw new SecurityException("Only the tutor can accept or decline an offer");
         }
     }
 

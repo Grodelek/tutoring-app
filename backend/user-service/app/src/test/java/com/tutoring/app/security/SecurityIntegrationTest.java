@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,5 +55,19 @@ class SecurityIntegrationTest {
         mvc.perform(post("/api/users/add").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("username", "newuser", "email", "duplicate@example.test", "password", "secret123", "userType", "STUDENT"))))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void authenticatedNonOwnerCannotModifyAnotherProfile() throws Exception {
+        User owner = userRepository.save(User.builder().username("owner").email("owner@example.test")
+                .password("encoded").userType(UserType.STUDENT).build());
+        User other = userRepository.save(User.builder().username("other").email("other@example.test")
+                .password("encoded").userType(UserType.STUDENT).build());
+
+        mvc.perform(put("/api/users/" + owner.getId())
+                        .header("Authorization", "Bearer " + jwtService.generateToken(other.getUsername()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("username", "hijacked", "description", "x"))))
+                .andExpect(status().isForbidden());
     }
 }

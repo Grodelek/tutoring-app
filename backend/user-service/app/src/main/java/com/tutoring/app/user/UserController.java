@@ -34,13 +34,13 @@ public class UserController {
   public UserDTO getUser(@PathVariable UUID id) { return userService.getUserById(id); }
 
   @PutMapping("/{id}")
-  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #id)")
   public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #id)")
   public ResponseEntity<String> delete(@PathVariable UUID id) { return userService.delete(id); }
 
   @GetMapping("/me")

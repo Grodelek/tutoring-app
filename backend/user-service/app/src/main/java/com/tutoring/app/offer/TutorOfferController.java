@@ -29,5 +29,5 @@ public class TutorOfferController {
     public OfferResponseDTO confirmPayment(@PathVariable UUID offerId) { return tutorOfferService.confirmPayment(offerId); }
 
     @GetMapping("/my")
-    public List<OfferResponseDTO> getMyBookings() { return tutorOfferService.getMyStudentBookings(); }
+    public List<OfferResponseDTO> getMyBookings() { return tutorOfferService.getMyBookings(); }
 }

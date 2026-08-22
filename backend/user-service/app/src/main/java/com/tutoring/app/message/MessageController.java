@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.tutoring.app.user.UserPrincipal;
 
 @Tag(name = "Messages", description = "Sending and retrieving messages within conversations")
 @RestController
@@ -27,9 +29,10 @@ public class MessageController {
   @PostMapping("/send")
   public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request) throws Exception {
     MessageDTO saved = messageService.sendMessage(
-        request.getSenderId(), request.getReceiverId(),
+        request.getReceiverId(),
         request.getContent(), request.getMessageType(), request.getLessonId());
-    messagingTemplate.convertAndSend("/topic/notification", saved);
+    messagingTemplate.convertAndSendToUser(
+        messageService.findUsernameById(saved.getReceiverId()), "/queue/messages", saved);
     return ResponseEntity.ok(saved);
   }
 
@@ -41,7 +44,14 @@ public class MessageController {
   @PostMapping("/get-or-create")
   public ResponseEntity<?> getOrCreateConversation(@RequestBody ConversationDTO req) {
     try {
-      Conversation conversation = messageService.getOrCreateConversation(req.getUser1Id(), req.getUser2Id());
+      UserPrincipal principal = (UserPrincipal) org.springframework.security.core.context.SecurityContextHolder
+          .getContext().getAuthentication().getPrincipal();
+      UUID authenticatedId = messageService.findUserIdByUsername(principal.getUsername());
+      UUID otherUserId = authenticatedId.equals(req.getUser1Id()) ? req.getUser2Id() : req.getUser1Id();
+      if (!authenticatedId.equals(req.getUser1Id()) && !authenticatedId.equals(req.getUser2Id())) {
+        throw new org.springframework.security.access.AccessDeniedException("Authenticated user must be a participant");
+      }
+      Conversation conversation = messageService.getOrCreateConversationForUser(authenticatedId, otherUserId);
       return ResponseEntity.ok(conversation);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

@@ -135,7 +135,7 @@ public class UserService {
   }
 
   private boolean isTutorProfileComplete(User user) {
-    if (!user.getUserType().equals("TUTOR")) return true;
+    if (user.getUserType() != UserType.TUTOR) return true;
     return user.getExperienceTime() != null && user.getAvailability() != null && user.getLessonType() != null;
   }
 

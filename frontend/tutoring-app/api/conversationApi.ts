@@ -22,7 +22,6 @@ export const getMessages = async (conversationId: string): Promise<ChatMessage[]
 };
 
 export const sendMessage = async (payload: {
-  senderId: string;
   receiverId: string;
   content: string;
 }): Promise<ChatMessage> => {

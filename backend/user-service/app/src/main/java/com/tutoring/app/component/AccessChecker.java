@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component("accessChecker")
 public class AccessChecker {
@@ -31,5 +32,14 @@ public class AccessChecker {
         return user.getExperienceTime() != null &&
                 user.getAvailability() != null &&
                 user.getLessonType() != null;
+    }
+
+    public boolean isOwner(Authentication auth, UUID resourceUserId) {
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof UserPrincipal principal)) {
+            return false;
+        }
+        return userRepository.findByUsername(principal.getUsername())
+                .map(user -> user.getId().equals(resourceUserId))
+                .orElse(false);
     }
 }
