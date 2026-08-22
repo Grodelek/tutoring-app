@@ -1,0 +1,22 @@
+# Build output and dependencies
+**/target/
+**/node_modules/
+coverage/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local secrets and environment configuration
+.env
+.env.*
+!*.example
+!application-example.properties
+backend/user-service/app/src/main/resources/application.properties
+
+# Test and runtime output
+*.log
+*.hprof

@@ -1,0 +1,11 @@
+{
+  "name": "tutoring-app-chat-latency-test",
+  "private": true,
+  "scripts": {
+    "test:chat-latency": "node scripts/chat-latency-test.js"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.1.1",
+    "faye-websocket": "^0.11.4"
+  }
+}

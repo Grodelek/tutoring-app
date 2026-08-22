@@ -1,0 +1,45 @@
+package com.tutoring.app.component;
+
+import com.tutoring.app.user.User;
+import com.tutoring.app.user.UserPrincipal;
+import com.tutoring.app.user.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Component("accessChecker")
+public class AccessChecker {
+
+    private final UserRepository userRepository;
+
+    public AccessChecker(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public boolean isTutorProfileComplete(Authentication auth){
+        UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
+        String username = principal.getUsername();
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if(userOptional.isEmpty()) {
+            throw new EntityNotFoundException("User not found");
+        }
+        User user = userOptional.get();
+        if (user.getUserType() != com.tutoring.app.user.UserType.TUTOR) return true;
+
+        return user.getExperienceTime() != null &&
+                user.getAvailability() != null &&
+                user.getLessonType() != null;
+    }
+
+    public boolean isOwner(Authentication auth, UUID resourceUserId) {
+        if (auth == null || !auth.isAuthenticated() || !(auth.getPrincipal() instanceof UserPrincipal principal)) {
+            return false;
+        }
+        return userRepository.findByUsername(principal.getUsername())
+                .map(user -> user.getId().equals(resourceUserId))
+                .orElse(false);
+    }
+}
