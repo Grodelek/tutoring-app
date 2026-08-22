@@ -76,6 +76,7 @@ public class MessageService {
         MessageDTO dto = new MessageDTO();
         dto.setContent(content); dto.setId(message.getId()); dto.setTimestamp(message.getTimestamp());
         dto.setReceiverId(message.getReceiver().getId()); dto.setSenderId(message.getSender().getId());
+        dto.setConversationId(conversation.getId());
         dto.setMessageType(message.getMessageType());
         return dto;
     }

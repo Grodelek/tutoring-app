@@ -29,6 +29,7 @@ public class Message {
   @JoinColumn(name = "conversation_id")
   @JsonBackReference
   private Conversation conversation;
+  @Enumerated(EnumType.STRING)
   private MessageType messageType = MessageType.TEXT;
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "lesson_id")

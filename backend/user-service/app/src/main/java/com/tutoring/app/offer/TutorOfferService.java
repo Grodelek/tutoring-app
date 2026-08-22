@@ -77,6 +77,8 @@ public class TutorOfferService {
     @Transactional
     public OfferResponseDTO acceptOffer(UUID offerId) {
         TutorOffer offer = getParticipantOffer(offerId);
+        requirePending(offer);
+        requireStudent(offer);
         offer.setStatus(OfferStatus.ACCEPTED); offer.setAccepted(true);
         tutorOfferRepository.save(offer);
         return new OfferResponseDTO(offer);
@@ -85,6 +87,8 @@ public class TutorOfferService {
     @Transactional
     public OfferResponseDTO declineOffer(UUID offerId) {
         TutorOffer offer = getParticipantOffer(offerId);
+        requirePending(offer);
+        requireStudent(offer);
         offer.setStatus(OfferStatus.DECLINED); offer.setAccepted(false);
         tutorOfferRepository.save(offer);
         return new OfferResponseDTO(offer);
@@ -129,6 +133,18 @@ public class TutorOfferService {
         if (!user.getId().equals(offer.getTutor().getId()) && !user.getId().equals(offer.getStudent().getId()))
             throw new SecurityException("Nie jesteś uczestnikiem tej oferty");
         return offer;
+    }
+
+    private void requirePending(TutorOffer offer) {
+        if (offer.getStatus() != OfferStatus.PENDING) {
+            throw new IllegalStateException("Only pending offers can be changed");
+        }
+    }
+
+    private void requireStudent(TutorOffer offer) {
+        if (!getLoggedInUser().getId().equals(offer.getStudent().getId())) {
+            throw new SecurityException("Only the student can accept or decline an offer");
+        }
     }
 
     private User getLoggedInUser() {

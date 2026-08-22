@@ -1,1 +1,3 @@
-export const BASE_URL = "http://10.100.81.86:8090";
+// Use the computer's LAN address, not the Wi-Fi gateway, so physical devices
+// running Expo Go can reach the Spring Boot server.
+export const BASE_URL = "http://192.168.1.32:8090";

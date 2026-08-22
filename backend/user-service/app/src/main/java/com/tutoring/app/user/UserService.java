@@ -71,8 +71,9 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found"));
       }
       User user = userOptional.get();
-      authenticationManager.authenticate(
-              new UsernamePasswordAuthenticationToken(user.getUsername(), userDTO.getPassword()));
+      if (!passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication failed"));
+      }
       String token = jwtService.generateToken(user.getUsername());
       return ResponseEntity.ok(Map.of(
               "token", token,
@@ -94,7 +95,7 @@ public class UserService {
             .username(user.getUsername())
             .email(user.getEmail())
             .description(user.getDescription())
-            .points(user.getPoints())
+            .points(user.getPoints() == null ? 0 : user.getPoints())
             .photoPath(user.getPhotoPath())
             .streak(user.getStreak() == null ? 0 : user.getStreak())
             .build();

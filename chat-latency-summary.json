@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "sent": 100,
+  "received": 100,
+  "uniqueReceived": 100,
+  "lost": 0,
+  "duplicates": 0,
+  "ordered": true,
+  "minMs": 6.936,
+  "maxMs": 25.996,
+  "meanMs": 9.435,
+  "medianMs": 8.947,
+  "p95Ms": 11.9518,
+  "durationMs": 10298.196,
+  "testDatabase": "tutoring_latency_test",
+  "backendUrl": "http://localhost:8091",
+  "messageIntervalMs": 75
+}

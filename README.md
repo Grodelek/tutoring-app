@@ -2,6 +2,12 @@
 
 Welcome to **Tutoring App** – a sleek, modern **mobile app** for connecting tutors and students effortlessly! Built with **React Native** for cross-platform performance. 💜
 
+## Testing
+
+Backend: `cd backend/user-service/app; ./mvnw test` (coverage: `./mvnw jacoco:report`). Frontend: `cd frontend/tutoring-app; npm install; npm test`.
+
+See `TEST_REPORT.md`, `MANUAL_TEST_PLAN.md`, and `CHAT_LATENCY_TEST.md` for results and procedures.
+
 ---
 
 ## 💻 Technologies & Stack

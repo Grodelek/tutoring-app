@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -137,6 +139,17 @@ public class LessonServiceTest {
                     assertEquals(lessonRequestDTO.getPrice(), result.getPrice());
                 }
         );
+    }
+
+    @Test
+    void shouldRejectUpdateOfAnotherTutorsLesson() {
+        User otherTutor = User.builder().id(UUID.randomUUID()).username("other").build();
+        UUID lessonId = UUID.randomUUID();
+        Lesson lesson = Lesson.builder().id(lessonId).tutor(otherTutor).build();
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+
+        assertThrows(SecurityException.class, () -> lessonService.updateLesson(lessonId, lessonRequestDTO));
+        verify(lessonRepository, never()).save(any(Lesson.class));
     }
 
     @AfterEach
