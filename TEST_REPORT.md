@@ -1,12 +1,12 @@
 # Test report
 
-Results below come from commands executed in this workspace (backend: 2026-08-23; frontend: 2026-08-22).
+Results below come from commands executed in this workspace on 2026-08-24.
 
 ## Backend
 
 Command: `./mvnw test` (from `backend/user-service/app`)
 
-- Tests run: 30
+- Tests run: 34
 - Failures: 0
 - Errors: 0
 - Skipped: 0
@@ -15,9 +15,9 @@ Command: `./mvnw test` (from `backend/user-service/app`)
 
 Command: `./mvnw jacoco:report`
 
-- Line coverage: 59.81% (491 / 821)
-- Branch coverage: 33.43% (117 / 350)
-- Instruction coverage: 53.75% (2277 / 4236)
+- Line coverage: 65.25% (539 / 826)
+- Branch coverage: 39.77% (140 / 352)
+- Instruction coverage: 59.92% (2548 / 4252)
 
 ## Frontend
 

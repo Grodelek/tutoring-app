@@ -7,6 +7,7 @@ import com.tutoring.app.message.MessageService;
 import com.tutoring.app.user.User;
 import com.tutoring.app.user.UserPrincipal;
 import com.tutoring.app.user.UserRepository;
+import com.tutoring.app.user.UserType;
 import com.tutoring.app.session.SessionStatus;
 import com.tutoring.app.session.TutoringSession;
 import com.tutoring.app.session.TutoringSessionRepository;
@@ -55,19 +56,20 @@ public class TutorOfferService {
         if (offerDTO.getReceiverId() == null) throw new IllegalArgumentException("Receiver ID cannot be null");
         if (offerDTO.getSessionStartTime() == null) throw new IllegalArgumentException("Session start time cannot be null");
 
-        User proposer = getLoggedInUser();
-        User receiver = userRepository.findById(offerDTO.getReceiverId())
-                .orElseThrow(() -> new EntityNotFoundException("Receiver not found"));
+        User student = getLoggedInUser();
+        if (student.getUserType() != UserType.STUDENT) {
+            throw new SecurityException("Only students can create tutor offers");
+        }
         Lesson lesson = lessonRepository.findById(offerDTO.getLessonId())
                 .orElseThrow(() -> new EntityNotFoundException("Lesson not found"));
-
         User tutor = lesson.getTutor();
         if (tutor == null) throw new IllegalArgumentException("Lesson has no tutor");
-
-        User student;
-        if (tutor.getId().equals(proposer.getId())) student = receiver;
-        else if (tutor.getId().equals(receiver.getId())) student = proposer;
-        else throw new IllegalArgumentException("Lesson tutor must be one of the conversation participants");
+        if (student.getId().equals(tutor.getId())) {
+            throw new SecurityException("A student cannot create an offer for themselves");
+        }
+        if (!tutor.getId().equals(offerDTO.getReceiverId())) {
+            throw new IllegalArgumentException("Offer receiver must own the selected lesson");
+        }
 
         TutorOffer offer = TutorOffer.builder()
                 .tutor(tutor).student(student).lesson(lesson)
@@ -75,8 +77,8 @@ public class TutorOfferService {
                 .status(OfferStatus.PENDING).accepted(false).build();
         tutorOfferRepository.save(offer);
 
-        MessageDTO invitation = messageService.sendOfferInvitation(proposer.getId(), receiver.getId(), offer);
-        messagingTemplate.convertAndSendToUser(receiver.getUsername(), "/queue/messages", invitation);
+        MessageDTO invitation = messageService.sendOfferInvitation(student.getId(), tutor.getId(), offer);
+        messagingTemplate.convertAndSendToUser(tutor.getUsername(), "/queue/messages", invitation);
         return new OfferResponseDTO(offer);
     }
 
@@ -121,6 +123,10 @@ public class TutorOfferService {
         else throw new SecurityException("Nie jesteś uczestnikiem tych zajęć");
         if (offer.isStudentConfirmedPayment() && offer.isTutorConfirmedPayment() && !offer.isCompleted()) {
             grantReward(offer.getStudent()); grantReward(offer.getTutor()); offer.setCompleted(true);
+            TutoringSession session = tutoringSessionRepository.findByOfferId(offer.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Session not found for offer"));
+            session.setStatus(SessionStatus.SUCCESSFUL);
+            tutoringSessionRepository.save(session);
         }
         tutorOfferRepository.save(offer);
         return new OfferResponseDTO(offer);

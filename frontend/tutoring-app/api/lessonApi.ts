@@ -19,7 +19,6 @@ export interface Lesson {
   subject: string;
   startTime: string | null;
   durationMinutes: number;
-  status: string | null;
   price: number | null;
   description: string;
   durationTime: number;

@@ -1,6 +1,7 @@
 package com.tutoring.app.offer;
 
 import com.tutoring.app.lesson.LessonRepository;
+import com.tutoring.app.lesson.Lesson;
 import com.tutoring.app.message.MessageService;
 import com.tutoring.app.user.User;
 import com.tutoring.app.user.UserPrincipal;
@@ -20,10 +21,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import java.util.Optional;
 import java.util.List;
 import java.util.UUID;
+import java.time.LocalDateTime;
 import com.tutoring.app.session.TutoringSessionRepository;
+import com.tutoring.app.session.TutoringSession;
+import com.tutoring.app.session.SessionStatus;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,10 +91,67 @@ class TutorOfferServiceTest {
         verify(tutorOfferRepository).findByStudentIdOrderBySessionStartTimeAsc(student.getId());
     }
 
+    @Test void studentCanCreateOfferForLessonsTutor() throws Exception {
+        Lesson lesson = Lesson.builder().id(UUID.randomUUID()).tutor(tutor).durationTime(60).build();
+        when(lessonRepository.findById(lesson.getId())).thenReturn(Optional.of(lesson));
+        authenticate(student);
+        service.makeOffer(offerRequest(lesson.getId(), tutor.getId()));
+        var captor = org.mockito.ArgumentCaptor.forClass(TutorOffer.class);
+        verify(tutorOfferRepository).save(captor.capture());
+        assertEquals(student.getId(), captor.getValue().getStudent().getId());
+        assertEquals(tutor.getId(), captor.getValue().getTutor().getId());
+    }
+
+    @Test void tutorCannotCreateOffer() {
+        authenticate(tutor);
+        assertThrows(SecurityException.class, () -> service.makeOffer(offerRequest(UUID.randomUUID(), student.getId())));
+        verify(tutorOfferRepository, never()).save(any());
+    }
+
+    @Test void studentCannotCreateOfferForMissingLessonOrSelf() {
+        authenticate(student);
+        UUID missing = UUID.randomUUID();
+        when(lessonRepository.findById(missing)).thenReturn(Optional.empty());
+        assertThrows(jakarta.persistence.EntityNotFoundException.class, () -> service.makeOffer(offerRequest(missing, tutor.getId())));
+        Lesson ownLesson = Lesson.builder().id(UUID.randomUUID()).tutor(student).build();
+        when(lessonRepository.findById(ownLesson.getId())).thenReturn(Optional.of(ownLesson));
+        assertThrows(SecurityException.class, () -> service.makeOffer(offerRequest(ownLesson.getId(), student.getId())));
+    }
+
+    @Test void sessionBecomesSuccessfulOnlyAfterBothConfirmationsAndIsIdempotent() {
+        Lesson lesson = Lesson.builder().id(UUID.randomUUID()).tutor(tutor).durationTime(60).build();
+        offer.setLesson(lesson); offer.setStatus(OfferStatus.ACCEPTED);
+        offer.setSessionStartTime(LocalDateTime.now().minusHours(2));
+        TutoringSession session = TutoringSession.builder().id(UUID.randomUUID()).offer(offer)
+                .student(student).tutor(tutor).lesson(lesson).startTime(offer.getSessionStartTime())
+                .status(SessionStatus.SCHEDULED).build();
+        foundOffer();
+        when(tutoringSessionRepository.findByOfferId(offer.getId())).thenReturn(Optional.of(session));
+        authenticate(student);
+        service.confirmPayment(offer.getId());
+        assertFalse(offer.isCompleted());
+        assertEquals(SessionStatus.SCHEDULED, session.getStatus());
+        verify(tutoringSessionRepository, never()).save(any());
+        authenticate(tutor);
+        service.confirmPayment(offer.getId());
+        assertTrue(offer.isCompleted());
+        assertEquals(SessionStatus.SUCCESSFUL, session.getStatus());
+        verify(tutoringSessionRepository).save(session);
+        service.confirmPayment(offer.getId());
+        verify(tutoringSessionRepository, times(1)).save(session);
+    }
+
     private void authenticate(User user) {
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(new UserPrincipal(user), null, List.of()));
     }
 
     private void foundOffer() { when(tutorOfferRepository.findById(offer.getId())).thenReturn(Optional.of(offer)); }
+
+    private TutorOfferDTO offerRequest(UUID lessonId, UUID receiverId) {
+        TutorOfferDTO dto = new TutorOfferDTO();
+        dto.setLessonId(lessonId); dto.setReceiverId(receiverId);
+        dto.setSessionStartTime(LocalDateTime.now().plusDays(1));
+        return dto;
+    }
 }
