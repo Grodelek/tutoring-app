@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.tutoring.app.user.UserType;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,7 +30,10 @@ public class LessonService {
 
   public LessonResponseDTO createLesson(LessonRequestDTO dto) {
     User tutor = getLoggedInUser();
-    Lesson lesson = Lesson.builder()
+    if (tutor.getUserType() != UserType.TUTOR) {
+            throw new SecurityException("Only tutors can create lessons");
+        }
+        Lesson lesson = Lesson.builder()
             .tutor(tutor).subject(dto.getSubject())
             .durationTime(dto.getDurationTime()).price(dto.getPrice())
             .description(dto.getDescription()).build();

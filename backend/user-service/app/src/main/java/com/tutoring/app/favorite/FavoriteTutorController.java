@@ -18,17 +18,20 @@ public class FavoriteTutorController {
   private final FavoriteTutorService favoriteTutorService;
 
   @PostMapping("/add")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #request.studentId)")
   public ResponseEntity<FavoriteTutorDTO> addFavorite(@RequestBody FavoriteTutorDTO request) {
     return ResponseEntity.ok(favoriteTutorService.addFavorite(request.getStudentId(), request.getTutorId()));
   }
 
   @DeleteMapping("/remove/{studentId}/{tutorId}")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #studentId)")
   public ResponseEntity<Void> removeFavorite(@PathVariable UUID studentId, @PathVariable UUID tutorId) {
     favoriteTutorService.removeFavorite(studentId, tutorId);
     return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/student/{studentId}")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #studentId)")
   public ResponseEntity<List<FavoriteTutorDTO>> getFavorites(@PathVariable UUID studentId) {
     return ResponseEntity.ok(favoriteTutorService.getFavoritesForStudent(studentId));
   }
