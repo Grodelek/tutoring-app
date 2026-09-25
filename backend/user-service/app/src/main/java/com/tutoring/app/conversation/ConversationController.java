@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.tutoring.app.user.UserPrincipal;
+import com.tutoring.app.user.UserRepository;
 
 @Tag(name = "Conversations", description = "Conversation retrieval between tutors and students")
 @RestController
@@ -18,13 +21,20 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/conversation")
 public class ConversationController {
   private final ConversationRepository conversationRepository;
+  private final UserRepository userRepository;
 
-  public ConversationController(ConversationRepository conversationRepository) {
+  public ConversationController(ConversationRepository conversationRepository, UserRepository userRepository) {
     this.conversationRepository = conversationRepository;
+    this.userRepository = userRepository;
   }
 
   @GetMapping("/{userId}")
   public ResponseEntity<List<ConversationDTO>> getUserConversations(@PathVariable UUID userId) {
+    UserPrincipal principal = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    UUID authenticatedUserId = userRepository.findByUsername(principal.getUsername()).orElseThrow().getId();
+    if (!authenticatedUserId.equals(userId)) {
+      return ResponseEntity.status(403).build();
+    }
     List<Conversation> conversations = conversationRepository.findByUser1IdOrUser2Id(userId);
     List<ConversationLastMessageProjection> projections = conversationRepository.findLastMessageTimestamps(userId);
     Map<UUID, ConversationLastMessageProjection> lastMessageMap = projections.stream()

@@ -29,7 +29,6 @@ export default function AuthLayout() {
         ) : (
           <Stack.Screen name="(tabs)" />
         )}
-        <Stack.Screen name="registerForm" />
         <Stack.Screen name="AfterLoginPopUp/moreInfoAboutTutor" />
         <Stack.Screen name="+not-found" />
       </Stack>

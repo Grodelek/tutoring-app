@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 
-@CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.2.167:8081","http://localhost:5173","http://192.168.1.32:5173"})
+@CrossOrigin(origins = {"http://localhost:8081","http://localhost:19006","http://localhost:19000","exp://192.168.1.32:8081","http://localhost:5173","http://192.168.1.32:5173"})
 @Tag(name = "Users", description = "User registration, authentication and profile management")
 @RestController
 @RequestMapping("/api/users")
@@ -34,13 +34,13 @@ public class UserController {
   public UserDTO getUser(@PathVariable UUID id) { return userService.getUserById(id); }
 
   @PutMapping("/{id}")
-  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #id)")
   public User updateUsername(@PathVariable UUID id, @Valid @RequestBody UpdateUserProfileRequest request) {
     return userService.updateUserProfile(id, request);
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
+  @PreAuthorize("@accessChecker.isOwner(authentication, #id)")
   public ResponseEntity<String> delete(@PathVariable UUID id) { return userService.delete(id); }
 
   @GetMapping("/me")

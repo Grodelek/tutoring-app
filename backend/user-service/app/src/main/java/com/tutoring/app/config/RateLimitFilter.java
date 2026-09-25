@@ -14,9 +14,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    @Value("${app.rate-limit.messages.capacity:30}")
+    private long messageLimitCapacity;
+
+    @Value("${app.rate-limit.messages.refill-seconds:60}")
+    private long messageLimitRefillSeconds;
 
     private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
             .expireAfterAccess(1, TimeUnit.HOURS)
@@ -36,7 +43,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         if (path.startsWith("/api/messages")) {
             return Bucket.builder()
-                    .addLimit(Bandwidth.builder().capacity(30).refillIntervally(30, Duration.ofMinutes(1)).build())
+                    .addLimit(Bandwidth.builder()
+                            .capacity(messageLimitCapacity)
+                            .refillIntervally(messageLimitCapacity, Duration.ofSeconds(messageLimitRefillSeconds))
+                            .build())
                     .build();
         }
         return Bucket.builder()

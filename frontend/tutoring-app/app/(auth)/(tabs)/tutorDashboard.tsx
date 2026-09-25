@@ -16,20 +16,6 @@ import { fetchLessonsByTutorId, Lesson } from "@/api/lessonApi";
 import { C, T, R } from "@/constants/theme";
 import { Card } from "@/components/ui/Card";
 
-function statusLabel(s: string | null) {
-  if (s === "ACTIVE") return "Aktywne";
-  if (s === "COMPLETED") return "Zakończone";
-  if (s === "CANCELLED") return "Anulowane";
-  if (s === "PENDING") return "Oczekujące";
-  return "Aktywne";
-}
-
-function statusColor(s: string | null) {
-  if (s === "COMPLETED") return C.teal;
-  if (s === "CANCELLED") return C.coral;
-  return C.green;
-}
-
 function LessonCard({ lesson }: { lesson: Lesson }) {
   return (
     <Card style={styles.card}>
@@ -45,14 +31,6 @@ function LessonCard({ lesson }: { lesson: Lesson }) {
             {lesson.price != null ? `${lesson.price} zł` : "—"}
           </Text>
           <Text style={styles.duration}>{lesson.durationTime} min</Text>
-        </View>
-      </View>
-      <View style={styles.cardFooter}>
-        <View style={[styles.statusPill, { backgroundColor: statusColor(lesson.status) + "22" }]}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor(lesson.status) }]} />
-          <Text style={[styles.statusText, { color: statusColor(lesson.status) }]}>
-            {statusLabel(lesson.status)}
-          </Text>
         </View>
       </View>
     </Card>
@@ -83,8 +61,6 @@ const TutorDashboard: React.FC = () => {
 
   useEffect(() => { loadLessons(); }, [loadLessons]);
 
-  const active    = lessons.filter(l => !l.status || l.status === "ACTIVE" || l.status === "PENDING");
-  const completed = lessons.filter(l => l.status === "COMPLETED" || l.status === "CANCELLED");
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -93,7 +69,7 @@ const TutorDashboard: React.FC = () => {
         <View>
           <Text style={styles.headerTitle}>Dashboard</Text>
           <Text style={styles.headerSub}>
-            {loading ? "Ładowanie…" : `${active.length} aktywnych ogłoszeń`}
+            {loading ? "Ładowanie…" : `${lessons.length} aktywnych ogłoszeń`}
           </Text>
         </View>
         <Pressable
@@ -138,16 +114,10 @@ const TutorDashboard: React.FC = () => {
             </View>
           ) : (
             <>
-              {active.length > 0 && (
+              {lessons.length > 0 && (
                 <>
                   <Text style={styles.sectionLabel}>Aktywne</Text>
-                  {active.map(l => <LessonCard key={l.id} lesson={l} />)}
-                </>
-              )}
-              {completed.length > 0 && (
-                <>
-                  <Text style={styles.sectionLabel}>Archiwum</Text>
-                  {completed.map(l => <LessonCard key={l.id} lesson={l} />)}
+                  {lessons.map(l => <LessonCard key={l.id} lesson={l} />)}
                 </>
               )}
             </>
@@ -254,28 +224,6 @@ const styles = StyleSheet.create({
     fontFamily: T.family.medium,
     fontSize: 11,
     color: C.textDim,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: R.full,
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontFamily: T.family.bold,
-    fontWeight: T.weight.bold,
-    fontSize: 12,
   },
 
   emptyWrap: {

@@ -2,6 +2,14 @@
 
 Welcome to **Tutoring App** – a sleek, modern **mobile app** for connecting tutors and students effortlessly! Built with **React Native** for cross-platform performance. 💜
 
+## Testing
+
+Backend: `cd backend/user-service/app && ./mvnw test` (if the checkout lacks the executable bit, use `bash mvnw test`; coverage: `./mvnw jacoco:report`). Frontend: `cd frontend/tutoring-app && npm test`.
+
+Required backend configuration is documented in `backend/user-service/app/src/main/resources/application-example.properties` (`jwt.secret`, `aes.secret`, database settings, and WebSocket origins). Frontend accepts `EXPO_PUBLIC_API_URL` and optionally `EXPO_PUBLIC_WS_URL`; the WebSocket URL otherwise derives from the API URL. Latency test: `npm run test:chat-latency` with the `CHAT_LATENCY_*` variables documented in `scripts/chat-latency-test.js`.
+
+See `TEST_REPORT.md`, `MANUAL_TEST_PLAN.md`, and `CHAT_LATENCY_TEST.md` for results and procedures.
+
 ---
 
 ## 💻 Technologies & Stack

@@ -18,18 +18,11 @@ public class Lesson {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @ManyToOne(optional = true)
-  @JoinColumn(name = "student_id", nullable = true)
-  private User student;
-
   @ManyToOne(optional = false)
   private User tutor;
 
   private String subject;
   private int durationTime;
-
-  @Enumerated(EnumType.STRING)
-  private LessonStatus status;
 
   private BigDecimal price;
   private String description;

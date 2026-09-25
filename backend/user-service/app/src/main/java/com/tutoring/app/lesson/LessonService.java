@@ -51,9 +51,11 @@ public class LessonService {
     Optional<Lesson> lessonOptional = lessonRepository.findById(id);
     if (lessonOptional.isEmpty()) return ResponseEntity.notFound().build();
     Lesson lesson = lessonOptional.get();
+    if (!lesson.getTutor().getId().equals(tutor.getId())) {
+      throw new SecurityException("Only the lesson owner can update it");
+    }
     lesson.setSubject(dto.getSubject()); lesson.setDurationTime(dto.getDurationTime());
     lesson.setPrice(dto.getPrice()); lesson.setDescription(dto.getDescription());
-    lesson.setTutor(tutor);
     return ResponseEntity.ok(mapToResponseDTO(lessonRepository.save(lesson)));
   }
 

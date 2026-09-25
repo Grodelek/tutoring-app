@@ -77,6 +77,8 @@ const LoginForm: React.FC = () => {
                 await AsyncStorage.setItem("hasCompletedTutorProfile", tutorProfileComplete ? "true" : "false");
             }
 
+            setToken(token);
+
             const userType = await AsyncStorage.getItem("userType");
             const completed = await AsyncStorage.getItem("hasCompletedTutorProfile");
 
@@ -84,7 +86,6 @@ const LoginForm: React.FC = () => {
                 router.replace("/AfterLoginPopUp/moreInfoAboutTutor");
 
             } else {
-                setToken(token);
                 router.replace("/(auth)/(tabs)/myAccount");
             }
         } catch (error: any) {

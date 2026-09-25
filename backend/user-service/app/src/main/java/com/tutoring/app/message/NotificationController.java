@@ -2,7 +2,6 @@ package com.tutoring.app.message;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +12,5 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("@accessChecker.isTutorProfileComplete(authentication)")
 public class NotificationController {
   @MessageMapping("send-message")
-  @SendTo("/topic/notification")
-  public String sendMessage(String message) { return message; }
+  public void sendMessage(String message) { }
 }
